@@ -1,3 +1,8 @@
+
+mod game;
+use crate::game::Twirl;
+
 fn main() {
-    println!("Hello, world!");
+    let game = Twirl::new(9);
+    println!("{game}");
 }
