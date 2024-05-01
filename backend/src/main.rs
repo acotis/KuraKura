@@ -5,6 +5,7 @@ mod game;
 use crate::game::Twirl;
 use crate::game::Color::*;
 use crate::game::TurnPhase::*;
+use crate::game::SpinDirection::*;
 
 fn print_game(game: &Twirl) {
     let string = game.to_string();
@@ -30,10 +31,10 @@ fn main() {
     let mut game = Twirl::new(9);
 
     let turns = vec![
-        (Black, Play, 2, 2, None),
-        (Black, Spin, 2, 2, Some(1)),
-        (White, Play, 2, 3, None),
-        (White, Spin, 2, 3, Some(1)),
+        (Black, Play, 2, 2, None,    None),
+        (Black, Spin, 2, 2, Some(1), Some(Right)),
+        (White, Play, 2, 3, None,    None),
+        (White, Spin, 0, 0, Some(9), Some(Right)),
     ];
 
     println!("Initial game state:");
@@ -42,12 +43,19 @@ fn main() {
     for turn in turns {
         let result;
 
+        let player = turn.0;
+        let action = turn.1;
+        let r = turn.2;
+        let c = turn.3;
+
         if turn.1 == Play {
-            print!("{:?} plays ({}, {}).", turn.0, turn.2, turn.3);
-            result = game.play(turn.0, turn.2, turn.3);
+            print!("{player:?} plays ({r}, {c}).");
+            result = game.play(player, r, c);
         } else {
-            print!("{:?} spins ({}, {}) size {}.", turn.0, turn.2, turn.3, turn.4.unwrap());
-            result = game.spin(turn.0, turn.2, turn.3, turn.4.unwrap());
+            let size = turn.4.unwrap();
+            let dir  = turn.5.unwrap();
+            print!("{player:?} spins ({r}, {c}) size {size}, {dir:?}.");
+            result = game.spin(player, r, c, size, dir);
         }
 
         println!(" Result = {result:?}");

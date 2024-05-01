@@ -8,10 +8,12 @@ use crate::game::Color::*;
 use crate::game::TurnPhase::*;
 use crate::game::TurnError::*;
 use crate::game::GameOutcome::*;
+use crate::game::SpinDirection::*;
 
 // Elementary types.
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)] pub enum Color {Black, White, Empty}
+#[derive(Clone, Copy, PartialEq, Eq, Debug)] pub enum SpinDirection {Right, Left}
 #[derive(Clone, Copy, PartialEq, Eq, Debug)] pub enum TurnPhase {Play, Spin}
 #[derive(Clone, Copy, PartialEq, Eq, Debug)] pub enum GameOutcome {
     BlackWin,
@@ -62,15 +64,15 @@ impl Twirl {
         }
     }
 
-    pub fn play(&mut self, player: Color, x: usize, y: usize) -> TurnResult {
+    pub fn play(&mut self, player: Color, r: usize, c: usize) -> TurnResult {
         if self.outcome != None         {return Err(GameAlreadyOver);}
         if self.whose_turn != player    {return Err(NotYourTurn);}
         if self.turn_phase != Play      {return Err(PlayDuringSpinPhase);}
-        if x >= self.size               {return Err(InvalidLocation);}
-        if y >= self.size               {return Err(InvalidLocation);}
-        if self.board[y][x] != Empty    {return Err(PieceAlreadyThere);}
+        if r >= self.size               {return Err(InvalidLocation);}
+        if c >= self.size               {return Err(InvalidLocation);}
+        if self.board[r][c] != Empty    {return Err(PieceAlreadyThere);}
 
-        self.board[y][x] = player;
+        self.board[r][c] = player;
         self.turn_phase = Spin;
 
         // TODO: If we end up treating the play phase as a distinct action, then
@@ -79,24 +81,26 @@ impl Twirl {
         Ok(self.outcome)
     }
 
-    pub fn spin(&mut self, player: Color, x: usize, y: usize, size: usize) -> TurnResult {
+    pub fn spin(&mut self, player: Color, r: usize, c: usize, size: usize, dir: SpinDirection) -> TurnResult {
         if self.outcome != None         {return Err(GameAlreadyOver);}
         if self.whose_turn != player    {return Err(NotYourTurn);}
         if self.turn_phase != Spin      {return Err(SpinDuringPlayPhase);}
-        if x + size - 1 >= self.size    {return Err(InvalidLocation);}
-        if y + size - 1 >= self.size    {return Err(InvalidLocation);}
+        if r + size - 1 >= self.size    {return Err(InvalidLocation);}
+        if c + size - 1 >= self.size    {return Err(InvalidLocation);}
 
         let mut slice = vec![vec![Empty; size]; size];
 
-        for y_offset in 0..size {
-            for x_offset in 0..size {
-                slice[y_offset][x_offset] = self.board[y+y_offset][x+x_offset];
+        for r_offset in 0..size {
+            for c_offset in 0..size {
+                slice[r_offset][c_offset] = self.board[r+r_offset][c+c_offset];
             }
         }
 
-        for y_offset in 0..size {
-            for x_offset in 0..size {
-                self.board[y+y_offset][x+x_offset] = slice[size-x_offset-1][y_offset];
+        for r_offset in 0..size {
+            for c_offset in 0..size {
+                let slice_r = if dir == Right {size-c_offset-1} else {c_offset};
+                let slice_c = if dir == Left  {size-r_offset-1} else {r_offset};
+                self.board[r+r_offset][c+c_offset] = slice[slice_r][slice_c];
             }
         }
 
