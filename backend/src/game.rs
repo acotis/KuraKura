@@ -25,7 +25,7 @@ use crate::game::GameOutcome::*;
     PlayDuringSpinPhase,
     SpinDuringPlayPhase,
     InvalidLocation,
-    StoneAlreadyThere,
+    PieceAlreadyThere,
 }
 
 pub type TurnResult = Result<Option<GameOutcome>, TurnError>;
@@ -68,7 +68,7 @@ impl Twirl {
         if self.turn_phase != Play      {return Err(PlayDuringSpinPhase);}
         if x >= self.size               {return Err(InvalidLocation);}
         if y >= self.size               {return Err(InvalidLocation);}
-        if self.board[y][x] != Empty    {return Err(StoneAlreadyThere);}
+        if self.board[y][x] != Empty    {return Err(PieceAlreadyThere);}
 
         self.board[y][x] = player;
         self.turn_phase = Spin;
@@ -83,10 +83,22 @@ impl Twirl {
         if self.outcome != None         {return Err(GameAlreadyOver);}
         if self.whose_turn != player    {return Err(NotYourTurn);}
         if self.turn_phase != Spin      {return Err(SpinDuringPlayPhase);}
-        if x + size >= self.size        {return Err(InvalidLocation);}
-        if y + size >= self.size        {return Err(InvalidLocation);}
+        if x + size - 1 >= self.size    {return Err(InvalidLocation);}
+        if y + size - 1 >= self.size    {return Err(InvalidLocation);}
 
-        // TODO: Perform the spin.
+        let mut slice = vec![vec![Empty; size]; size];
+
+        for y_offset in 0..size {
+            for x_offset in 0..size {
+                slice[y_offset][x_offset] = self.board[y+y_offset][x+x_offset];
+            }
+        }
+
+        for y_offset in 0..size {
+            for x_offset in 0..size {
+                self.board[y+y_offset][x+x_offset] = slice[size-x_offset-1][y_offset];
+            }
+        }
 
         self.whose_turn = !self.whose_turn;
         self.turn_phase = Play;

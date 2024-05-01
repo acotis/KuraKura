@@ -30,9 +30,10 @@ fn main() {
     let mut game = Twirl::new(9);
 
     let turns = vec![
-        (Black, Play, 0, 0, None),
-        (Black, Spin, 0, 0, Some(4)),
-        (Black, Play, 0, 0, None),
+        (Black, Play, 2, 2, None),
+        (Black, Spin, 2, 2, Some(1)),
+        (White, Play, 2, 3, None),
+        (White, Spin, 2, 3, Some(1)),
     ];
 
     println!("Initial game state:");
