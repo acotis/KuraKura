@@ -115,13 +115,15 @@ impl Twirl {
 
 impl Display for Twirl {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
-        for row in &self.board {
-            for space in row {
-                match space {
+        for r in 0..self.size {
+            for c in 0..self.size {
+                match self.board[r][c] {
                     Black => {write!(f, "x")?;},
                     White => {write!(f, "o")?;},
                     Empty => {write!(f, ".")?;},
                 }
+
+                if c < self.size - 1 {write!(f, " ")?;}
             }
             write!(f, "\n")?;
         }
