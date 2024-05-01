@@ -7,6 +7,7 @@ use std::ops::Not;
 use crate::game::Color::*;
 use crate::game::TurnPhase::*;
 use crate::game::TurnError::*;
+use crate::game::GameOutcome::*;
 
 // Elementary types.
 
@@ -109,14 +110,24 @@ impl Display for Twirl {
             write!(f, "\n")?;
         }
 
-        match (self.whose_turn, self.turn_phase) {
-            (Black, Play) => {write!(f, "Black's turn to play")?;},
-            (Black, Spin) => {write!(f, "Black's turn to spin")?;},
-            (White, Play) => {write!(f, "White's turn to play")?;},
-            (White, Spin) => {write!(f, "White's turn to spin")?;},
-            (Empty, _) => {panic!();},
-        };
-        
+        write!(f, "\n")?;
+
+        match self.outcome {
+            Some(BlackWin)  => {write!(f, "Black wins!")?;},
+            Some(WhiteWin)  => {write!(f, "White wins!")?;},
+            Some(Stalemate) => {write!(f, "Stalemate.")?;},
+            Some(DoubleWin) => {write!(f, "Double win!")?;},
+            None => {
+                match (self.whose_turn, self.turn_phase) {
+                    (Black, Play) => {write!(f, "Black's turn to play...")?;},
+                    (Black, Spin) => {write!(f, "Black's turn to spin...")?;},
+                    (White, Play) => {write!(f, "White's turn to play...")?;},
+                    (White, Spin) => {write!(f, "White's turn to spin...")?;},
+                    (Empty, _) => {panic!();},
+                };
+            }
+        }
+
         Ok(())
     }
 }

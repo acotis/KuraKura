@@ -7,11 +7,23 @@ use crate::game::Color::*;
 use crate::game::TurnPhase::*;
 
 fn print_game(game: &Twirl) {
-    println!("  ======================");
-    for line in game.to_string().lines() {
-        println!("  {line}");
+    let string = game.to_string();
+    let lines = string.lines();
+    let width = lines.clone().fold(0, |best, next| best.max(next.len()));
+
+    print!("  ┌─");
+    for _ in 0..width {print!("─")};
+    print!("─┐\n");
+
+    for line in lines {
+        print!("  │ {line}");
+        for _ in 0..(width - line.len()) {print!(" ");}
+        print!(" │\n");
     }
-    println!("  ======================");
+
+    print!("  └─");
+    for _ in 0..width {print!("─")};
+    print!("─┘\n");
 }
 
 fn main() {
@@ -27,14 +39,17 @@ fn main() {
     print_game(&game);
 
     for turn in turns {
+        let result;
+
         if turn.1 == Play {
-            println!("{:?} plays ({}, {})", turn.0, turn.2, turn.3);
-            game.play(turn.0, turn.2, turn.3).unwrap();
+            print!("{:?} plays ({}, {}).", turn.0, turn.2, turn.3);
+            result = game.play(turn.0, turn.2, turn.3);
         } else {
-            println!("{:?} spins ({}, {}) size {}", turn.0, turn.2, turn.3, turn.4.unwrap());
-            game.spin(turn.0, turn.2, turn.3, turn.4.unwrap()).unwrap();
+            print!("{:?} spins ({}, {}) size {}.", turn.0, turn.2, turn.3, turn.4.unwrap());
+            result = game.spin(turn.0, turn.2, turn.3, turn.4.unwrap());
         }
 
+        println!(" Result = {result:?}");
         print_game(&game);
     }
 }
