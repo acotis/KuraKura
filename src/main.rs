@@ -1,4 +1,6 @@
 
+#[allow(unused)] // TODO: disable this
+
 mod game;
 use crate::game::Twirl;
 

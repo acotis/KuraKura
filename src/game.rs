@@ -25,7 +25,6 @@ enum PlayResult {
 
 
 pub struct Twirl {
-    size:       usize,
     board:      Vec<Vec<Color>>,
     next_turn:  Color,
     outcome:    Option<GameOutcome>, // None until the game is over
@@ -34,11 +33,9 @@ pub struct Twirl {
 impl Twirl {
     pub fn new(size: usize) -> Self {
         Twirl {
-            size:       size,
             board:      vec![vec![Empty; size]; size],
             next_turn:  Black,
             outcome:    None,
-
         }
     }
 }
