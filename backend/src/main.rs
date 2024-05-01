@@ -32,9 +32,9 @@ fn main() {
 
     let turns = vec![
         (Black, Play, 2, 2, None,    None),
-        (Black, Spin, 2, 2, Some(1), Some(Right)),
-        (White, Play, 2, 3, None,    None),
-        (White, Spin, 0, 0, Some(9), Some(Right)),
+        (Black, Spin, 0, 0, Some(9), Some(Right)),
+        (White, Play, 2, 7, None,    None),
+        (White, Spin, 0, 0, Some(9), Some(Left)),
     ];
 
     println!("Initial game state:");
@@ -44,7 +44,6 @@ fn main() {
         let result;
 
         let player = turn.0;
-        let action = turn.1;
         let r = turn.2;
         let c = turn.3;
 
@@ -58,7 +57,7 @@ fn main() {
             result = game.spin(player, r, c, size, dir);
         }
 
-        println!(" Result = {result:?}");
+        println!(" Result = {result:?}. New game state:");
         print_game(&game);
     }
 }
