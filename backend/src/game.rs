@@ -2,6 +2,7 @@
 use std::fmt::Formatter;
 use std::fmt::Display;
 use std::fmt::Error;
+use std::ops::Not;
 
 use crate::game::Color::*;
 use crate::game::TurnPhase::*;
@@ -9,16 +10,15 @@ use crate::game::TurnError::*;
 
 // Elementary types.
 
-#[derive(Clone, Copy)] pub struct Tile {x: usize, y: usize}
-#[derive(Clone, Copy, PartialEq, Eq)] pub enum Color {Black, White, Empty}
-#[derive(Clone, Copy, PartialEq, Eq)] pub enum TurnPhase {Play, Spin}
-#[derive(Clone, Copy, PartialEq, Eq)] pub enum GameOutcome {
+#[derive(Clone, Copy, PartialEq, Eq, Debug)] pub enum Color {Black, White, Empty}
+#[derive(Clone, Copy, PartialEq, Eq, Debug)] pub enum TurnPhase {Play, Spin}
+#[derive(Clone, Copy, PartialEq, Eq, Debug)] pub enum GameOutcome {
     BlackWin,
     WhiteWin,
     Stalemate,
     DoubleWin,
 }
-#[derive(Clone, Copy, PartialEq, Eq)] pub enum TurnError {
+#[derive(Clone, Copy, PartialEq, Eq, Debug)] pub enum TurnError {
     GameAlreadyOver,
     NotYourTurn,
     PlayDuringSpinPhase,
@@ -28,6 +28,17 @@ use crate::game::TurnError::*;
 }
 
 pub type TurnResult = Result<Option<GameOutcome>, TurnError>;
+
+impl Not for Color {
+    type Output = Color;
+    fn not(self) -> Self {
+        match self {
+            Black => White,
+            White => Black,
+            Empty => panic!(),
+        }
+    }
+}
 
 // Game type.
 
@@ -50,15 +61,16 @@ impl Twirl {
         }
     }
 
-    pub fn play(mut self, player: Color, play: Tile) -> TurnResult {
-        if self.outcome != None                 {return Err(GameAlreadyOver);}
-        if self.whose_turn != player            {return Err(NotYourTurn);}
-        if self.turn_phase != Play              {return Err(PlayDuringSpinPhase);}
-        if play.x >= self.size                  {return Err(InvalidLocation);}
-        if play.y >= self.size                  {return Err(InvalidLocation);}
-        if self.board[play.y][play.x] != Empty  {return Err(StoneAlreadyThere);}
+    pub fn play(&mut self, player: Color, x: usize, y: usize) -> TurnResult {
+        if self.outcome != None         {return Err(GameAlreadyOver);}
+        if self.whose_turn != player    {return Err(NotYourTurn);}
+        if self.turn_phase != Play      {return Err(PlayDuringSpinPhase);}
+        if x >= self.size               {return Err(InvalidLocation);}
+        if y >= self.size               {return Err(InvalidLocation);}
+        if self.board[y][x] != Empty    {return Err(StoneAlreadyThere);}
 
-        self.board[play.y][play.x] = player;
+        self.board[y][x] = player;
+        self.turn_phase = Spin;
 
         // TODO: If we end up treating the play phase as a distinct action, then
         // update the game's outcome here.
@@ -66,14 +78,18 @@ impl Twirl {
         Ok(self.outcome)
     }
 
-    pub fn spin(mut self, player: Color, ul: Tile, size: usize) -> TurnResult {
-        if self.outcome != None             {return Err(GameAlreadyOver);}
-        if self.whose_turn != player        {return Err(NotYourTurn);}
-        if self.turn_phase != Spin          {return Err(SpinDuringPlayPhase);}
-        if ul.x + size >= self.size         {return Err(InvalidLocation);}
-        if ul.y + size >= self.size         {return Err(InvalidLocation);}
+    pub fn spin(&mut self, player: Color, x: usize, y: usize, size: usize) -> TurnResult {
+        if self.outcome != None         {return Err(GameAlreadyOver);}
+        if self.whose_turn != player    {return Err(NotYourTurn);}
+        if self.turn_phase != Spin      {return Err(SpinDuringPlayPhase);}
+        if x + size >= self.size        {return Err(InvalidLocation);}
+        if y + size >= self.size        {return Err(InvalidLocation);}
 
         // TODO: Perform the spin.
+
+        self.whose_turn = !self.whose_turn;
+        self.turn_phase = Play;
+
         // TODO: Update the game's outcome.
 
         Ok(self.outcome)
@@ -92,6 +108,14 @@ impl Display for Twirl {
             }
             write!(f, "\n")?;
         }
+
+        match (self.whose_turn, self.turn_phase) {
+            (Black, Play) => {write!(f, "Black's turn to play")?;},
+            (Black, Spin) => {write!(f, "Black's turn to spin")?;},
+            (White, Play) => {write!(f, "White's turn to play")?;},
+            (White, Spin) => {write!(f, "White's turn to spin")?;},
+            (Empty, _) => {panic!();},
+        };
         
         Ok(())
     }
