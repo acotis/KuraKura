@@ -1,0 +1,57 @@
+.board-table {
+  border: none;
+  border-collapse: collapse;
+}
+
+.board-td {
+  position: relative;
+  padding: 0;
+  margin: 0;
+  width: 64px;
+  height: 64px;
+}
+
+.board-cell {
+  background: #deb887;
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+.board-line {
+  background: #be4847;
+  margin: auto;
+  position: absolute;
+  inset: 31px;
+}
+
+.board-line-r {
+  right: 0px;
+}
+
+.board-line-l {
+  left: 0px;
+}
+
+.board-line-t {
+  top: 0px;
+}
+
+.board-line-b {
+  bottom: 0px;
+}
+
+.stone {
+  position: relative;
+  border-radius: 32px;
+  width: 100%;
+  height: 100%;
+}
+
+.stone-black {
+  background: #444444;
+}
+
+.stone-white {
+  background: #f7f7f7;
+}
