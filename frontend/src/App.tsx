@@ -15,7 +15,7 @@ function App() {
           [undefined, undefined, undefined, undefined, undefined, undefined],
           [undefined, undefined, undefined, undefined, undefined, undefined],
         ]}
-        active="white"
+        active="black"
         onMove={(move) => {
           console.log(move);
         }}
