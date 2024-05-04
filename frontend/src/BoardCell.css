@@ -1,0 +1,61 @@
+.board-cell {
+  background: #deb887;
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+.board-cell-clickable {
+  cursor: pointer;
+}
+
+.board-line {
+  pointer-events: none;
+  background: #be4847;
+  margin: auto;
+  position: absolute;
+  inset: 31px;
+}
+
+.board-line-r {
+  right: 0px;
+}
+
+.board-line-l {
+  left: 0px;
+}
+
+.board-line-t {
+  top: 0px;
+}
+
+.board-line-b {
+  bottom: 0px;
+}
+
+.stone {
+  pointer-events: none;
+  position: absolute;
+  border-radius: 32px;
+  width: 100%;
+  height: 100%;
+}
+
+.stone-preview {
+  visibility: hidden;
+  opacity: 0.5;
+}
+
+@media (hover: hover) {
+  .board-cell-clickable:hover .stone-preview {
+    visibility: visible;
+  }
+}
+
+.stone-black {
+  background: #444444;
+}
+
+.stone-white {
+  background: #f7f7f7;
+}
