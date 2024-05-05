@@ -1,5 +1,6 @@
 import { Cell, Stone } from "./types";
 import "./BoardCell.css";
+import { BoardStone } from "./BoardStone";
 
 export interface BoardCellProps {
   cell: Cell;
@@ -19,14 +20,9 @@ export function BoardCell(props: BoardCellProps) {
         <div key={x} className={"board-line board-line-" + x} />
       ))}
       {cell.stone ? (
-        <div
-          className={"stone stone-" + cell.stone.color}
-          style={{ transform: `rotate(${cell.stone.rotation}deg)` }}
-        >
-          {cell.stone.label}
-        </div>
+        <BoardStone stone={cell.stone} />
       ) : stonePreview ? (
-        <div className={"stone stone-preview stone-" + stonePreview.color} />
+        <BoardStone preview stone={stonePreview} />
       ) : undefined}
     </div>
   );

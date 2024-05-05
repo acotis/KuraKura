@@ -22,7 +22,7 @@ export interface BoardProps {
    * other player's turn.
    */
   active: Color | undefined;
-
+  moveNumber: number;
   /**
    * Called when the player locks in their move.
    */
@@ -86,7 +86,7 @@ export function Board(props: BoardProps) {
 
   let newGrid = props.grid;
   let newStone: Stone | undefined = props.active
-    ? { color: props.active, label: "", rotation: 0 }
+    ? { color: props.active, label: props.moveNumber.toString(), rotation: 0 }
     : undefined;
 
   if (props.active && moveState.phase !== "place") {

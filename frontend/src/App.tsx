@@ -57,6 +57,7 @@ function App() {
       <Board
         grid={grid}
         active={active}
+        moveNumber={moveNumber}
         onMove={(move) => {
           setGrid(applyMove(grid, move, active, moveNumber.toString()));
           setActive(active === "black" ? "white" : "black");
