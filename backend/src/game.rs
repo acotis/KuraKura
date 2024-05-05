@@ -10,10 +10,6 @@ use crate::game::TurnError::*;
 use crate::game::GameOutcome::*;
 use crate::game::SpinDirection::*;
 
-// Constants.
-
-const WIN_LEN: usize = 5;
-
 // Elementary types.
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)] pub enum Color {Black, White, Empty}
@@ -51,6 +47,7 @@ impl Not for Color {
 
 pub struct Twirl {
     size:       usize,
+    win_len:    usize,
     board:      Vec<Vec<Color>>,
     outcome:    Option<GameOutcome>, // None until the game is over
     whose_turn: Color,
@@ -58,9 +55,10 @@ pub struct Twirl {
 }
 
 impl Twirl {
-    pub fn new(size: usize) -> Self {
+    pub fn new(size: usize, win_len: usize) -> Self {
         Twirl {
             size:       size,
+            win_len:    win_len,
             board:      vec![vec![Empty; size]; size],
             outcome:    None,
             whose_turn: Black,
@@ -111,21 +109,21 @@ impl Twirl {
         self.whose_turn = !self.whose_turn;
         self.turn_phase = Play;
 
-        // TODO: Update the game's outcome.
+        self.update_outcome();
 
         Ok(self.outcome)
     }
 
-    pub fn update_outcome(&mut self) {
+    fn update_outcome(&mut self) {
         let mut winning_tiles: Vec<(usize, usize)> = vec![];
 
         for r in 0..self.size {
             for c in 0..self.size {
                 for dir in vec![(0, 1), (1, 0), (1, 1)] {
-                    let mut line = (0..WIN_LEN).map(|x| (r + dir.0 * x, c + dir.1 * x));
+                    let mut line = (0..self.win_len).map(|x| (r + dir.0 * x, c + dir.1 * x));
 
                     for color in vec![Black, White] {
-                        if line.all(|(r, c)| 
+                        if line.clone().all(|(r, c)| 
                                     r < self.size &&
                                     c < self.size && 
                                     self.board[r][c] == color) {
@@ -178,10 +176,10 @@ impl Display for Twirl {
             Some(DoubleWin) => {write!(f, "Double win!")?;},
             None => {
                 match (self.whose_turn, self.turn_phase) {
-                    (Black, Play) => {write!(f, "Black's turn to play...")?;},
-                    (Black, Spin) => {write!(f, "Black's turn to spin...")?;},
-                    (White, Play) => {write!(f, "White's turn to play...")?;},
-                    (White, Spin) => {write!(f, "White's turn to spin...")?;},
+                    (Black, Play) => {write!(f, "Black to play...")?;},
+                    (Black, Spin) => {write!(f, "Black to spin...")?;},
+                    (White, Play) => {write!(f, "White to play...")?;},
+                    (White, Spin) => {write!(f, "White to spin...")?;},
                     (Empty, _) => {panic!();},
                 };
             }

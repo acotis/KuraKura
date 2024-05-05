@@ -28,7 +28,7 @@ fn print_game(game: &Twirl) {
 }
 
 fn main() {
-    let mut game = Twirl::new(9);
+    let mut game = Twirl::new(9, 2);
 
     let turns = vec![
         //(Black, Play, 19, 19, None,    None),
@@ -39,6 +39,7 @@ fn main() {
         (White, Spin, 0, 0, Some(9), Some(Left)),
         (Black, Play, 0, 1, None,    None),
         (Black, Spin, 0, 2, Some(3), Some(Right)),
+        (White, Play, 2, 7, None,    None),
     ];
 
     println!("Initial game state:");
