@@ -2,14 +2,26 @@
 import { useState } from "react";
 import "./App.css";
 import { Board } from "./Board";
-import { Color, Move } from "./types";
+import { BoardLine, Cell, Color, Grid, Move, boardSize } from "./types";
 import update from "immutability-helper";
 
-type Grid = (Color | undefined)[][];
+function rotateLine(line: BoardLine): BoardLine {
+  return line === "t" ? "r" : line === "r" ? "b" : line === "b" ? "l" : "t";
+}
 
-function applyMove(grid: Grid, move: Move, color: Color): Grid {
+function rotateCell(cell: Cell): Cell {
+  return {
+    stone: cell.stone
+      ? { ...cell.stone, rotation: (cell.stone.rotation + 90) % 360 }
+      : undefined,
+    lines: cell.lines.map(rotateLine),
+  };
+}
+
+function applyMove(grid: Grid, move: Move, color: Color, label: string): Grid {
+  const newStone = { color, label, rotation: 0 };
   const placed = update(grid, {
-    [move.placeY]: { [move.placeX]: { $set: color } },
+    [move.placeY]: { [move.placeX]: { stone: { $set: newStone } } },
   });
   const sx = move.spinX;
   const sy = move.spinY;
@@ -17,7 +29,7 @@ function applyMove(grid: Grid, move: Move, color: Color): Grid {
   const spun = placed.map((row, y) =>
     row.map((cell, x) =>
       x >= sx && x < sx + n && y >= sy && y < sy + n
-        ? placed[sy + n - 1 - (x - sx)][sx + (y - sy)]
+        ? rotateCell(placed[sy + n - 1 - (x - sx)][sx + (y - sy)])
         : cell
     )
   );
@@ -25,15 +37,19 @@ function applyMove(grid: Grid, move: Move, color: Color): Grid {
 }
 
 function App() {
-  const [grid, setGrid] = useState<Grid>([
-    [undefined, undefined, undefined, undefined, undefined, undefined],
-    [undefined, undefined, undefined, undefined, undefined, undefined],
-    [undefined, undefined, "white", undefined, undefined, undefined],
-    [undefined, undefined, undefined, "black", undefined, undefined],
-    [undefined, undefined, undefined, undefined, undefined, undefined],
-    [undefined, undefined, undefined, undefined, undefined, undefined],
-  ]);
+  const [grid, setGrid] = useState<Grid>(
+    new Array(boardSize).fill(undefined).map((_, y) =>
+      new Array(boardSize).fill(undefined).map((_, x) => ({
+        stone: undefined,
+        lines: (y > 0 ? ["t" as BoardLine] : [])
+          .concat(x < boardSize - 1 ? ["r" as BoardLine] : [])
+          .concat(y < boardSize - 1 ? ["b" as BoardLine] : [])
+          .concat(x > 0 ? ["l" as BoardLine] : []),
+      }))
+    )
+  );
   const [active, setActive] = useState<Color>("black");
+  const [moveNumber, setMoveNumber] = useState(1);
 
   return (
     <>
@@ -42,8 +58,9 @@ function App() {
         grid={grid}
         active={active}
         onMove={(move) => {
-          setGrid(applyMove(grid, move, active));
+          setGrid(applyMove(grid, move, active, moveNumber.toString()));
           setActive(active === "black" ? "white" : "black");
+          setMoveNumber(moveNumber + 1);
         }}
       />
     </>

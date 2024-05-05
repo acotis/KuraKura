@@ -1,29 +1,32 @@
-import { Color, boardSize } from "./types";
+import { Cell, Stone } from "./types";
 import "./BoardCell.css";
 
 export interface BoardCellProps {
-  x: number;
-  y: number;
-  color: Color | undefined;
-  placePreview?: Color | undefined;
+  cell: Cell;
+  stonePreview?: Stone | undefined;
   onClick?: () => undefined;
 }
 
 export function BoardCell(props: BoardCellProps) {
-  const clickable = props.placePreview && !props.color;
+  const { cell, stonePreview, onClick } = props;
+  const clickable = stonePreview && !cell.stone;
   const cellClass = clickable
     ? "board-cell board-cell-clickable"
     : "board-cell";
   return (
-    <div className={cellClass} onClick={props.onClick}>
-      {props.x > 0 && <div className="board-line board-line-l" />}
-      {props.x < boardSize - 1 && <div className="board-line board-line-r" />}
-      {props.y > 0 && <div className="board-line board-line-t" />}
-      {props.y < boardSize - 1 && <div className="board-line board-line-b" />}
-      {props.color ? (
-        <div className={"stone stone-" + props.color} />
-      ) : props.placePreview ? (
-        <div className={"stone stone-preview stone-" + props.placePreview} />
+    <div className={cellClass} onClick={onClick}>
+      {cell.lines.map((x) => (
+        <div key={x} className={"board-line board-line-" + x} />
+      ))}
+      {cell.stone ? (
+        <div
+          className={"stone stone-" + cell.stone.color}
+          style={{ transform: `rotate(${cell.stone.rotation}deg)` }}
+        >
+          {cell.stone.label}
+        </div>
+      ) : stonePreview ? (
+        <div className={"stone stone-preview stone-" + stonePreview.color} />
       ) : undefined}
     </div>
   );

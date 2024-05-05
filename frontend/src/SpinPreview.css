@@ -1,0 +1,38 @@
+.spin-area {
+  z-index: 9;
+  cursor: pointer;
+  position: absolute;
+  inset: 0;
+}
+
+.spin-rect {
+  pointer-events: none;
+  position: absolute;
+  outline: 2px dashed #0088ff;
+  background: #0088ff20;
+}
+
+.spin-rect-bad {
+  outline-color: #ff0000;
+  background: #ff000020;
+}
+
+.spin-rect-ok {
+  outline: none;
+}
+
+.spin-preview {
+  outline: 2px dashed #0088ff;
+  position: absolute;
+}
+
+.spin-preview-animate {
+  transform: rotate(0deg);
+  animation: spin 0.5s ease forwards;
+}
+
+@keyframes spin {
+  100% {
+    transform: rotate(90deg);
+  }
+}

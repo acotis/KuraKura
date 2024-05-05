@@ -1,4 +1,13 @@
-import { Color, Move, MoveState, SpinState, tileSize } from "./types";
+import {
+  Cell,
+  Color,
+  Grid,
+  Move,
+  MoveState,
+  SpinState,
+  Stone,
+  tileSize,
+} from "./types";
 import "./Board.css";
 import { useCallback, useState } from "react";
 import { BoardCell } from "./BoardCell";
@@ -6,7 +15,7 @@ import { SpinPreview } from "./SpinPreview";
 import update from "immutability-helper";
 
 export interface BoardProps {
-  grid: (Color | undefined)[][];
+  grid: Grid;
   /**
    * A Color means the board is interactable as that player. `undefined` means
    * the game is not yet started, or already over, or we're waiting for the
@@ -75,14 +84,20 @@ export function Board(props: BoardProps) {
     }
   }, [spin]);
 
-  const newGrid =
-    moveState.phase === "place"
-      ? props.grid
-      : update(props.grid, {
-          [moveState.move.placeY]: {
-            [moveState.move.placeX]: { $set: props.active },
-          },
-        });
+  let newGrid = props.grid;
+  let newStone: Stone | undefined = props.active
+    ? { color: props.active, label: "", rotation: 0 }
+    : undefined;
+
+  if (props.active && moveState.phase !== "place") {
+    newGrid = update(props.grid, {
+      [moveState.move.placeY]: {
+        [moveState.move.placeX]: {
+          stone: { $set: newStone },
+        },
+      },
+    });
+  }
 
   return (
     <div className="flexv">
@@ -94,7 +109,7 @@ export function Board(props: BoardProps) {
           <tbody>
             {newGrid.map((row, y) => (
               <tr className="board-tr" key={y}>
-                {row.map((color, x) => (
+                {row.map((cell, x) => (
                   <td key={x} className="board-td">
                     {spinRect &&
                     spin.phase === "preview" &&
@@ -103,16 +118,12 @@ export function Board(props: BoardProps) {
                     y >= Math.min(spinRect.y1, spinRect.y2) &&
                     y <= Math.max(spinRect.y1, spinRect.y2) ? undefined : (
                       <BoardCell
-                        y={y}
-                        x={x}
-                        color={color}
-                        placePreview={
-                          moveState.phase === "place" ? props.active : undefined
-                        }
+                        cell={cell}
+                        stonePreview={newStone}
                         onClick={() => {
                           if (
                             moveState.phase === "place" &&
-                            props.grid[y][x] === undefined
+                            props.grid[y][x].stone === undefined
                           ) {
                             setMoveState({
                               phase: "spin",
@@ -157,7 +168,7 @@ export function Board(props: BoardProps) {
           }
         }}
       >
-        Confirm
+        Confirm {JSON.stringify(moveState)}
       </button>
     </div>
   );

@@ -3,6 +3,29 @@ export const tileSize = 64;
 
 export type Color = "black" | "white";
 
+export type Stone = {
+  color: Color;
+  label: string;
+  /**
+   * In degrees.
+   */
+  rotation: number;
+};
+
+export type BoardLine = "t" | "r" | "b" | "l";
+
+export type Cell = {
+  stone: Stone | undefined;
+  /**
+   * Which lines does this cell have?
+   * "t" means a line from the center to the top,
+   * "r" means a line from the center to the right edge, etc.
+   */
+  lines: Array<BoardLine>;
+};
+
+export type Grid = Cell[][];
+
 export interface Move {
   placeX: number;
   placeY: number;

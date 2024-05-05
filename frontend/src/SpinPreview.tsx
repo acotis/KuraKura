@@ -1,8 +1,9 @@
 import { BoardCell } from "./BoardCell";
-import { Color, SpinState, tileSize } from "./types";
+import { Grid, SpinState, tileSize } from "./types";
+import "./SpinPreview.css";
 
 export interface SpinPreviewProps {
-  grid: (Color | undefined)[][];
+  grid: Grid;
   spinRect: {
     x1: number;
     y1: number;
@@ -47,9 +48,9 @@ export function SpinPreview(props: SpinPreviewProps) {
           <tbody>
             {props.grid.slice(top, top + width).map((row, y) => (
               <tr className="board-tr" key={y}>
-                {row.slice(left, left + width).map((color, x) => (
+                {row.slice(left, left + width).map((cell, x) => (
                   <td key={x} className="board-td">
-                    <BoardCell y={top + y} x={left + x} color={color} />
+                    <BoardCell cell={cell} />
                   </td>
                 ))}
               </tr>
