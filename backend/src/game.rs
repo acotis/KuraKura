@@ -10,6 +10,10 @@ use crate::game::TurnError::*;
 use crate::game::GameOutcome::*;
 use crate::game::SpinDirection::*;
 
+// Constants.
+
+const WIN_LEN: usize = 5;
+
 // Elementary types.
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)] pub enum Color {Black, White, Empty}
@@ -110,6 +114,43 @@ impl Twirl {
         // TODO: Update the game's outcome.
 
         Ok(self.outcome)
+    }
+
+    pub fn update_outcome(&mut self) {
+        let mut winning_tiles: Vec<(usize, usize)> = vec![];
+
+        for r in 0..self.size {
+            for c in 0..self.size {
+                for dir in vec![(0, 1), (1, 0), (1, 1)] {
+                    let mut line = (0..WIN_LEN).map(|x| (r + dir.0 * x, c + dir.1 * x));
+
+                    for color in vec![Black, White] {
+                        if line.all(|(r, c)| 
+                                    r < self.size &&
+                                    c < self.size && 
+                                    self.board[r][c] == color) {
+                            winning_tiles.extend(line);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check for wins and double wins.
+
+        if winning_tiles.len() > 0 {
+            if winning_tiles.iter().all(|&(r, c)| self.board[r][c] == Black) {self.outcome = Some(BlackWin); return;}
+            if winning_tiles.iter().all(|&(r, c)| self.board[r][c] == White) {self.outcome = Some(WhiteWin); return;}
+            self.outcome = Some(DoubleWin);
+            return;
+        }
+
+        // Check for stalemate.
+
+        if (0..self.size).all(|r| (0..self.size).all(|c| self.board[r][c] != Empty)) {
+            self.outcome = Some(Stalemate);
+        }
     }
 }
 
