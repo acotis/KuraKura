@@ -167,8 +167,6 @@ impl Display for Twirl {
             write!(f, "\n")?;
         }
 
-        write!(f, "\n")?;
-
         match self.outcome {
             Some(BlackWin)  => {write!(f, "Black wins!")?;},
             Some(WhiteWin)  => {write!(f, "White wins!")?;},

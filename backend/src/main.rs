@@ -4,9 +4,9 @@
 mod game;
 use crate::game::Twirl;
 use crate::game::Color::*;
-use crate::game::TurnPhase::*;
-use crate::game::SpinDirection::*;
+use crate::game::Color;
 
+/*
 fn print_game(game: &Twirl) {
     let string = game.to_string();
     let lines = string.lines();
@@ -26,43 +26,64 @@ fn print_game(game: &Twirl) {
     for _ in 0..width {print!("─")};
     print!("─┘\n");
 }
+*/
 
 fn main() {
-    let mut game = Twirl::new(9, 2);
+}
 
-    let turns = vec![
-        //(Black, Play, 19, 19, None,    None),
-        //(Black, Spin, 0,  0,  Some(20), Some(Left)),
-        (Black, Play, 0, 0, None,    None),
-        (Black, Spin, 0, 0, Some(9), Some(Right)),
-        (White, Play, 2, 7, None,    None),
-        (White, Spin, 0, 0, Some(9), Some(Left)),
-        (Black, Play, 0, 1, None,    None),
-        (Black, Spin, 0, 2, Some(3), Some(Right)),
-        (White, Play, 2, 7, None,    None),
-    ];
+#[test]
+fn test() {
+    insta::with_settings!({
+        omit_expression => true,
+    }, {
 
-    println!("Initial game state:");
-    print_game(&game);
+        let mut game = Twirl::new(9, 2);
+        insta::assert_snapshot!(play(&mut game, Black, 0, 0));
+    });
+}
 
-    for turn in turns {
-        let result;
+fn play(game: &mut Twirl, color: Color, r: usize, c: usize) -> String {
+    let initial = game.to_string();
+    let result  = game.play(color, r, c);
+    let ending  = game.to_string();
 
-        let player = turn.0;
-        let r = turn.2;
-        let c = turn.3;
+    let mut ret = format!("{color:?} plays at ({r}, {c})...  => {result:?}\n\n");
 
-        if turn.1 == Play {
-            print!("{player:?} plays ({r}, {c}).");
-            result = game.play(player, r, c);
-        } else {
-            let size = turn.4.unwrap();
-            let dir  = turn.5.unwrap();
-            print!("{player:?} spins ({r}, {c}) size {size}, {dir:?}.");
-            result = game.spin(player, r, c, size, dir);
+    ret.push_str(&juxtapose(&initial, &ending));
+    return ret;
+}
+
+fn juxtapose(a: &str, b: &str) -> String {
+    let mut a_lines = a.lines();
+    let mut b_lines = b.lines();
+    let a_width = a.lines().fold(0, |best, next| best.max(next.len()));
+
+    let mut ret = "".to_string();
+    let margin = 4;
+    
+    loop {
+        match (a_lines.next(), b_lines.next()) {
+            (Some(a_line), Some(b_line)) => {
+                ret.push_str(a_line);
+                ret.push_str(&" ".repeat(a_width - a_line.len() + margin));
+                ret.push_str(b_line);
+            },
+            (None, Some(b_line)) => {
+                ret.push_str(&" ".repeat(a_width + margin));
+                ret.push_str(b_line);
+            },
+            (Some(a_line), None) => {
+                ret.push_str(a_line);
+            },
+            (None, None) => {
+                break;
+            },
         }
 
-        println!(" Result = {result:?}. New game state:");
-        print_game(&game);
+        ret.push_str("\n");
     }
+
+    return ret;
 }
+
+
