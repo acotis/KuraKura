@@ -1,5 +1,6 @@
 ---
 source: src/main.rs
+assertion_line: 19
 ---
 Black plays at (0, 0)...  => Ok(None)
 

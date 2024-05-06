@@ -6,28 +6,6 @@ use crate::game::Twirl;
 use crate::game::Color::*;
 use crate::game::Color;
 
-/*
-fn print_game(game: &Twirl) {
-    let string = game.to_string();
-    let lines = string.lines();
-    let width = lines.clone().fold(0, |best, next| best.max(next.len()));
-
-    print!("  ┌─");
-    for _ in 0..width {print!("─")};
-    print!("─┐\n");
-
-    for line in lines {
-        print!("  │ {line}");
-        for _ in 0..(width - line.len()) {print!(" ");}
-        print!(" │\n");
-    }
-
-    print!("  └─");
-    for _ in 0..width {print!("─")};
-    print!("─┘\n");
-}
-*/
-
 fn main() {
 }
 

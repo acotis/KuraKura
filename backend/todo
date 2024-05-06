@@ -1,5 +1,12 @@
 
-1. Finish implementing win functionality.
-1a. Install insta and use it to test the win functionality.
 2. Add UI rotation details.
+    - Numbers.
+    - Rotation of numbers.
+    - Board lines.
+3. Write a bunch of insta tests.
+    - Wins.
+    - Double wins.
+    - Multiple wins for same player.
+    - Correct rotation of numbers.
+    - Correct position of numbers.
 
