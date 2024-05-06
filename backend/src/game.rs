@@ -79,6 +79,35 @@ impl Cell {
             Some((num, _)) => if num % 2 == 1 {Some(Black)} else {Some(White)},
         }
     }
+
+    fn line_char(&self) -> char {
+        match (
+            self.lines.contains(&Up),
+            self.lines.contains(&Right),
+            self.lines.contains(&Down),
+            self.lines.contains(&Left),
+        ) {
+            (true , true , false, false) => '└',
+            (false, true , true , false) => '┌',
+            (false, false, true , true ) => '┐',
+            (true , false, false, true ) => '┘',
+            (true , true , true , false) => '├',
+            (false, true , true , true ) => '┬',
+            (true , false, true , true ) => '┤',
+            (true , true , false, true ) => '┴',
+            (true , true , true , true ) => '┼',
+            _ => panic!(),
+        }
+    }
+
+    fn between_char(&self, other: Self) -> char {
+        match (self.lines.contains(&Right), other.lines.contains(&Left)) {
+            (true , true ) => '─',
+            (true , false) => '╴',
+            (false, true ) => '╶',
+            (false, false) => ' ',
+        }
+    }
 }
 
 fn spin_cell_grid(grid: Vec<Vec<Cell>>) -> Vec<Vec<Cell>> {
