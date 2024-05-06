@@ -3,8 +3,8 @@
 
 mod game;
 use crate::game::Twirl;
-use crate::game::Color::*;
-use crate::game::Color;
+use crate::game::Player;
+use crate::game::Player::*;
 
 fn main() {
 }
@@ -20,12 +20,12 @@ fn test() {
     });
 }
 
-fn play(game: &mut Twirl, color: Color, r: usize, c: usize) -> String {
+fn play(game: &mut Twirl, player: Player, r: usize, c: usize) -> String {
     let initial = game.to_string();
-    let result  = game.play(color, r, c);
+    let result  = game.play(player, r, c);
     let ending  = game.to_string();
 
-    let mut ret = format!("{color:?} plays at ({r}, {c})...  => {result:?}\n\n");
+    let mut ret = format!("{player:?} plays at ({r}, {c})... => {result:?}\n\n");
 
     ret.push_str(&juxtapose(&initial, &ending));
     return ret;

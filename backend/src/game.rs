@@ -4,7 +4,8 @@ use std::fmt::Display;
 use std::fmt::Error;
 use std::ops::Not;
 
-use crate::game::Color::*;
+use crate::game::Player::*;
+use crate::game::Orientation::*;
 use crate::game::TurnPhase::*;
 use crate::game::TurnError::*;
 use crate::game::GameOutcome::*;
@@ -12,15 +13,18 @@ use crate::game::SpinDirection::*;
 
 // Elementary types.
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)] pub enum Color {Black, White, Empty}
-#[derive(Clone, Copy, PartialEq, Eq, Debug)] pub enum SpinDirection {Right, Left}
+#[derive(Clone, Copy, PartialEq, Eq, Debug)] pub enum Orientation {Up, Right, Down, Left}
+#[derive(Clone, Copy, PartialEq, Eq, Debug)] pub enum SpinDirection {CW, CCW}
+#[derive(Clone, Copy, PartialEq, Eq, Debug)] pub enum Player {Black, White}
 #[derive(Clone, Copy, PartialEq, Eq, Debug)] pub enum TurnPhase {Play, Spin}
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)] pub enum GameOutcome {
     BlackWin,
     WhiteWin,
     Stalemate,
     DoubleWin,
 }
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)] pub enum TurnError {
     GameAlreadyOver,
     NotYourTurn,
@@ -30,103 +34,164 @@ use crate::game::SpinDirection::*;
     PieceAlreadyThere,
 }
 
+#[derive(Clone, PartialEq, Eq, Debug)] pub struct Cell {
+    stone:  Option<(usize, Orientation)>,
+    lines:  Vec<Orientation>,
+}
+
 pub type TurnResult = Result<Option<GameOutcome>, TurnError>;
 
-impl Not for Color {
-    type Output = Color;
+impl Not for Player {
+    type Output = Player;
     fn not(self) -> Self {
         match self {
             Black => White,
             White => Black,
-            Empty => panic!(),
         }
     }
+}
+
+impl Orientation {
+    fn spin(self) -> Self {
+        match self {
+            Up => Right,
+            Right => Down,
+            Down => Left,
+            Left => Up,
+        }
+    }
+}
+
+impl Cell {
+    fn spin(&self) -> Self {
+        Cell {
+            stone: match self.stone {
+                None => None,
+                Some((num, or)) => Some((num, or.spin())),
+            },
+            lines: self.lines.iter().map(|or| or.spin()).collect(),
+        }
+    }
+
+    fn who(&self) -> Option<Player> {
+        match self.stone {
+            None => None,
+            Some((num, _)) => if num % 2 == 1 {Some(Black)} else {Some(White)},
+        }
+    }
+}
+
+fn spin_cell_grid(grid: Vec<Vec<Cell>>) -> Vec<Vec<Cell>> {
+    let size = grid.len();
+    let mut ret = vec![];
+
+    for r in 0..size {
+        ret.push(vec![]);
+
+        for c in 0..size {
+            ret[r].push(grid[r][size-c-1].spin());
+        }
+    }
+
+    ret
 }
 
 // Game type.
 
 pub struct Twirl {
-    size:       usize,
-    win_len:    usize,
-    board:      Vec<Vec<Color>>,
-    outcome:    Option<GameOutcome>, // None until the game is over
-    whose_turn: Color,
-    turn_phase: TurnPhase,
+    win_len:    usize,                  // Line length needed to win.
+    board:      Vec<Vec<Cell>>,         // State of the board.
+    turn:       usize,                  // Number of the active turn's stone.
+    turn_phase: TurnPhase,              // Phase of the active turn.
+
+    outcome:    Option<GameOutcome>,    // [Cache] Outcome (= None until the game is over).
 }
 
 impl Twirl {
     pub fn new(size: usize, win_len: usize) -> Self {
-        Twirl {
-            size:       size,
+        let mut board = Twirl {
             win_len:    win_len,
-            board:      vec![vec![Empty; size]; size],
-            outcome:    None,
-            whose_turn: Black,
+            board:      vec![],
+            turn:       1,
             turn_phase: Play,
+            outcome:    None,
+        };
+
+        for r in 0..size {
+            board.board.push(vec![]);
+
+            for c in 0..size {
+                board.board[r].push(
+                    Cell {
+                        stone:  None,
+                        lines:  vec![],
+                    }
+                );
+
+                if r > 0        {board.board[r][c].lines.push(Up);}
+                if c > 0        {board.board[r][c].lines.push(Left);}
+                if r < size - 1 {board.board[r][c].lines.push(Down);}
+                if c < size - 1 {board.board[r][c].lines.push(Right);}
+            }
         }
+        
+        board
     }
 
-    pub fn play(&mut self, player: Color, r: usize, c: usize) -> TurnResult {
-        if self.outcome != None         {return Err(GameAlreadyOver);}
-        if self.whose_turn != player    {return Err(NotYourTurn);}
-        if self.turn_phase != Play      {return Err(PlayDuringSpinPhase);}
-        if r >= self.size               {return Err(InvalidLocation);}
-        if c >= self.size               {return Err(InvalidLocation);}
-        if self.board[r][c] != Empty    {return Err(PieceAlreadyThere);}
+    pub fn play(&mut self, player: Player, r: usize, c: usize) -> TurnResult {
+        if self.outcome           != None   {return Err(GameAlreadyOver);}
+        if self.whose_turn()      != player {return Err(NotYourTurn);}
+        if self.turn_phase        != Play   {return Err(PlayDuringSpinPhase);}
+        if self.size() <= r                 {return Err(InvalidLocation);}
+        if self.size() <= c                 {return Err(InvalidLocation);}
+        if self.board[r][c].stone != None   {return Err(PieceAlreadyThere);}
 
-        self.board[r][c] = player;
+        self.board[r][c].stone = Some((self.turn, Up));
         self.turn_phase = Spin;
 
-        // TODO: If we end up treating the play phase as a distinct action, then
-        // update the game's outcome here.
-
-        Ok(self.outcome)
+        Ok(None)
     }
 
-    pub fn spin(&mut self, player: Color, r: usize, c: usize, size: usize, dir: SpinDirection) -> TurnResult {
-        if self.outcome != None         {return Err(GameAlreadyOver);}
-        if self.whose_turn != player    {return Err(NotYourTurn);}
-        if self.turn_phase != Spin      {return Err(SpinDuringPlayPhase);}
-        if r + size - 1 >= self.size    {return Err(InvalidLocation);}
-        if c + size - 1 >= self.size    {return Err(InvalidLocation);}
+    pub fn spin(&mut self, player: Player, u: usize, l: usize, size: usize, dir: SpinDirection) -> TurnResult {
+        if self.outcome           != None   {return Err(GameAlreadyOver);}
+        if self.whose_turn()      != player {return Err(NotYourTurn);}
+        if self.turn_phase        != Play   {return Err(PlayDuringSpinPhase);}
+        if self.size() <= u + size - 1      {return Err(InvalidLocation);}
+        if self.size() <= l + size - 1      {return Err(InvalidLocation);}
 
-        let mut slice = vec![vec![Empty; size]; size];
+        let mut slice = self.copy_slice_out(u, l, size);
 
-        for r_offset in 0..size {
-            for c_offset in 0..size {
-                slice[r_offset][c_offset] = self.board[r+r_offset][c+c_offset];
-            }
+        slice = spin_cell_grid(slice);
+        if dir == CCW {
+            slice = spin_cell_grid(slice);
+            slice = spin_cell_grid(slice);
         }
 
-        for r_offset in 0..size {
-            for c_offset in 0..size {
-                let slice_r = if dir == Right {size-c_offset-1} else {c_offset};
-                let slice_c = if dir == Left  {size-r_offset-1} else {r_offset};
-                self.board[r+r_offset][c+c_offset] = slice[slice_r][slice_c];
-            }
-        }
-
-        self.whose_turn = !self.whose_turn;
-        self.turn_phase = Play;
+        self.copy_slice_in(u, l, slice);
 
         self.update_outcome();
 
+        self.turn += 1;
+        self.turn_phase = Play;
+
         Ok(self.outcome)
     }
+
+    // Check for wins.
 
     fn update_outcome(&mut self) {
         let mut winning_tiles: Vec<(usize, usize)> = vec![];
 
-        for r in 0..self.size {
-            for c in 0..self.size {
+        for r in 0..self.size() {
+            for c in 0..self.size() {
                 for dir in vec![(0, 1), (1, 0), (1, 1)] {
                     let mut line = (0..self.win_len).map(|x| (r + dir.0 * x, c + dir.1 * x));
 
-                    for color in vec![Black, White] {
+                    for player in vec![Black, White] {
                         if line.clone().all(|(r, c)| 
-                                    r < self.size &&
-                                    c < self.size && 
-                                    self.board[r][c] == color) {
+                                    r < self.size() &&
+                                    c < self.size() && 
+                                    self.board[r][c].who() == Some(player)) {
                             winning_tiles.extend(line);
                             break;
                         }
@@ -138,31 +203,64 @@ impl Twirl {
         // Check for wins and double wins.
 
         if winning_tiles.len() > 0 {
-            if winning_tiles.iter().all(|&(r, c)| self.board[r][c] == Black) {self.outcome = Some(BlackWin); return;}
-            if winning_tiles.iter().all(|&(r, c)| self.board[r][c] == White) {self.outcome = Some(WhiteWin); return;}
+            if winning_tiles.iter().all(|&(r, c)| self.board[r][c].who() == Some(Black)) {self.outcome = Some(BlackWin); return;}
+            if winning_tiles.iter().all(|&(r, c)| self.board[r][c].who() == Some(White)) {self.outcome = Some(WhiteWin); return;}
             self.outcome = Some(DoubleWin);
             return;
         }
 
         // Check for stalemate.
 
-        if (0..self.size).all(|r| (0..self.size).all(|c| self.board[r][c] != Empty)) {
+        if (0..self.size()).all(|r| (0..self.size()).all(|c| self.board[r][c].stone != None)) {
             self.outcome = Some(Stalemate);
+        }
+    }
+
+    // Convenience functions.
+
+    fn whose_turn(&self) -> Player {
+        if self.turn % 2 == 1 {Black} else {White}
+    }
+
+    fn size(&self) -> usize {
+        self.board.len()
+    }
+
+    fn copy_slice_out(&self, u: usize, l: usize, size: usize) -> Vec<Vec<Cell>> {
+        let mut ret = vec![];
+
+        for ro in 0..size {
+            ret.push(vec![]);
+            for co in 0..size {
+                ret[ro].push(self.board[u+ro][l+co].clone());
+            }
+        }
+
+        ret
+    }
+
+    fn copy_slice_in(&mut self, u: usize, l: usize, slice: Vec<Vec<Cell>>) {
+        let size = slice.len();
+
+        for ro in 0..size {
+            for co in 0..size {
+                self.board[u+ro][u+ro] = slice[ro][co].clone();
+            }
         }
     }
 }
 
 impl Display for Twirl {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
-        for r in 0..self.size {
-            for c in 0..self.size {
-                match self.board[r][c] {
-                    Black => {write!(f, "x")?;},
-                    White => {write!(f, "o")?;},
-                    Empty => {write!(f, ".")?;},
+        for r in 0..self.size() {
+            for c in 0..self.size() {
+                match self.board[r][c].who() {
+                    Some(Black) => {write!(f, "x")?;},
+                    Some(White) => {write!(f, "o")?;},
+                    None        => {write!(f, ".")?;},
                 }
 
-                if c < self.size - 1 {write!(f, " ")?;}
+                if c < self.size() - 1 {write!(f, " ")?;}
             }
             write!(f, "\n")?;
         }
@@ -173,12 +271,11 @@ impl Display for Twirl {
             Some(Stalemate) => {write!(f, "Stalemate.")?;},
             Some(DoubleWin) => {write!(f, "Double win!")?;},
             None => {
-                match (self.whose_turn, self.turn_phase) {
+                match (self.whose_turn(), self.turn_phase) {
                     (Black, Play) => {write!(f, "Black to play...")?;},
                     (Black, Spin) => {write!(f, "Black to spin...")?;},
                     (White, Play) => {write!(f, "White to play...")?;},
                     (White, Spin) => {write!(f, "White to spin...")?;},
-                    (Empty, _) => {panic!();},
                 };
             }
         }
