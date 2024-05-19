@@ -35,8 +35,11 @@ use crate::game::SpinDirection::*;
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)] pub struct Cell {
-    stone:  Option<(usize, Orientation)>,
-    lines:  Vec<Orientation>,
+    stone:      Option<(usize, Orientation)>,
+    line_up:    bool,
+    line_right: bool,
+    line_down:  bool,
+    line_left:  bool,
 }
 
 pub type TurnResult = Result<Option<GameOutcome>, TurnError>;
@@ -62,6 +65,19 @@ impl Orientation {
     }
 }
 
+impl Display for Orientation {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        match self {
+            Up    => {write!(f, "↑")?;}
+            Right => {write!(f, "→")?;}
+            Down  => {write!(f, "↓")?;}
+            Left  => {write!(f, "← ")?;}
+        };
+
+        Ok(())
+    }
+}
+
 impl Cell {
     fn spin(&self) -> Self {
         Cell {
@@ -69,7 +85,10 @@ impl Cell {
                 None => None,
                 Some((num, or)) => Some((num, or.spin())),
             },
-            lines: self.lines.iter().map(|or| or.spin()).collect(),
+            line_right: self.line_up,
+            line_down:  self.line_right,
+            line_left:  self.line_down,
+            line_up:    self.line_left,
         }
     }
 
@@ -81,12 +100,7 @@ impl Cell {
     }
 
     fn line_char(&self) -> char {
-        match (
-            self.lines.contains(&Up),
-            self.lines.contains(&Right),
-            self.lines.contains(&Down),
-            self.lines.contains(&Left),
-        ) {
+        match (self.line_up, self.line_right, self.line_down, self.line_left) {
             (true , true , false, false) => '└',
             (false, true , true , false) => '┌',
             (false, false, true , true ) => '┐',
@@ -101,7 +115,7 @@ impl Cell {
     }
 
     fn between_char(&self, other: Self) -> char {
-        match (self.lines.contains(&Right), other.lines.contains(&Left)) {
+        match (self.line_right, other.line_left) {
             (true , true ) => '─',
             (true , false) => '╴',
             (false, true ) => '╶',
@@ -152,15 +166,18 @@ impl Twirl {
             for c in 0..size {
                 board.board[r].push(
                     Cell {
-                        stone:  None,
-                        lines:  vec![],
+                        stone:      None,
+                        line_up:    false,
+                        line_right: false,
+                        line_down:  false,
+                        line_left:  false,
                     }
                 );
 
-                if r > 0        {board.board[r][c].lines.push(Up);}
-                if c > 0        {board.board[r][c].lines.push(Left);}
-                if r < size - 1 {board.board[r][c].lines.push(Down);}
-                if c < size - 1 {board.board[r][c].lines.push(Right);}
+                if r > 0        {board.board[r][c].line_up    = true;}
+                if c > 0        {board.board[r][c].line_left  = true;}
+                if r < size - 1 {board.board[r][c].line_down  = true;}
+                if c < size - 1 {board.board[r][c].line_right = true;}
             }
         }
         
@@ -184,7 +201,7 @@ impl Twirl {
     pub fn spin(&mut self, player: Player, u: usize, l: usize, size: usize, dir: SpinDirection) -> TurnResult {
         if self.outcome           != None   {return Err(GameAlreadyOver);}
         if self.whose_turn()      != player {return Err(NotYourTurn);}
-        if self.turn_phase        != Play   {return Err(PlayDuringSpinPhase);}
+        if self.turn_phase        != Spin   {return Err(SpinDuringPlayPhase);}
         if self.size() <= u + size - 1      {return Err(InvalidLocation);}
         if self.size() <= l + size - 1      {return Err(InvalidLocation);}
 
@@ -277,39 +294,90 @@ impl Twirl {
             }
         }
     }
-}
 
-impl Display for Twirl {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+    // String functions.
+
+    pub fn format_numbers(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        let bold    = "\x1b[1m";
+        let unbold  = "\x1b[22m";
+        let cyan    = "\x1b[96m";
+        let yellow  = "\x1b[93m";
+        let uncolor = "\x1b[39m";
+
         for r in 0..self.size() {
             for c in 0..self.size() {
-                match self.board[r][c].who() {
-                    Some(Black) => {write!(f, "x")?;},
-                    Some(White) => {write!(f, "o")?;},
-                    None        => {write!(f, ".")?;},
+                match self.board[r][c].stone {
+                    Some((num, spin)) => {
+                        match self.board[r][c].who().unwrap() {
+                            Black => {write!(f, "{bold}{cyan  }{spin}{unbold}{num:02}{uncolor}")?;}
+                            White => {write!(f, "{bold}{yellow}{spin}{unbold}{num:02}{uncolor}")?;}
+                        }
+                    },
+                    None => {write!(f, "\x1b[2;37m . \x1b[39m")?;}
                 }
-
-                if c < self.size() - 1 {write!(f, " ")?;}
             }
+
             write!(f, "\n")?;
-        }
-
-        match self.outcome {
-            Some(BlackWin)  => {write!(f, "Black wins!")?;},
-            Some(WhiteWin)  => {write!(f, "White wins!")?;},
-            Some(Stalemate) => {write!(f, "Stalemate.")?;},
-            Some(DoubleWin) => {write!(f, "Double win!")?;},
-            None => {
-                match (self.whose_turn(), self.turn_phase) {
-                    (Black, Play) => {write!(f, "Black to play...")?;},
-                    (Black, Spin) => {write!(f, "Black to spin...")?;},
-                    (White, Play) => {write!(f, "White to play...")?;},
-                    (White, Spin) => {write!(f, "White to spin...")?;},
-                };
-            }
         }
 
         Ok(())
     }
+}
+
+impl Display for Twirl {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        self.format_numbers(f)?;
+        Ok(())
+    }
+        //match self.outcome {
+            //Some(BlackWin)  => {write!(f, "Black wins!")?;},
+            //Some(WhiteWin)  => {write!(f, "White wins!")?;},
+            //Some(Stalemate) => {write!(f, "Stalemate.")?;},
+            //Some(DoubleWin) => {write!(f, "Double win!")?;},
+            //None => {
+                //match (self.whose_turn(), self.turn_phase) {
+                    //(Black, Play) => {write!(f, "Black to play...")?;},
+                    //(Black, Spin) => {write!(f, "Black to spin...")?;},
+                    //(White, Play) => {write!(f, "White to play...")?;},
+                    //(White, Spin) => {write!(f, "White to spin...")?;},
+                //};
+            //}
+        //}
+//
+        //Ok(())
+    //}
+}
+
+fn juxtapose(a: &str, b: &str) -> String {
+    let mut a_lines = a.lines();
+    let mut b_lines = b.lines();
+    let a_width = a.lines().fold(0, |best, next| best.max(next.len()));
+
+    let mut ret = "".to_string();
+    let margin = 4;
+    
+    loop {
+        match (a_lines.next(), b_lines.next()) {
+            (Some(a_line), Some(b_line)) => {
+                ret.push_str(a_line);
+                ret.push_str(&" ".repeat(a_width - a_line.len() + margin));
+                ret.push_str(b_line);
+            },
+            (None, Some(b_line)) => {
+                ret.push_str(&" ".repeat(a_width + margin));
+                ret.push_str(b_line);
+            },
+            (Some(a_line), None) => {
+                ret.push_str(a_line);
+            },
+            (None, None) => {
+                break;
+            },
+        }
+
+        ret.push_str("\n");
+    }
+
+    return ret;
 }
 
