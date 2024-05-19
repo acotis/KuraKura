@@ -306,22 +306,15 @@ impl Display for Twirl {
 
                 // On-column.
 
-                let top_half    = (r > 0)           && self.board[r-1][c].line_down;
-                let bottom_half = (r < self.size()) && self.board[r  ][c].line_up;
+                let wing_up = self.board[r-1][c].line_up;
 
-                match (top_half, bottom_half) {
-                    (false, false) => {write!(f, "  ")?;},
-                    (false, true ) => {write!(f, "╷ ")?;},
-                    (true , false) => {write!(f, "╵ ")?;},
-                    (true , true ) => {write!(f, "│ ")?;},
+                match wing_up {
+                    false => {write!(f, "  │  ");},
+                    true  => {write!(f, "     ");},
                 };
             }
 
             write!(f, "\n")?;
-
-            // If last off-row, break.
-
-            if r == self.size() {break;}
 
             // On-row.
 
@@ -345,6 +338,11 @@ impl Display for Twirl {
                 if c == self.size() {break;}
 
                 // On-column.
+
+                match left_wing {
+                    false => {write!(f, " ");},
+                    true  => {write!(f, "─");},
+                }
 
                 match self.board[r][c].stone {
                     Some((num, spin)) => {
@@ -382,9 +380,39 @@ impl Display for Twirl {
                         }
                     }
                 }
+
+                match right_wing {
+                    false => {write!(f, " ")?;},
+                    true  => {write!(f, "─")?;},
+                }
             }
 
             write!(f, "\n")?;
+    
+            // Off-row below.
+
+            for c in 0..self.size()+1 {
+
+                // Off-column before.
+
+                write!(f, "  ")?;
+
+                // If last off-column, break.
+
+                if c == self.size() {break;}
+
+                // On-column.
+
+                let wing_down = self.board[r-1][c].line_down;
+
+                match wing_down {
+                    false => {write!(f, "  │  ");},
+                    true  => {write!(f, "     ");},
+                };
+            }
+
+            write!(f, "\n")?;
+
         }
 
         write!(f, "{unstyle}")?;
