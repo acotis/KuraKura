@@ -35,8 +35,7 @@ use crate::game::SpinDirection::*;
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)] pub struct Cell {
-    stone:      Option<(usize, Orientation)>,
-    in_a_win:   bool,
+    stone:      Option<(usize, Orientation, bool)>, // ID of stone, orienation of stone, whether stone participate in a win.
     line_up:    bool,
     line_right: bool,
     line_down:  bool,
@@ -84,9 +83,8 @@ impl Cell {
         Cell {
             stone: match self.stone {
                 None => None,
-                Some((num, or)) => Some((num, or.spun())),
+                Some((num, or, win)) => Some((num, or.spun(), win)),
             },
-            in_a_win:   self.in_a_win,
             line_right: self.line_up,
             line_down:  self.line_right,
             line_left:  self.line_down,
@@ -97,7 +95,7 @@ impl Cell {
     fn who(&self) -> Option<Player> {
         match self.stone {
             None => None,
-            Some((num, _)) => if num % 2 == 1 {Some(Black)} else {Some(White)},
+            Some((num, _, _)) => if num % 2 == 1 {Some(Black)} else {Some(White)},
         }
     }
 }
@@ -146,7 +144,6 @@ impl Twirl {
                 board.board[r].push(
                     Cell {
                         stone:      None,
-                        in_a_win:   false,
                         line_up:    false,
                         line_right: false,
                         line_down:  false,
@@ -172,7 +169,7 @@ impl Twirl {
         if self.size() <= c                 {return Err(InvalidLocation);}
         if self.board[r][c].stone != None   {return Err(PieceAlreadyThere);}
 
-        self.board[r][c].stone = Some((self.turn, Up));
+        self.board[r][c].stone = Some((self.turn, Up, false));
         self.turn_phase = Spin;
 
         Ok(None)
@@ -230,7 +227,10 @@ impl Twirl {
 
         if winning_tiles.len() > 0 {
             for &(r, c) in &winning_tiles {
-                self.board[r][c].in_a_win = true;
+                self.board[r][c].stone = match self.board[r][c].stone {
+                    Some((id, or, _win)) => Some((id, or, true)),
+                    _ => {panic!();},
+                }
             }
 
             if winning_tiles.iter().all(|&(r, c)| self.board[r][c].who() == Some(Black)) {self.outcome = Some(BlackWin); return;}
@@ -282,12 +282,14 @@ impl Twirl {
 
 impl Display for Twirl {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
-        let bold    = "\x1b[1m";
-        let unbold  = "\x1b[22m";
-        let cyan    = "\x1b[96m";
-        let yellow  = "\x1b[93m";
-        let uncolor = "\x1b[39m";
-        let unstyle = "\x1b[0m";
+        let bold        = "\x1b[1m";
+        let unbold      = "\x1b[22m";
+        let cyan        = "\x1b[96m";
+        let cyan_bg     = "\x1b[106;30m";
+        let yellow      = "\x1b[93m";
+        let yellow_bg   = "\x1b[103;30m";
+        let uncolor     = "\x1b[39;49m";
+        let unstyle     = "\x1b[0m";
 
         for r in 0..self.size() {
 
@@ -306,23 +308,11 @@ impl Display for Twirl {
                 // On-column.
 
                 let wing_up = self.board[r][c].line_up;
-                let in_win  = self.board[r][c].in_a_win;
-                let color   = if self.board[r][c].who() == Some(Black) {cyan} else {yellow};
-
-                match in_win {
-                    false => {write!(f, "  ")?;},
-                    true  => {write!(f, "{color}██{uncolor}")?;},
-                }
 
                 match wing_up {
-                    false => {write!(f, " ")?;},
-                    true  => {write!(f, "│")?;},
+                    false => {write!(f, "     ")?;},
+                    true  => {write!(f, "  │  ")?;},
                 };
-                
-                match in_win {
-                    false => {write!(f, "  ")?;},
-                    true  => {write!(f, "{color}██{uncolor}")?;},
-                }
             }
 
             write!(f, "\n")?;
@@ -356,10 +346,12 @@ impl Display for Twirl {
                 }
 
                 match self.board[r][c].stone {
-                    Some((num, spin)) => {
-                        match self.board[r][c].who().unwrap() {
-                            Black => {write!(f, "{bold}{cyan  }{spin}{unbold}{num:02}{uncolor}")?;}
-                            White => {write!(f, "{bold}{yellow}{spin}{unbold}{num:02}{uncolor}")?;}
+                    Some((num, spin, win)) => {
+                        match (self.board[r][c].who().unwrap(), win) {
+                            (Black, false) => {write!(f, "{bold}{cyan     }{spin}{unbold}{num:02}{uncolor}")?;}
+                            (Black, true ) => {write!(f, "{bold}{cyan_bg  }{spin}{unbold}{num:02}{uncolor}")?;}
+                            (White, false) => {write!(f, "{bold}{yellow   }{spin}{unbold}{num:02}{uncolor}")?;}
+                            (White, true ) => {write!(f, "{bold}{yellow_bg}{spin}{unbold}{num:02}{uncolor}")?;}
                         }
                     },
 
@@ -415,23 +407,11 @@ impl Display for Twirl {
                 // On-column.
 
                 let wing_down = self.board[r][c].line_down;
-                let in_win    = self.board[r][c].in_a_win;
-                let color     = if self.board[r][c].who() == Some(Black) {cyan} else {yellow};
-
-                match in_win {
-                    false => {write!(f, "  ")?;},
-                    true  => {write!(f, "{color}██{uncolor}")?;},
-                }
 
                 match wing_down {
-                    false => {write!(f, " ")?;},
-                    true  => {write!(f, "│")?;},
+                    false => {write!(f, "     ")?;},
+                    true  => {write!(f, "  │  ")?;},
                 };
-                
-                match in_win {
-                    false => {write!(f, "  ")?;},
-                    true  => {write!(f, "{color}██{uncolor}")?;},
-                }
             }
 
             write!(f, "\n")?;
