@@ -3,9 +3,8 @@
 
 mod game;
 use crate::game::Twirl;
-use crate::game::Player;
-use crate::game::SpinDirection::*;
-use crate::game::Player::*;
+use crate::game::SpinDirection::{self, *};
+use crate::game::Player::{self, *};
 
 fn main() {
 }
@@ -18,6 +17,11 @@ fn test() {
 
         let mut game = Twirl::new(9, 2);
         insta::assert_snapshot!(play(&mut game, Black, 0, 0));
+        insta::assert_snapshot!(spin(&mut game, Black, 0, 0, 1, CW));
+        insta::assert_snapshot!(play(&mut game, White, 0, 0));
+        insta::assert_snapshot!(spin(&mut game, White, 0, 0, 1, CW));
+        insta::assert_snapshot!(play(&mut game, White, 0, 1));
+        insta::assert_snapshot!(spin(&mut game, White, 0, 0, 5, CW));
     });
 }
 
@@ -27,6 +31,17 @@ fn play(game: &mut Twirl, player: Player, r: usize, c: usize) -> String {
     let ending  = game.to_string();
 
     let mut ret = format!("{player:?} plays at ({r}, {c})... => {result:?}\n");
+
+    ret.push_str(&juxtapose(&initial, &ending));
+    return ret;
+}
+
+fn spin(game: &mut Twirl, player: Player, r: usize, c: usize, s: usize, d: SpinDirection) -> String {
+    let initial = game.to_string();
+    let result  = game.spin(player, r, c, s, d);
+    let ending  = game.to_string();
+
+    let mut ret = format!("{player:?} spins from ({r}, {c}) {s} tile {d:?}... => {result:?}\n");
 
     ret.push_str(&juxtapose(&initial, &ending));
     return ret;

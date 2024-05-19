@@ -55,7 +55,7 @@ impl Not for Player {
 }
 
 impl Orientation {
-    fn spin(self) -> Self {
+    fn spun(self) -> Self {
         match self {
             Up => Right,
             Right => Down,
@@ -79,11 +79,11 @@ impl Display for Orientation {
 }
 
 impl Cell {
-    fn spin(&self) -> Self {
+    fn spun(&self) -> Self {
         Cell {
             stone: match self.stone {
                 None => None,
-                Some((num, or)) => Some((num, or.spin())),
+                Some((num, or)) => Some((num, or.spun())),
             },
             line_right: self.line_up,
             line_down:  self.line_right,
@@ -117,7 +117,7 @@ fn spin_cell_grid(grid: Vec<Vec<Cell>>) -> Vec<Vec<Cell>> {
         ret.push(vec![]);
 
         for c in 0..size {
-            ret[r].push(grid[r][size-c-1].spin());
+            ret[r].push(grid[size-c-1][r].spun());
         }
     }
 
@@ -275,7 +275,7 @@ impl Twirl {
 
         for ro in 0..size {
             for co in 0..size {
-                self.board[u+ro][u+ro] = slice[ro][co].clone();
+                self.board[u+ro][l+co] = slice[ro][co].clone();
             }
         }
     }
