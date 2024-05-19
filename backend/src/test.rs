@@ -1,5 +1,4 @@
 
-mod game;
 use crate::game::Twirl;
 use crate::game::SpinDirection::{self, *};
 use crate::game::Player::{self, *};
@@ -17,6 +16,8 @@ fn test() {
         insta::assert_snapshot!(spin(&mut game, White, 0, 0, 1, CW));
         insta::assert_snapshot!(play(&mut game, White, 0, 1));
         insta::assert_snapshot!(spin(&mut game, White, 0, 0, 5, CW));
+        insta::assert_snapshot!(play(&mut game, Black, 0, 3));
+        insta::assert_snapshot!(spin(&mut game, Black, 0, 3, 2, CCW));
     });
 }
 

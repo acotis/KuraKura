@@ -36,6 +36,7 @@ use crate::game::SpinDirection::*;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)] pub struct Cell {
     stone:      Option<(usize, Orientation)>,
+    in_a_win:   bool,
     line_up:    bool,
     line_right: bool,
     line_down:  bool,
@@ -71,7 +72,7 @@ impl Display for Orientation {
             Up    => {write!(f, "↑")?;}
             Right => {write!(f, "→")?;}
             Down  => {write!(f, "↓")?;}
-            Left  => {write!(f, "← ")?;}
+            Left  => {write!(f, "←")?;}
         };
 
         Ok(())
@@ -85,6 +86,7 @@ impl Cell {
                 None => None,
                 Some((num, or)) => Some((num, or.spun())),
             },
+            in_a_win:   self.in_a_win,
             line_right: self.line_up,
             line_down:  self.line_right,
             line_left:  self.line_down,
@@ -98,16 +100,8 @@ impl Cell {
             Some((num, _)) => if num % 2 == 1 {Some(Black)} else {Some(White)},
         }
     }
-
-    fn between_char(&self, other: Self) -> char {
-        match (self.line_right, other.line_left) {
-            (true , true ) => '─',
-            (true , false) => '╴',
-            (false, true ) => '╶',
-            (false, false) => ' ',
-        }
-    }
 }
+
 
 fn spin_cell_grid(grid: Vec<Vec<Cell>>) -> Vec<Vec<Cell>> {
     let size = grid.len();
@@ -152,6 +146,7 @@ impl Twirl {
                 board.board[r].push(
                     Cell {
                         stone:      None,
+                        in_a_win:   false,
                         line_up:    false,
                         line_right: false,
                         line_down:  false,
@@ -216,7 +211,7 @@ impl Twirl {
         for r in 0..self.size() {
             for c in 0..self.size() {
                 for dir in vec![(0, 1), (1, 0), (1, 1)] {
-                    let mut line = (0..self.win_len).map(|x| (r + dir.0 * x, c + dir.1 * x));
+                    let line = (0..self.win_len).map(|x| (r + dir.0 * x, c + dir.1 * x));
 
                     for player in vec![Black, White] {
                         if line.clone().all(|(r, c)| 
@@ -234,6 +229,10 @@ impl Twirl {
         // Check for wins and double wins.
 
         if winning_tiles.len() > 0 {
+            for &(r, c) in &winning_tiles {
+                self.board[r][c].in_a_win = true;
+            }
+
             if winning_tiles.iter().all(|&(r, c)| self.board[r][c].who() == Some(Black)) {self.outcome = Some(BlackWin); return;}
             if winning_tiles.iter().all(|&(r, c)| self.board[r][c].who() == Some(White)) {self.outcome = Some(WhiteWin); return;}
             self.outcome = Some(DoubleWin);
@@ -290,7 +289,7 @@ impl Display for Twirl {
         let uncolor = "\x1b[39m";
         let unstyle = "\x1b[0m";
 
-        for r in 0..self.size()+1 {
+        for r in 0..self.size() {
 
             // Off-row above.
 
@@ -298,7 +297,7 @@ impl Display for Twirl {
 
                 // Off-column before.
 
-                write!(f, "  ")?;
+                write!(f, " ")?;
 
                 // If last off-column, break.
 
@@ -306,12 +305,24 @@ impl Display for Twirl {
 
                 // On-column.
 
-                let wing_up = self.board[r-1][c].line_up;
+                let wing_up = self.board[r][c].line_up;
+                let in_win  = self.board[r][c].in_a_win;
+                let color   = if self.board[r][c].who() == Some(Black) {cyan} else {yellow};
+
+                match in_win {
+                    false => {write!(f, "  ")?;},
+                    true  => {write!(f, "{color}██{uncolor}")?;},
+                }
 
                 match wing_up {
-                    false => {write!(f, "  │  ");},
-                    true  => {write!(f, "     ");},
+                    false => {write!(f, " ")?;},
+                    true  => {write!(f, "│")?;},
                 };
+                
+                match in_win {
+                    false => {write!(f, "  ")?;},
+                    true  => {write!(f, "{color}██{uncolor}")?;},
+                }
             }
 
             write!(f, "\n")?;
@@ -340,8 +351,8 @@ impl Display for Twirl {
                 // On-column.
 
                 match left_wing {
-                    false => {write!(f, " ");},
-                    true  => {write!(f, "─");},
+                    false => {write!(f, " ")?;},
+                    true  => {write!(f, "─")?;},
                 }
 
                 match self.board[r][c].stone {
@@ -395,7 +406,7 @@ impl Display for Twirl {
 
                 // Off-column before.
 
-                write!(f, "  ")?;
+                write!(f, " ")?;
 
                 // If last off-column, break.
 
@@ -403,12 +414,24 @@ impl Display for Twirl {
 
                 // On-column.
 
-                let wing_down = self.board[r-1][c].line_down;
+                let wing_down = self.board[r][c].line_down;
+                let in_win    = self.board[r][c].in_a_win;
+                let color     = if self.board[r][c].who() == Some(Black) {cyan} else {yellow};
+
+                match in_win {
+                    false => {write!(f, "  ")?;},
+                    true  => {write!(f, "{color}██{uncolor}")?;},
+                }
 
                 match wing_down {
-                    false => {write!(f, "  │  ");},
-                    true  => {write!(f, "     ");},
+                    false => {write!(f, " ")?;},
+                    true  => {write!(f, "│")?;},
                 };
+                
+                match in_win {
+                    false => {write!(f, "  ")?;},
+                    true  => {write!(f, "{color}██{uncolor}")?;},
+                }
             }
 
             write!(f, "\n")?;
@@ -416,7 +439,7 @@ impl Display for Twirl {
         }
 
         write!(f, "{unstyle}")?;
-        write!(f, "  ")?;
+        write!(f, "   ")?;
 
         match self.outcome {
             Some(BlackWin)  => {write!(f, "Black wins!")?;},
