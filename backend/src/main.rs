@@ -10,9 +10,9 @@ use crate::game::Player::*;
 fn main() {
     let mut game = Twirl::new(9, 2);
     game.play(Black, 0, 0);
-    game.spin(Black, 0, 0, 1, CW).unwrap();
+    game.spin(Black, 4, 4, 1, CW).unwrap();
     game.play(White, 0, 3);
-    game.spin(White, 0, 0, 1, CW);
+    game.spin(White, 4, 4, 1, CW);
     println!("{}", game);
 }
 

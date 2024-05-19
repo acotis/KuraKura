@@ -344,70 +344,70 @@ impl Display for Twirl {
 
                 if c == self.size() {break;}
 
-                // On-column (box only).
+                // On-column.
 
-                let up_wing   = self.board[r][c].line_up;
-                let down_wing = self.board[r][c].line_down;
+                match self.board[r][c].stone {
+                    Some((num, spin)) => {
+                        match self.board[r][c].who().unwrap() {
+                            Black => {write!(f, "{bold}{cyan  }{spin}{unbold}{num:02}{uncolor}")?;}
+                            White => {write!(f, "{bold}{yellow}{spin}{unbold}{num:02}{uncolor}")?;}
+                        }
+                    },
 
-                match left_wing {
-                    false => {write!(f, " ")?;},
-                    true  => {write!(f, "─")?;},
+                    None => {
+                        let up_wing   = self.board[r][c].line_up;
+                        let down_wing = self.board[r][c].line_down;
+
+                        match left_wing {
+                            false => {write!(f, " ")?;},
+                            true  => {write!(f, "─")?;},
+                        }
+
+                        match (up_wing, right_wing, down_wing, left_wing) {
+                            (true , true , false, false) => {write!(f, "└")?;},
+                            (false, true , true , false) => {write!(f, "┌")?;},
+                            (false, false, true , true ) => {write!(f, "┐")?;},
+                            (true , false, false, true ) => {write!(f, "┘")?;},
+                            (true , true , true , false) => {write!(f, "├")?;},
+                            (false, true , true , true ) => {write!(f, "┬")?;},
+                            (true , false, true , true ) => {write!(f, "┤")?;},
+                            (true , true , false, true ) => {write!(f, "┴")?;},
+                            (true , true , true , true ) => {write!(f, "┼")?;},
+                            _ => panic!("Impossible combination of lines"),
+                        }
+
+                        match right_wing {
+                            false => {write!(f, " ")?;},
+                            true  => {write!(f, "─")?;},
+                        }
+                    }
                 }
-
-                match (up_wing, right_wing, down_wing, left_wing) {
-                    (true , true , false, false) => {write!(f, "└")?;},
-                    (false, true , true , false) => {write!(f, "┌")?;},
-                    (false, false, true , true ) => {write!(f, "┐")?;},
-                    (true , false, false, true ) => {write!(f, "┘")?;},
-                    (true , true , true , false) => {write!(f, "├")?;},
-                    (false, true , true , true ) => {write!(f, "┬")?;},
-                    (true , false, true , true ) => {write!(f, "┤")?;},
-                    (true , true , false, true ) => {write!(f, "┴")?;},
-                    (true , true , true , true ) => {write!(f, "┼")?;},
-                    _ => panic!("Impossible combination of lines"),
-                }
-
-                match right_wing {
-                    false => {write!(f, " ")?;},
-                    true  => {write!(f, "─")?;},
-                }
-                        
-                //match self.board[r][c].stone {
-                    //Some((num, spin)) => {
-                        //match self.board[r][c].who().unwrap() {
-                            //Black => {write!(f, "{bold}{cyan  }{spin}{unbold}{num:02}{uncolor}")?;}
-                            //White => {write!(f, "{bold}{yellow}{spin}{unbold}{num:02}{uncolor}")?;}
-                        //}
-                    //},
-                    //None => {write!(f, "\x1b[2;37m . \x1b[39m")?;}
-                //}
             }
 
             write!(f, "\n")?;
         }
 
         write!(f, "{unstyle}")?;
+        write!(f, "  ")?;
+
+        match self.outcome {
+            Some(BlackWin)  => {write!(f, "Black wins!")?;},
+            Some(WhiteWin)  => {write!(f, "White wins!")?;},
+            Some(Stalemate) => {write!(f, "Stalemate.")?;},
+            Some(DoubleWin) => {write!(f, "Double win!")?;},
+            None => {
+                match (self.whose_turn(), self.turn_phase) {
+                    (Black, Play) => {write!(f, "Black to play...")?;},
+                    (Black, Spin) => {write!(f, "Black to spin...")?;},
+                    (White, Play) => {write!(f, "White to play...")?;},
+                    (White, Spin) => {write!(f, "White to spin...")?;},
+                };
+            }
+        }
 
         Ok(())
     }
 
-        //match self.outcome {
-            //Some(BlackWin)  => {write!(f, "Black wins!")?;},
-            //Some(WhiteWin)  => {write!(f, "White wins!")?;},
-            //Some(Stalemate) => {write!(f, "Stalemate.")?;},
-            //Some(DoubleWin) => {write!(f, "Double win!")?;},
-            //None => {
-                //match (self.whose_turn(), self.turn_phase) {
-                    //(Black, Play) => {write!(f, "Black to play...")?;},
-                    //(Black, Spin) => {write!(f, "Black to spin...")?;},
-                    //(White, Play) => {write!(f, "White to play...")?;},
-                    //(White, Spin) => {write!(f, "White to spin...")?;},
-                //};
-            //}
-        //}
-//
-        //Ok(())
-    //}
 }
 
 fn juxtapose(a: &str, b: &str) -> String {
