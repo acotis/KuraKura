@@ -407,39 +407,5 @@ impl Display for Twirl {
 
         Ok(())
     }
-
-}
-
-fn juxtapose(a: &str, b: &str) -> String {
-    let mut a_lines = a.lines();
-    let mut b_lines = b.lines();
-    let a_width = a.lines().fold(0, |best, next| best.max(next.len()));
-
-    let mut ret = "".to_string();
-    let margin = 4;
-    
-    loop {
-        match (a_lines.next(), b_lines.next()) {
-            (Some(a_line), Some(b_line)) => {
-                ret.push_str(a_line);
-                ret.push_str(&" ".repeat(a_width - a_line.len() + margin));
-                ret.push_str(b_line);
-            },
-            (None, Some(b_line)) => {
-                ret.push_str(&" ".repeat(a_width + margin));
-                ret.push_str(b_line);
-            },
-            (Some(a_line), None) => {
-                ret.push_str(a_line);
-            },
-            (None, None) => {
-                break;
-            },
-        }
-
-        ret.push_str("\n");
-    }
-
-    return ret;
 }
 
