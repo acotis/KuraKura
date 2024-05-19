@@ -99,21 +99,6 @@ impl Cell {
         }
     }
 
-    fn line_char(&self) -> char {
-        match (self.line_up, self.line_right, self.line_down, self.line_left) {
-            (true , true , false, false) => '└',
-            (false, true , true , false) => '┌',
-            (false, false, true , true ) => '┐',
-            (true , false, false, true ) => '┘',
-            (true , true , true , false) => '├',
-            (false, true , true , true ) => '┬',
-            (true , false, true , true ) => '┤',
-            (true , true , false, true ) => '┴',
-            (true , true , true , true ) => '┼',
-            _ => panic!(),
-        }
-    }
-
     fn between_char(&self, other: Self) -> char {
         match (self.line_right, other.line_left) {
             (true , true ) => '─',
@@ -294,41 +279,118 @@ impl Twirl {
             }
         }
     }
+}
 
-    // String functions.
-
-    pub fn format_numbers(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+impl Display for Twirl {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         let bold    = "\x1b[1m";
         let unbold  = "\x1b[22m";
         let cyan    = "\x1b[96m";
         let yellow  = "\x1b[93m";
         let uncolor = "\x1b[39m";
+        let unstyle = "\x1b[0m";
 
-        for r in 0..self.size() {
-            for c in 0..self.size() {
-                match self.board[r][c].stone {
-                    Some((num, spin)) => {
-                        match self.board[r][c].who().unwrap() {
-                            Black => {write!(f, "{bold}{cyan  }{spin}{unbold}{num:02}{uncolor}")?;}
-                            White => {write!(f, "{bold}{yellow}{spin}{unbold}{num:02}{uncolor}")?;}
-                        }
-                    },
-                    None => {write!(f, "\x1b[2;37m . \x1b[39m")?;}
+        for r in 0..self.size()+1 {
+
+            // Off-row above.
+
+            for c in 0..self.size()+1 {
+
+                // Off-column before.
+
+                write!(f, "  ")?;
+
+                // If last off-column, break.
+
+                if c == self.size() {break;}
+
+                // On-column.
+
+                let top_half    = (r > 0)           && self.board[r-1][c].line_down;
+                let bottom_half = (r < self.size()) && self.board[r  ][c].line_up;
+
+                match (top_half, bottom_half) {
+                    (false, false) => {write!(f, "  ")?;},
+                    (false, true ) => {write!(f, "╷ ")?;},
+                    (true , false) => {write!(f, "╵ ")?;},
+                    (true , true ) => {write!(f, "│ ")?;},
+                };
+            }
+
+            write!(f, "\n")?;
+
+            // If last off-row, break.
+
+            if r == self.size() {break;}
+
+            // On-row.
+
+            for c in 0..self.size() + 1 {
+
+                // Off-column before.
+
+                let left_connect  = (c > 0)             && self.board[r][c-1].line_right;
+                let left_wing     = (c < self.size())   && self.board[r][c  ].line_left;
+                let right_wing    = (c < self.size())   && self.board[r][c  ].line_right;
+
+                match (left_connect, left_wing) {
+                    (false, false) => {write!(f, " ")?;},
+                    (false, true ) => {write!(f, "╶")?;},
+                    (true , false) => {write!(f, "╴")?;},
+                    (true , true ) => {write!(f, "─")?;},
+                };
+
+                // If last off-column, break.
+
+                if c == self.size() {break;}
+
+                // On-column (box only).
+
+                let up_wing   = self.board[r][c].line_up;
+                let down_wing = self.board[r][c].line_down;
+
+                match left_wing {
+                    false => {write!(f, " ")?;},
+                    true  => {write!(f, "─")?;},
                 }
+
+                match (up_wing, right_wing, down_wing, left_wing) {
+                    (true , true , false, false) => {write!(f, "└")?;},
+                    (false, true , true , false) => {write!(f, "┌")?;},
+                    (false, false, true , true ) => {write!(f, "┐")?;},
+                    (true , false, false, true ) => {write!(f, "┘")?;},
+                    (true , true , true , false) => {write!(f, "├")?;},
+                    (false, true , true , true ) => {write!(f, "┬")?;},
+                    (true , false, true , true ) => {write!(f, "┤")?;},
+                    (true , true , false, true ) => {write!(f, "┴")?;},
+                    (true , true , true , true ) => {write!(f, "┼")?;},
+                    _ => panic!("Impossible combination of lines"),
+                }
+
+                match right_wing {
+                    false => {write!(f, " ")?;},
+                    true  => {write!(f, "─")?;},
+                }
+                        
+                //match self.board[r][c].stone {
+                    //Some((num, spin)) => {
+                        //match self.board[r][c].who().unwrap() {
+                            //Black => {write!(f, "{bold}{cyan  }{spin}{unbold}{num:02}{uncolor}")?;}
+                            //White => {write!(f, "{bold}{yellow}{spin}{unbold}{num:02}{uncolor}")?;}
+                        //}
+                    //},
+                    //None => {write!(f, "\x1b[2;37m . \x1b[39m")?;}
+                //}
             }
 
             write!(f, "\n")?;
         }
 
-        Ok(())
-    }
-}
+        write!(f, "{unstyle}")?;
 
-impl Display for Twirl {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
-        self.format_numbers(f)?;
         Ok(())
     }
+
         //match self.outcome {
             //Some(BlackWin)  => {write!(f, "Black wins!")?;},
             //Some(WhiteWin)  => {write!(f, "White wins!")?;},
