@@ -34,7 +34,7 @@ use crate::game::SpinDirection::*;
     PieceAlreadyThere,
 }
 
-#[derive(Clone, PartialEq, Eq, Debug)] pub struct Cell {
+#[derive(Clone, Copy, PartialEq, Eq, Debug)] pub struct Cell {
     stone:      Option<(usize, Orientation)>,
     line_up:    bool,
     line_right: bool,
@@ -263,7 +263,7 @@ impl Twirl {
         for ro in 0..size {
             ret.push(vec![]);
             for co in 0..size {
-                ret[ro].push(self.board[u+ro][l+co].clone());
+                ret[ro].push(self.board[u+ro][l+co]);
             }
         }
 
@@ -275,7 +275,7 @@ impl Twirl {
 
         for ro in 0..size {
             for co in 0..size {
-                self.board[u+ro][l+co] = slice[ro][co].clone();
+                self.board[u+ro][l+co] = slice[ro][co];
             }
         }
     }
