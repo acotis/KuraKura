@@ -2,119 +2,16 @@
 use std::fmt::Formatter;
 use std::fmt::Display;
 use std::fmt::Error;
-use std::ops::Not;
 
-use crate::game::Player::*;
-use crate::game::Orientation::*;
-use crate::game::TurnPhase::*;
-use crate::game::TurnError::*;
-use crate::game::GameOutcome::*;
-use crate::game::SpinDirection::*;
-
-// Elementary types.
-
-#[derive(Clone, Copy, PartialEq, Eq, Debug)] pub enum Orientation {Up, Right, Down, Left}
-#[derive(Clone, Copy, PartialEq, Eq, Debug)] pub enum SpinDirection {CW, CCW}
-#[derive(Clone, Copy, PartialEq, Eq, Debug)] pub enum Player {Black, White}
-#[derive(Clone, Copy, PartialEq, Eq, Debug)] pub enum TurnPhase {Play, Spin}
-
-#[derive(Clone, Copy, PartialEq, Eq, Debug)] pub enum GameOutcome {
-    BlackWin,
-    WhiteWin,
-    Stalemate,
-    DoubleWin,
-}
-
-#[derive(Clone, Copy, PartialEq, Eq, Debug)] pub enum TurnError {
-    GameAlreadyOver,
-    NotYourTurn,
-    PlayDuringSpinPhase,
-    SpinDuringPlayPhase,
-    InvalidLocation,
-    PieceAlreadyThere,
-}
-
-#[derive(Clone, Copy, PartialEq, Eq, Debug)] pub struct Cell {
-    stone:      Option<(usize, Orientation, bool)>, // ID of stone, orienation of stone, whether stone participate in a win.
-    line_up:    bool,
-    line_right: bool,
-    line_down:  bool,
-    line_left:  bool,
-}
-
-pub type TurnResult = Result<Option<GameOutcome>, TurnError>;
-
-impl Not for Player {
-    type Output = Player;
-    fn not(self) -> Self {
-        match self {
-            Black => White,
-            White => Black,
-        }
-    }
-}
-
-impl Orientation {
-    fn spun(self) -> Self {
-        match self {
-            Up => Right,
-            Right => Down,
-            Down => Left,
-            Left => Up,
-        }
-    }
-}
-
-impl Display for Orientation {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
-        match self {
-            Up    => {write!(f, "↑")?;}
-            Right => {write!(f, "→")?;}
-            Down  => {write!(f, "↓")?;}
-            Left  => {write!(f, "←")?;}
-        };
-
-        Ok(())
-    }
-}
-
-impl Cell {
-    fn spun(&self) -> Self {
-        Cell {
-            stone: match self.stone {
-                None => None,
-                Some((num, or, win)) => Some((num, or.spun(), win)),
-            },
-            line_right: self.line_up,
-            line_down:  self.line_right,
-            line_left:  self.line_down,
-            line_up:    self.line_left,
-        }
-    }
-
-    fn who(&self) -> Option<Player> {
-        match self.stone {
-            None => None,
-            Some((num, _, _)) => if num % 2 == 1 {Some(Black)} else {Some(White)},
-        }
-    }
-}
-
-
-fn spin_cell_grid(grid: Vec<Vec<Cell>>) -> Vec<Vec<Cell>> {
-    let size = grid.len();
-    let mut ret = vec![];
-
-    for r in 0..size {
-        ret.push(vec![]);
-
-        for c in 0..size {
-            ret[r].push(grid[size-c-1][r].spun());
-        }
-    }
-
-    ret
-}
+use crate::types::Player::{self, *};
+use crate::types::Orientation::*;
+use crate::types::TurnPhase::{self, *};
+use crate::types::TurnError::*;
+use crate::types::GameOutcome::{self, *};
+use crate::types::SpinDirection::{self, *};
+use crate::types::TurnResult;
+use crate::cell::Cell;
+use crate::cell::spin_cell_grid;
 
 // Game type.
 

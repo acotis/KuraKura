@@ -1,7 +1,7 @@
 
-use crate::game::Twirl;
-use crate::game::SpinDirection::{self, *};
-use crate::game::Player::{self, *};
+use twirl::types::Player::{self, *};
+use twirl::game::Twirl;
+use twirl::types::SpinDirection::{self, *};
 
 #[test]
 fn test() {
@@ -9,15 +9,15 @@ fn test() {
         omit_expression => true,
     }, {
 
-        let mut game = Twirl::new(9, 2);
-        insta::assert_snapshot!(play(&mut game, Black, 0, 0));
-        insta::assert_snapshot!(spin(&mut game, Black, 0, 0, 1, CW));
-        insta::assert_snapshot!(play(&mut game, White, 0, 0));
-        insta::assert_snapshot!(spin(&mut game, White, 0, 0, 1, CW));
-        insta::assert_snapshot!(play(&mut game, White, 0, 1));
-        insta::assert_snapshot!(spin(&mut game, White, 0, 0, 5, CW));
-        insta::assert_snapshot!(play(&mut game, Black, 0, 3));
-        insta::assert_snapshot!(spin(&mut game, Black, 0, 3, 2, CCW));
+        let game = &mut Twirl::new(9, 2);
+        insta::assert_snapshot!(play(game, Black, 0, 0));
+        insta::assert_snapshot!(spin(game, Black, 0, 0, 1, CW));
+        insta::assert_snapshot!(play(game, White, 0, 0));
+        insta::assert_snapshot!(spin(game, White, 0, 0, 1, CW));
+        insta::assert_snapshot!(play(game, White, 0, 1));
+        insta::assert_snapshot!(spin(game, White, 0, 0, 5, CW));
+        insta::assert_snapshot!(play(game, Black, 0, 3));
+        insta::assert_snapshot!(spin(game, Black, 0, 3, 2, CCW));
     });
 }
 
