@@ -15,7 +15,7 @@ use crate::cell::spin_cell_grid;
 
 // Game type.
 
-pub struct Twirl {
+pub struct Game {
     win_len:    usize,                  // Line length needed to win.
     board:      Vec<Vec<Cell>>,         // State of the board.
     turn:       usize,                  // Number of the active turn's stone.
@@ -24,9 +24,9 @@ pub struct Twirl {
     outcome:    Option<GameOutcome>,    // [Cache] Outcome (= None until the game is over).
 }
 
-impl Twirl {
+impl Game {
     pub fn new(size: usize, win_len: usize) -> Self {
-        let mut board = Twirl {
+        let mut board = Game {
             win_len:    win_len,
             board:      vec![],
             turn:       1,
@@ -177,7 +177,7 @@ impl Twirl {
     }
 }
 
-impl Display for Twirl {
+impl Display for Game {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         let bold        = "\x1b[1m";
         let unbold      = "\x1b[22m";

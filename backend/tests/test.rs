@@ -1,6 +1,6 @@
 
 use kurakura::Player::{self, *};
-use kurakura::Twirl;
+use kurakura::Game;
 use kurakura::SpinDirection::{self, *};
 
 #[test]
@@ -9,7 +9,7 @@ fn test() {
         omit_expression => true,
     }, {
 
-        let game = &mut Twirl::new(9, 2);
+        let game = &mut Game::new(9, 2);
         insta::assert_snapshot!(play(game, Black, 0, 0));
         insta::assert_snapshot!(spin(game, Black, 0, 0, 1, CW));
         insta::assert_snapshot!(play(game, White, 0, 0));
@@ -21,7 +21,7 @@ fn test() {
     });
 }
 
-fn play(game: &mut Twirl, player: Player, r: usize, c: usize) -> String {
+fn play(game: &mut Game, player: Player, r: usize, c: usize) -> String {
     let initial = game.to_string();
     let result  = game.play(player, r, c);
     let ending  = game.to_string();
@@ -32,7 +32,7 @@ fn play(game: &mut Twirl, player: Player, r: usize, c: usize) -> String {
     return ret;
 }
 
-fn spin(game: &mut Twirl, player: Player, r: usize, c: usize, s: usize, d: SpinDirection) -> String {
+fn spin(game: &mut Game, player: Player, r: usize, c: usize, s: usize, d: SpinDirection) -> String {
     let initial = game.to_string();
     let result  = game.spin(player, r, c, s, d);
     let ending  = game.to_string();

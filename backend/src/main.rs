@@ -1,8 +1,8 @@
 
-use kurakura::Twirl;
+use kurakura::Game;
 
 fn main() {
-    let game = Twirl::new(9, 2);
+    let game = Game::new(9, 2);
     println!("{game}\n");
 }
 
