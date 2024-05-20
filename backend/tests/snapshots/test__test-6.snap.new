@@ -1,5 +1,6 @@
 ---
 source: tests/test.rs
+assertion_line: 19
 ---
 White spins from (0, 0) 5 tile CW... => Ok(None)
                                                                                     │                           

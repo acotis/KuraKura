@@ -1,0 +1,3 @@
+
+echo d | cargo insta test --review
+

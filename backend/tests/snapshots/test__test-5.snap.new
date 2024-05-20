@@ -1,5 +1,6 @@
 ---
 source: tests/test.rs
+assertion_line: 18
 ---
 White plays at (0, 1)... => Ok(None)
                                                                                                                 

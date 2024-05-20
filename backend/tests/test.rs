@@ -1,24 +1,30 @@
 
+use insta::Settings;
+use insta::internals::SettingsBindDropGuard;
+
 use kurakura::Player::{self, *};
 use kurakura::Game;
 use kurakura::SpinDirection::{self, *};
 
 #[test]
 fn test() {
-    insta::with_settings!({
-        omit_expression => true,
-    }, {
+    let _guard = configure_insta();
+    let game = &mut Game::new(9, 2);
 
-        let game = &mut Game::new(9, 2);
-        insta::assert_snapshot!(play(game, Black, 0, 0));
-        insta::assert_snapshot!(spin(game, Black, 0, 0, 1, CW));
-        insta::assert_snapshot!(play(game, White, 0, 0));
-        insta::assert_snapshot!(spin(game, White, 0, 0, 1, CW));
-        insta::assert_snapshot!(play(game, White, 0, 1));
-        insta::assert_snapshot!(spin(game, White, 0, 0, 5, CW));
-        insta::assert_snapshot!(play(game, Black, 0, 3));
-        insta::assert_snapshot!(spin(game, Black, 0, 3, 2, CCW));
-    });
+    insta::assert_snapshot!(play(game, Black, 0, 0));
+    insta::assert_snapshot!(spin(game, Black, 0, 0, 1, CW));
+    insta::assert_snapshot!(play(game, White, 0, 0));
+    insta::assert_snapshot!(spin(game, White, 0, 0, 1, CW));
+    insta::assert_snapshot!(play(game, White, 0, 1));
+    insta::assert_snapshot!(spin(game, White, 0, 0, 5, CW));
+    insta::assert_snapshot!(play(game, Black, 0, 3));
+    insta::assert_snapshot!(spin(game, Black, 0, 3, 2, CCW));
+}
+
+fn configure_insta() -> SettingsBindDropGuard {
+    let mut settings = Settings::clone_current();
+    settings.set_omit_expression(true);
+    return settings.bind_to_scope();
 }
 
 fn play(game: &mut Game, player: Player, r: usize, c: usize) -> String {

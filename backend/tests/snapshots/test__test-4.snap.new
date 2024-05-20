@@ -1,7 +1,8 @@
 ---
 source: tests/test.rs
+assertion_line: 17
 ---
-White plays at (0, 0)... => Err(PieceAlreadyThere)
+White spins from (0, 0) 1 tile CW... => Err(SpinDuringPlayPhase)
                                                                                                                 
 ╶─[1m[96m→[22m01[39;49m ╶──┬─────┬─────┬─────┬─────┬─────┬─────┬─────┐     ╶─[1m[96m→[22m01[39;49m ╶──┬─────┬─────┬─────┬─────┬─────┬─────┬─────┐   
    │     │     │     │     │     │     │     │     │        │     │     │     │     │     │     │     │     │   
