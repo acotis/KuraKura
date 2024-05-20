@@ -7,7 +7,7 @@ use kurakura::Game;
 use kurakura::SpinDirection::{self, *};
 
 #[test]
-fn test() {
+fn original_test() {
     let _guard = configure_insta();
     let game = &mut Game::new(9, 2);
 

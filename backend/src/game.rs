@@ -333,6 +333,10 @@ impl Display for Game {
             }
         }
 
+        if self.outcome == None {
+            write!(f, "\n   {} to win.", self.win_len)?;
+        }
+
         Ok(())
     }
 }

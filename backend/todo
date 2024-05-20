@@ -1,8 +1,4 @@
 
-2. Add UI rotation details.
-    - Numbers.
-    - Rotation of numbers.
-    - Board lines.
 3. Write a bunch of insta tests.
     - Wins.
     - Double wins.
@@ -12,4 +8,5 @@
     - Stalemate.
     - Win averted if the spin ruins it.
     - Every error condition under the sun.
+4. Add a GameHistory class.
 
