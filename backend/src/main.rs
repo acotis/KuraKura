@@ -1,5 +1,5 @@
 
-use kurakura::game::Twirl;
+use kurakura::Twirl;
 
 fn main() {
     let game = Twirl::new(9, 2);
