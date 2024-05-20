@@ -9,4 +9,7 @@
     - Multiple wins for same player.
     - Correct rotation of numbers.
     - Correct position of numbers.
+    - Stalemate.
+    - Win averted if the spin ruins it.
+    - Every error condition under the sun.
 
