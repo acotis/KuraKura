@@ -1,7 +1,7 @@
 
-use twirl::types::Player::{self, *};
-use twirl::game::Twirl;
-use twirl::types::SpinDirection::{self, *};
+use kurakura::types::Player::{self, *};
+use kurakura::game::Twirl;
+use kurakura::types::SpinDirection::{self, *};
 
 #[test]
 fn test() {

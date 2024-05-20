@@ -33,6 +33,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "kurakura"
+version = "0.1.0"
+dependencies = [
+ "insta",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -55,13 +62,6 @@ name = "similar"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fa42c91313f1d05da9b26f267f931cf178d4aba455b4c4622dd7355eb80c6640"
-
-[[package]]
-name = "twirl"
-version = "0.1.0"
-dependencies = [
- "insta",
-]
 
 [[package]]
 name = "windows-sys"
