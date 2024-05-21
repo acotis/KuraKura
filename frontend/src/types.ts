@@ -1,5 +1,4 @@
 export const boardSize = 6;
-export const tileSize = 64;
 
 export type Color = "black" | "white";
 
@@ -12,17 +11,30 @@ export type Stone = {
   rotation: number;
 };
 
-export type BoardLine = "t" | "r" | "b" | "l";
+export type BoardLine = "top" | "right" | "bottom" | "left";
 
 export type Cell = {
   stone: Stone | undefined;
   /**
    * Which lines does this cell have?
-   * "t" means a line from the center to the top,
-   * "r" means a line from the center to the right edge, etc.
+   * "top" means a line from the center to the top,
+   * "right" means a line from the center to the right edge, etc.
    */
   lines: Array<BoardLine>;
 };
+
+export function boardLinesFor(
+  x: number,
+  y: number,
+  boardSize: number
+): BoardLine[] {
+  const lines: BoardLine[] = [];
+  if (y > 0) lines.push("top");
+  if (x < boardSize - 1) lines.push("right");
+  if (y < boardSize - 1) lines.push("bottom");
+  if (x > 0) lines.push("left");
+  return lines;
+}
 
 export type Grid = Cell[][];
 

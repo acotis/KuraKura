@@ -1,20 +1,11 @@
-import {
-  Cell,
-  Color,
-  Grid,
-  Move,
-  MoveState,
-  SpinState,
-  Stone,
-  tileSize,
-} from "./types";
-import "./Board.css";
+import { Color, Grid, Move, MoveState, SpinState, Stone } from "./types";
 import { useCallback, useState } from "react";
-import { BoardCell } from "./BoardCell";
-import { SpinPreview } from "./SpinPreview";
+import BoardCell from "./BoardCell";
+import SpinPreview from "./SpinPreview";
 import update from "immutability-helper";
 
 export interface BoardProps {
+  tileSize: number;
   grid: Grid;
   /**
    * A Color means the board is interactable as that player. `undefined` means
@@ -36,10 +27,11 @@ type SpinRect = {
   y2: number;
 };
 
-export function Board(props: BoardProps) {
+export default function Board(props: BoardProps) {
   const [moveState, setMoveState] = useState<MoveState>({ phase: "place" });
   const [spin, setSpin] = useState<SpinState>({ phase: "start" });
   const [spinRect, setSpinRect] = useState<SpinRect | undefined>(undefined);
+  const { tileSize } = props;
 
   const spinMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
@@ -52,7 +44,7 @@ export function Board(props: BoardProps) {
         setSpinRect({ x1: x, y1: y, x2: x, y2: y });
       }
     },
-    [spin]
+    [spin, tileSize]
   );
 
   const spinMouseDown = useCallback(
@@ -67,7 +59,7 @@ export function Board(props: BoardProps) {
       const y1 = Math.floor((e.clientY - rect.top) / tileSize);
       setSpin({ phase: "drag", x1, y1 });
     },
-    [spin]
+    [spin, tileSize]
   );
 
   const spinMouseUp = useCallback(() => {
@@ -82,10 +74,10 @@ export function Board(props: BoardProps) {
         setSpin({ phase: "start" });
       }
     }
-  }, [spin]);
+  }, [spinRect, spin]);
 
   let newGrid = props.grid;
-  let newStone: Stone | undefined = props.active
+  const newStone: Stone | undefined = props.active
     ? { color: props.active, label: props.moveNumber.toString(), rotation: 0 }
     : undefined;
 
@@ -100,76 +92,87 @@ export function Board(props: BoardProps) {
   }
 
   return (
-    <div className="flexv">
-      <div className="board">
-        <table
-          className="board-table"
-          style={{ opacity: spin.phase === "preview" ? 0.7 : 1 }}
-        >
-          <tbody>
-            {newGrid.map((row, y) => (
-              <tr className="board-tr" key={y}>
-                {row.map((cell, x) => (
-                  <td key={x} className="board-td">
-                    {spinRect &&
-                    spin.phase === "preview" &&
-                    x >= Math.min(spinRect.x1, spinRect.x2) &&
-                    x <= Math.max(spinRect.x1, spinRect.x2) &&
-                    y >= Math.min(spinRect.y1, spinRect.y2) &&
-                    y <= Math.max(spinRect.y1, spinRect.y2) ? undefined : (
-                      <BoardCell
-                        cell={cell}
-                        stonePreview={newStone}
-                        onClick={() => {
-                          if (
-                            moveState.phase === "place" &&
-                            props.grid[y][x].stone === undefined
-                          ) {
-                            setMoveState({
-                              phase: "spin",
-                              move: { placeX: x, placeY: y },
-                            });
-                          }
-                        }}
-                      />
-                    )}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {moveState.phase === "spin" && (
-          <div
-            className="spin-area"
-            onMouseMove={spinMouseMove}
-            onMouseDown={spinMouseDown}
-            onMouseUp={spinMouseUp}
-          ></div>
-        )}
-        {moveState.phase === "spin" && spinRect && (
-          <SpinPreview grid={newGrid} spinRect={spinRect} spin={spin} />
-        )}
+    <div className="fcc gap-4">
+      <div className="shadow-lg p-[8px] bg-board rounded-lg">
+        <div className="relative bg-base-100">
+          <table style={{ opacity: spin.phase === "preview" ? 0.7 : 1 }}>
+            <tbody>
+              {newGrid.map((row, y) => (
+                <tr key={y}>
+                  {row.map((cell, x) => (
+                    <td
+                      key={x}
+                      className="relative p-0 m-0"
+                      style={{ width: 40, height: 40 }}
+                    >
+                      {spinRect &&
+                      spin.phase === "preview" &&
+                      x >= Math.min(spinRect.x1, spinRect.x2) &&
+                      x <= Math.max(spinRect.x1, spinRect.x2) &&
+                      y >= Math.min(spinRect.y1, spinRect.y2) &&
+                      y <= Math.max(spinRect.y1, spinRect.y2) ? undefined : (
+                        <BoardCell
+                          cell={cell}
+                          stonePreview={newStone}
+                          onClick={() => {
+                            if (
+                              moveState.phase === "place" &&
+                              props.grid[y][x].stone === undefined
+                            ) {
+                              setMoveState({
+                                phase: "spin",
+                                move: { placeX: x, placeY: y },
+                              });
+                            }
+                          }}
+                        />
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {props.active && moveState.phase === "spin" && (
+            <div
+              className="z-9 inset-0 cursor-pointer absolute"
+              onMouseMove={spinMouseMove}
+              onMouseDown={spinMouseDown}
+              onMouseUp={spinMouseUp}
+            ></div>
+          )}
+          {props.active && moveState.phase === "spin" && spinRect && (
+            <SpinPreview
+              grid={newGrid}
+              tileSize={tileSize}
+              spinRect={spinRect}
+              spin={spin}
+            />
+          )}
+        </div>
       </div>
-      <button
-        disabled={moveState.phase !== "spin" || spin.phase !== "preview"}
-        onClick={() => {
-          if (moveState.phase === "spin" && spinRect) {
-            setMoveState({ phase: "place" });
-            setSpin({ phase: "start" });
-            setSpinRect(undefined);
-            props.onMove({
-              placeX: moveState.move.placeX,
-              placeY: moveState.move.placeY,
-              spinX: Math.min(spinRect.x1, spinRect.x2),
-              spinY: Math.min(spinRect.y1, spinRect.y2),
-              spinSize: Math.abs(spinRect.x1 - spinRect.x2) + 1,
-            });
-          }
-        }}
-      >
-        Confirm {JSON.stringify(moveState)}
-      </button>
+      {props.active && (
+        <button
+          className="btn no-animation"
+          disabled={moveState.phase !== "spin" || spin.phase !== "preview"}
+          onClick={() => {
+            if (moveState.phase === "spin" && spinRect) {
+              setMoveState({ phase: "place" });
+              setSpin({ phase: "start" });
+              setSpinRect(undefined);
+              props.onMove({
+                placeX: moveState.move.placeX,
+                placeY: moveState.move.placeY,
+                spinX: Math.min(spinRect.x1, spinRect.x2),
+                spinY: Math.min(spinRect.y1, spinRect.y2),
+                spinSize: Math.abs(spinRect.x1 - spinRect.x2) + 1,
+              });
+            }
+          }}
+        >
+          Confirm
+        </button>
+      )}
     </div>
   );
 }
