@@ -98,55 +98,58 @@ export default function Board(props: BoardProps) {
   }
 
   return (
-    <div className="flex flex-col items-center">
-      <div className="relative">
-        <table style={{ opacity: spin.phase === "preview" ? 0.7 : 1 }}>
-          <tbody>
-            {newGrid.map((row, y) => (
-              <tr key={y}>
-                {row.map((cell, x) => (
-                  <td key={x} className="relative p-0 m-0 w-[64px] h-[64px]">
-                    {spinRect &&
-                    spin.phase === "preview" &&
-                    x >= Math.min(spinRect.x1, spinRect.x2) &&
-                    x <= Math.max(spinRect.x1, spinRect.x2) &&
-                    y >= Math.min(spinRect.y1, spinRect.y2) &&
-                    y <= Math.max(spinRect.y1, spinRect.y2) ? undefined : (
-                      <BoardCell
-                        cell={cell}
-                        stonePreview={newStone}
-                        onClick={() => {
-                          if (
-                            moveState.phase === "place" &&
-                            props.grid[y][x].stone === undefined
-                          ) {
-                            setMoveState({
-                              phase: "spin",
-                              move: { placeX: x, placeY: y },
-                            });
-                          }
-                        }}
-                      />
-                    )}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {moveState.phase === "spin" && (
-          <div
-            className="z-9 inset-0 cursor-pointer absolute"
-            onMouseMove={spinMouseMove}
-            onMouseDown={spinMouseDown}
-            onMouseUp={spinMouseUp}
-          ></div>
-        )}
-        {moveState.phase === "spin" && spinRect && (
-          <SpinPreview grid={newGrid} spinRect={spinRect} spin={spin} />
-        )}
+    <div className="fcc gap-4">
+      <div className="shadow-lg p-3 bg-secondary rounded-lg">
+        <div className="relative bg-base-100">
+          <table style={{ opacity: spin.phase === "preview" ? 0.7 : 1 }}>
+            <tbody>
+              {newGrid.map((row, y) => (
+                <tr key={y}>
+                  {row.map((cell, x) => (
+                    <td key={x} className="relative p-0 m-0 w-[64px] h-[64px]">
+                      {spinRect &&
+                      spin.phase === "preview" &&
+                      x >= Math.min(spinRect.x1, spinRect.x2) &&
+                      x <= Math.max(spinRect.x1, spinRect.x2) &&
+                      y >= Math.min(spinRect.y1, spinRect.y2) &&
+                      y <= Math.max(spinRect.y1, spinRect.y2) ? undefined : (
+                        <BoardCell
+                          cell={cell}
+                          stonePreview={newStone}
+                          onClick={() => {
+                            if (
+                              moveState.phase === "place" &&
+                              props.grid[y][x].stone === undefined
+                            ) {
+                              setMoveState({
+                                phase: "spin",
+                                move: { placeX: x, placeY: y },
+                              });
+                            }
+                          }}
+                        />
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {moveState.phase === "spin" && (
+            <div
+              className="z-9 inset-0 cursor-pointer absolute"
+              onMouseMove={spinMouseMove}
+              onMouseDown={spinMouseDown}
+              onMouseUp={spinMouseUp}
+            ></div>
+          )}
+          {moveState.phase === "spin" && spinRect && (
+            <SpinPreview grid={newGrid} spinRect={spinRect} spin={spin} />
+          )}
+        </div>
       </div>
       <button
+        className="btn no-animation"
         disabled={moveState.phase !== "spin" || spin.phase !== "preview"}
         onClick={() => {
           if (moveState.phase === "spin" && spinRect) {
@@ -163,7 +166,7 @@ export default function Board(props: BoardProps) {
           }
         }}
       >
-        Confirm {JSON.stringify(moveState)}
+        Confirm
       </button>
     </div>
   );

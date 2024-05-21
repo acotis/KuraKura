@@ -8,7 +8,7 @@ export interface BoardCellProps {
 }
 
 function Line({ line }: { line: BoardLine }) {
-  let classes = "absolute bg-red-500 outline outline-1 inset-1/2";
+  let classes = "absolute outline-black/50 outline outline-1 inset-1/2";
   switch (line) {
     case "top":
       classes += " top-0";
@@ -29,7 +29,7 @@ function Line({ line }: { line: BoardLine }) {
 export default function BoardCell(props: BoardCellProps) {
   const { cell, stonePreview, onClick } = props;
   const clickable = stonePreview && !cell.stone;
-  let cellClass = "bg-red-200 w-full h-full flex";
+  let cellClass = "bg-secondary w-full h-full flex";
   if (clickable) cellClass += " group cursor-pointer";
   return (
     <div className={cellClass} onClick={onClick}>

@@ -63,8 +63,8 @@ function App() {
   const [moveNumber, setMoveNumber] = useState(1);
 
   return (
-    <div className="text-center">
-      <h1>kurakura!</h1>
+    <div className="fcc gap-2">
+      <h1 className="text-3xl font-bold">kurakura!</h1>
       <Board
         grid={grid}
         active={active}

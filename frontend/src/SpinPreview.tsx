@@ -14,16 +14,16 @@ export interface SpinPreviewProps {
 
 export default function SpinPreview(props: SpinPreviewProps) {
   const { spinRect, spin } = props;
-  const left = Math.min(spinRect.x1, spinRect.x2);
-  const top = Math.min(spinRect.y1, spinRect.y2);
+  const left = Math.max(Math.min(spinRect.x1, spinRect.x2), 0);
+  const top = Math.max(Math.min(spinRect.y1, spinRect.y2), 0);
   const width = Math.abs(spinRect.x1 - spinRect.x2) + 1;
   const height = Math.abs(spinRect.y1 - spinRect.y2) + 1;
   const rectClass =
     width !== height
-      ? " outline-dashed outline-red-500 bg-red-500/20"
+      ? " outline-dashed outline-error bg-error/20"
       : spin.phase === "preview"
       ? ""
-      : " outline-dashed outline-blue-500 bg-blue-500/20";
+      : " outline-dashed outline-info bg-info/20";
 
   return (
     <>
@@ -39,7 +39,7 @@ export default function SpinPreview(props: SpinPreviewProps) {
       {spin.phase === "preview" && (
         <table
           className={
-            "outline-dashed outline-blue-500 absolute" +
+            "outline-dashed outline-info absolute" +
             (width === height ? " animate-cw" : "")
           }
           style={{ left: left * tileSize, top: top * tileSize }}
