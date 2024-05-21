@@ -1,5 +1,4 @@
 import {
-  Cell,
   Color,
   Grid,
   Move,
@@ -8,7 +7,6 @@ import {
   Stone,
   tileSize,
 } from "./types";
-import "./Board.css";
 import { useCallback, useState } from "react";
 import { BoardCell } from "./BoardCell";
 import { SpinPreview } from "./SpinPreview";
@@ -82,10 +80,10 @@ export function Board(props: BoardProps) {
         setSpin({ phase: "start" });
       }
     }
-  }, [spin]);
+  }, [spinRect, spin]);
 
   let newGrid = props.grid;
-  let newStone: Stone | undefined = props.active
+  const newStone: Stone | undefined = props.active
     ? { color: props.active, label: props.moveNumber.toString(), rotation: 0 }
     : undefined;
 
@@ -100,17 +98,14 @@ export function Board(props: BoardProps) {
   }
 
   return (
-    <div className="flexv">
-      <div className="board">
-        <table
-          className="board-table"
-          style={{ opacity: spin.phase === "preview" ? 0.7 : 1 }}
-        >
+    <div className="flex flex-col items-center">
+      <div className="relative">
+        <table style={{ opacity: spin.phase === "preview" ? 0.7 : 1 }}>
           <tbody>
             {newGrid.map((row, y) => (
-              <tr className="board-tr" key={y}>
+              <tr key={y}>
                 {row.map((cell, x) => (
-                  <td key={x} className="board-td">
+                  <td key={x} className="relative p-0 m-0 w-[64px] h-[64px]">
                     {spinRect &&
                     spin.phase === "preview" &&
                     x >= Math.min(spinRect.x1, spinRect.x2) &&
@@ -141,7 +136,7 @@ export function Board(props: BoardProps) {
         </table>
         {moveState.phase === "spin" && (
           <div
-            className="spin-area"
+            className="z-9 inset-0 cursor-pointer absolute"
             onMouseMove={spinMouseMove}
             onMouseDown={spinMouseDown}
             onMouseUp={spinMouseUp}

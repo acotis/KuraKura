@@ -1,6 +1,5 @@
 import { BoardCell } from "./BoardCell";
 import { Grid, SpinState, tileSize } from "./types";
-import "./SpinPreview.css";
 
 export interface SpinPreviewProps {
   grid: Grid;
@@ -21,15 +20,15 @@ export function SpinPreview(props: SpinPreviewProps) {
   const height = Math.abs(spinRect.y1 - spinRect.y2) + 1;
   const rectClass =
     width !== height
-      ? " spin-rect-bad"
+      ? " outline-dashed outline-red-500 bg-red-500/20"
       : spin.phase === "preview"
-      ? " spin-rect-ok"
-      : "";
+      ? ""
+      : " outline-dashed outline-blue-500 bg-blue-500/20";
 
   return (
     <>
       <div
-        className={"spin-rect" + rectClass}
+        className={"pointer-events-none absolute" + rectClass}
         style={{
           left: left * tileSize,
           top: top * tileSize,
@@ -40,16 +39,16 @@ export function SpinPreview(props: SpinPreviewProps) {
       {spin.phase === "preview" && (
         <table
           className={
-            "board-table spin-preview" +
-            (width === height ? " spin-preview-animate" : "")
+            "outline-dashed outline-blue-500 absolute" +
+            (width === height ? " animate-cw" : "")
           }
           style={{ left: left * tileSize, top: top * tileSize }}
         >
           <tbody>
             {props.grid.slice(top, top + width).map((row, y) => (
-              <tr className="board-tr" key={y}>
+              <tr key={y}>
                 {row.slice(left, left + width).map((cell, x) => (
-                  <td key={x} className="board-td">
+                  <td key={x} className="relative p-0 m-0 w-[64px] h-[64px]">
                     <BoardCell cell={cell} />
                   </td>
                 ))}

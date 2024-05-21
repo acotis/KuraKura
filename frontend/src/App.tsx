@@ -1,12 +1,17 @@
 // import { useState } from "react";
 import { useState } from "react";
-import "./App.css";
 import { Board } from "./Board";
 import { BoardLine, Cell, Color, Grid, Move, boardSize } from "./types";
 import update from "immutability-helper";
 
 function rotateLine(line: BoardLine): BoardLine {
-  return line === "t" ? "r" : line === "r" ? "b" : line === "b" ? "l" : "t";
+  return line === "top"
+    ? "right"
+    : line === "right"
+    ? "bottom"
+    : line === "bottom"
+    ? "left"
+    : "top";
 }
 
 function rotateCell(cell: Cell): Cell {
@@ -36,15 +41,21 @@ function applyMove(grid: Grid, move: Move, color: Color, label: string): Grid {
   return spun;
 }
 
+function linesFor(x: number, y: number, boardSize: number): BoardLine[] {
+  const lines: BoardLine[] = [];
+  if (y > 0) lines.push("top");
+  if (x < boardSize - 1) lines.push("right");
+  if (y < boardSize - 1) lines.push("bottom");
+  if (x > 0) lines.push("left");
+  return lines;
+}
+
 function App() {
   const [grid, setGrid] = useState<Grid>(
     new Array(boardSize).fill(undefined).map((_, y) =>
       new Array(boardSize).fill(undefined).map((_, x) => ({
         stone: undefined,
-        lines: (y > 0 ? ["t" as BoardLine] : [])
-          .concat(x < boardSize - 1 ? ["r" as BoardLine] : [])
-          .concat(y < boardSize - 1 ? ["b" as BoardLine] : [])
-          .concat(x > 0 ? ["l" as BoardLine] : []),
+        lines: linesFor(x, y, boardSize),
       }))
     )
   );
@@ -52,7 +63,7 @@ function App() {
   const [moveNumber, setMoveNumber] = useState(1);
 
   return (
-    <>
+    <div className="text-center">
       <h1>kurakura!</h1>
       <Board
         grid={grid}
@@ -64,7 +75,7 @@ function App() {
           setMoveNumber(moveNumber + 1);
         }}
       />
-    </>
+    </div>
   );
 }
 

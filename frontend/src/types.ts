@@ -12,14 +12,14 @@ export type Stone = {
   rotation: number;
 };
 
-export type BoardLine = "t" | "r" | "b" | "l";
+export type BoardLine = "top" | "right" | "bottom" | "left";
 
 export type Cell = {
   stone: Stone | undefined;
   /**
    * Which lines does this cell have?
-   * "t" means a line from the center to the top,
-   * "r" means a line from the center to the right edge, etc.
+   * "top" means a line from the center to the top,
+   * "right" means a line from the center to the right edge, etc.
    */
   lines: Array<BoardLine>;
 };
