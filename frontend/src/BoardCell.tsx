@@ -1,5 +1,5 @@
 import { BoardLine, Cell, Stone } from "./types";
-import { BoardStone } from "./BoardStone";
+import BoardStone from "./BoardStone";
 
 export interface BoardCellProps {
   cell: Cell;
@@ -26,7 +26,7 @@ function Line({ line }: { line: BoardLine }) {
   return <div className={classes} />;
 }
 
-export function BoardCell(props: BoardCellProps) {
+export default function BoardCell(props: BoardCellProps) {
   const { cell, stonePreview, onClick } = props;
   const clickable = stonePreview && !cell.stone;
   let cellClass = "bg-red-200 w-full h-full flex";

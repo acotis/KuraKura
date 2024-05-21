@@ -8,8 +8,8 @@ import {
   tileSize,
 } from "./types";
 import { useCallback, useState } from "react";
-import { BoardCell } from "./BoardCell";
-import { SpinPreview } from "./SpinPreview";
+import BoardCell from "./BoardCell";
+import SpinPreview from "./SpinPreview";
 import update from "immutability-helper";
 
 export interface BoardProps {
@@ -34,7 +34,7 @@ type SpinRect = {
   y2: number;
 };
 
-export function Board(props: BoardProps) {
+export default function Board(props: BoardProps) {
   const [moveState, setMoveState] = useState<MoveState>({ phase: "place" });
   const [spin, setSpin] = useState<SpinState>({ phase: "start" });
   const [spinRect, setSpinRect] = useState<SpinRect | undefined>(undefined);

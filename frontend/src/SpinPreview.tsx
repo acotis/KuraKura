@@ -1,4 +1,4 @@
-import { BoardCell } from "./BoardCell";
+import BoardCell from "./BoardCell";
 import { Grid, SpinState, tileSize } from "./types";
 
 export interface SpinPreviewProps {
@@ -12,7 +12,7 @@ export interface SpinPreviewProps {
   spin: SpinState;
 }
 
-export function SpinPreview(props: SpinPreviewProps) {
+export default function SpinPreview(props: SpinPreviewProps) {
   const { spinRect, spin } = props;
   const left = Math.min(spinRect.x1, spinRect.x2);
   const top = Math.min(spinRect.y1, spinRect.y2);

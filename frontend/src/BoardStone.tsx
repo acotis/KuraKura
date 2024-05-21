@@ -5,7 +5,7 @@ export interface BoardStoneProps {
   preview?: boolean;
 }
 
-export function BoardStone({ stone, preview }: BoardStoneProps) {
+export default function BoardStone({ stone, preview }: BoardStoneProps) {
   let className =
     "pointer-events-none absolute rounded-full w-full h-full flex items-center justify-center text-2xl";
   if (stone.color === "black") className += " bg-gray-700 text-gray-200";

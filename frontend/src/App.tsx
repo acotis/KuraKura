@@ -1,6 +1,6 @@
 // import { useState } from "react";
 import { useState } from "react";
-import { Board } from "./Board";
+import Board from "./Board";
 import { BoardLine, Cell, Color, Grid, Move, boardSize } from "./types";
 import update from "immutability-helper";
 
