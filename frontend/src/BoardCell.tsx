@@ -29,7 +29,7 @@ function Line({ line }: { line: BoardLine }) {
 export default function BoardCell(props: BoardCellProps) {
   const { cell, stonePreview, onClick } = props;
   const clickable = stonePreview && !cell.stone;
-  let cellClass = "bg-secondary w-full h-full flex";
+  let cellClass = "bg-board w-full h-full flex";
   if (clickable) cellClass += " group cursor-pointer";
   return (
     <div className={cellClass} onClick={onClick}>

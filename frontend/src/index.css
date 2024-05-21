@@ -34,12 +34,15 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+* {
+  box-sizing: border-box;
+}
+
 #root {
   display: grid;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-  background: #00000010;
+  width: 100%;
+  min-height: 100vh;
+  /* background: #00000010; */
 }
 
 a {

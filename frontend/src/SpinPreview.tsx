@@ -1,8 +1,9 @@
 import BoardCell from "./BoardCell";
-import { Grid, SpinState, tileSize } from "./types";
+import { Grid, SpinState } from "./types";
 
 export interface SpinPreviewProps {
   grid: Grid;
+  tileSize: number;
   spinRect: {
     x1: number;
     y1: number;
@@ -13,7 +14,7 @@ export interface SpinPreviewProps {
 }
 
 export default function SpinPreview(props: SpinPreviewProps) {
-  const { spinRect, spin } = props;
+  const { spinRect, tileSize, spin } = props;
   const left = Math.max(Math.min(spinRect.x1, spinRect.x2), 0);
   const top = Math.max(Math.min(spinRect.y1, spinRect.y2), 0);
   const width = Math.abs(spinRect.x1 - spinRect.x2) + 1;
@@ -48,7 +49,11 @@ export default function SpinPreview(props: SpinPreviewProps) {
             {props.grid.slice(top, top + width).map((row, y) => (
               <tr key={y}>
                 {row.slice(left, left + width).map((cell, x) => (
-                  <td key={x} className="relative p-0 m-0 w-[64px] h-[64px]">
+                  <td
+                    key={x}
+                    className="relative p-0 m-0"
+                    style={{ width: tileSize, height: tileSize }}
+                  >
                     <BoardCell cell={cell} />
                   </td>
                 ))}

@@ -7,9 +7,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: "#566CB8",
-        secondary: "#F1C1AA",
-        accent: "#ED7D9C",
+        board: "#CAA489",
       },
       keyframes: {
         cw: {
@@ -23,4 +21,7 @@ export default {
     },
   },
   plugins: [typography, daisyui],
+  daisyui: {
+    themes: ["bumblebee"],
+  },
 };
