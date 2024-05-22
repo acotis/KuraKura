@@ -8,7 +8,7 @@ export interface BoardCellProps {
 }
 
 function Line({ line }: { line: BoardLine }) {
-  let classes = "absolute outline-black/50 outline outline-1 inset-1/2";
+  let classes = "absolute outline-black outline outline-1 inset-1/2";
   switch (line) {
     case "top":
       classes += " top-0";
