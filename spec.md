@@ -42,6 +42,7 @@ Player ->> Server: play(PlayerID, R, Move)
 Note over Server: Check that PlayerID is<br>a player in room R
 Note over Server: Apply Move
 Server ->> Player: roomState(R)
+Server ->> Opponent: roomState(R)
 ```
 
 ## Thoughts
