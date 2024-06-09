@@ -1,10 +1,8 @@
 
-#[allow(unused)] // TODO: disable this
-
-mod game;
-use crate::game::Twirl;
+use kurakura::Game;
 
 fn main() {
-    let game = Twirl::new(9);
-    println!("{game}");
+    let game = Game::new(2, 2);
+    println!("{game}\n");
 }
+
