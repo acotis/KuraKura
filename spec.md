@@ -20,18 +20,30 @@ struct ServerState {
 ## Initialization
 ```mermaid
 sequenceDiagram
-Note over Host: Generate id IH
 Note over Host: Let user pick name NH
 Host --> Server: Open WebSocket
-Host ->> Server: makeRoom(IH, NH)
+Host ->> Server: makeUser()
+Note over Server: Create a user U
+Server ->> Host: U
+Host ->> Server: [auth: U] setName(NH)
+Note over Server: Set player's name
+Server ->> Host: OK
+Host ->> Server: [auth: U] makeRoom()
 Note over Server: Create a room R
+Server ->> Host: R
+Host ->> Server: [auth: U] joinRoom(R)
 Server ->> Host: roomState(R)
 Note over Host: Render a link to copy
 Host -->> Guest: "Let's play! https://kurakura.io/join?room=R"
-Note over Guest: Generate id IG
 Note over Guest: Let user pick name NG
 Guest --> Server: Open WebSocket
-Guest ->> Server: joinRoom(R, IG, NG)
+Guest ->> Server: makeUser()
+Note over Server: Create a user U
+Server ->> Guest: U
+Guest ->> Server: [auth: U] setName(NG)
+Note over Server: Set player's name
+Server ->> Guest: OK
+Guest ->> Server: [auth: U] joinRoom(R)
 Server ->> Guest: roomState(R)
 ```
 
