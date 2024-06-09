@@ -32,18 +32,20 @@ Host ->> Server: [auth: U] makeRoom()
 Note over Server: Create a room R
 Server ->> Host: R
 Host ->> Server: [auth: U] joinRoom(R)
+Note over Server: Add player to room
 Server ->> Host: roomState(R)
 Note over Host: Render a link to copy
 Host -->> Guest: "Let's play! https://kurakura.io/join?room=R"
 Note over Guest: Let user pick name NG
 Guest --> Server: Open WebSocket
 Guest ->> Server: makeUser()
-Note over Server: Create a user U
-Server ->> Guest: U
-Guest ->> Server: [auth: U] setName(NG)
+Note over Server: Create a user U2
+Server ->> Guest: U2
+Guest ->> Server: [auth: U2] setName(NG)
 Note over Server: Set player's name
 Server ->> Guest: OK
-Guest ->> Server: [auth: U] joinRoom(R)
+Guest ->> Server: [auth: U2] joinRoom(R)
+Note over Server: Add player 2 to room
 Server ->> Guest: roomState(R)
 ```
 
