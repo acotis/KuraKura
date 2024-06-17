@@ -9,6 +9,7 @@ edition = "2021"
 
 [dev-dependencies]
 insta = "1.38.0"
+axum = "0.7.5"
 
 [dependencies.uuid]
 version = "1.8.0"
