@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Board from "./Board";
 import { applyMove } from "./logic";
 import { Grid, boardLinesFor } from "./types";
@@ -14,7 +15,7 @@ const example1: Grid = grid.map((row, y) =>
     stone:
       c === "."
         ? undefined
-        : { color: +c % 2 ? "black" : "white", rotation: 0, label: c },
+        : { color: +c % 2 ? "black" : "white", rotation: 0, label: "" },
     lines: boardLinesFor(x, y, 6),
   }))
 );
@@ -29,7 +30,7 @@ const example2 = applyMove(
     spinSize: 1,
   },
   "black",
-  "9"
+  ""
 );
 
 const example3 = applyMove(
@@ -42,10 +43,22 @@ const example3 = applyMove(
     spinSize: 3,
   },
   "black",
-  "9"
+  ""
 );
 
 export default function Home() {
+  const [gameSocket, setGameSocket] = useState<WebSocket>();
+  const testConnection = () => {
+    if (gameSocket) {
+      return;
+    }
+    const socket = new WebSocket("ws://localhost:3000");
+    setGameSocket(socket);
+    socket.addEventListener("open", () => {
+      socket.send(JSON.stringify("MakeUser"));
+    });
+  };
+
   return (
     <main className="flex flex-col items-center gap-12 p-8">
       <h1 className="font-bold text-5xl flex items-center tracking-tight">
@@ -84,7 +97,9 @@ export default function Home() {
           </svg>
           <input type="text" className="grow" placeholder="Name" />
         </label>
-        <button className="btn btn-primary">Start a game</button>
+        <button onClick={testConnection} className="btn btn-primary">
+          Start a game
+        </button>
       </div>
       <div className="fcc gap-4 text-center">
         <h2 className="text-2xl font-bold">Rules</h2>
