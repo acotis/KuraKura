@@ -1,30 +1,54 @@
 
-use kurakura::Game;
-use std::time::{Instant, Duration};
-use std::thread::sleep;
-use std::collections::HashMap;
-use uuid::Uuid;
+#[allow(unused)]
 
-fn main() {
-    //let game = Game::new(2, 2);
-    //println!("{game}\n");
+use axum::{
+    extract::ws::{WebSocketUpgrade, WebSocket},
+    routing::get,
+    response::{IntoResponse, Response},
+    Router,
+};
 
-    //let now = Instant::now();
+#[tokio::main]
+async fn main() {
+    let app = Router::new().route("/", get(|| async { "Secret string for Lynn" }));
+    //let app = Router::new().route("/ws", get(handler));
+    //let app = Router::new().route("/ws", get(send_json));
 
-    //sleep(Duration::new(2, 0));
-    //println!("{}", now.elapsed().as_secs());
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    axum::serve(listener, app).await.unwrap();
+}
+
+//struct MyStruct {
+    //first_field: u32,
+    //second_field: String,
+//}
+
+//async fn send_json() -> Json<MyStruct> {
+//
+//}
 
 
-    //let mut items = HashMap::new();
-    //items.insert("hello world", 3);
-    //items.insert("goodbye world", 4);
-    //items.insert("lalala", 6);
+async fn handler(ws: WebSocketUpgrade) -> Response {
+    println!("handler");
+    ws.on_upgrade(handle_socket)
+}
 
-    //println!("{items:?}");
-    //println!("{:?}", items.get("hello world"));
-    //println!("{:?}", items.get("hell world"));
+async fn handle_socket(mut socket: WebSocket) {
+    println!("handle socket");
+    while let Some(msg) = socket.recv().await {
+        let msg = if let Ok(msg) = msg {
+            msg
+        } else {
+            // client disconnected
+            return;
+        };
 
-    let id = Uuid::new_v4();
-    println!("{}", id.to_string());
+        println!("{msg:?}");
+
+        if socket.send(msg).await.is_err() {
+            // client disconnected
+            return;
+        }
+    }
 }
 

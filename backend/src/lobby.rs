@@ -21,7 +21,10 @@ type RoomId = String;
 //      - [auth: U] POST /rooms/roomId/join
 //      - [auth: U] POST /rooms/roomId {"move": ...}
 //
-// Todo: are these HTTP request things even a thing with WebSockets?
+// Question: are these HTTP request things even a thing with WebSockets?
+// Answer: Looks like no. WebSockets is a protocol on the same layer
+// of the network stack as HTTP and is an alternative to it. That
+// being said, you initiate a WebSocket with an HTTP request.
 
 struct User {
     name:   String,
@@ -45,7 +48,6 @@ enum ServerError {
     UserNotFound,
     UserAlreadyHasRoom,
 }
-
 
 impl Server {
 
