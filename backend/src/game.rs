@@ -12,6 +12,8 @@ use crate::types::SpinDirection::{self, *};
 use crate::types::TurnResult;
 use crate::cell::Cell;
 use crate::cell::spin_cell_grid;
+use crate::Turn;
+use crate::TurnDetails;
 
 // Game type.
 
@@ -58,41 +60,52 @@ impl Game {
         board
     }
 
-    pub fn play(&mut self, player: Player, r: usize, c: usize) -> TurnResult {
+    pub fn turn(&mut self, turn: Turn) -> TurnResult {
+        let Turn {
+            player: player,
+
+            details: TurnDetails {
+                play_row:       pr,
+                play_col:       pc,
+                spin_ul_row:    su,
+                spin_ul_col:    sl,
+                spin_size:      sz,
+                spin_dir:       sd,
+            },
+        } = turn;
+        
+        // Validate the turn.
+
         if self.outcome           != None   {return Err(GameAlreadyOver);}
         if self.whose_turn()      != player {return Err(NotYourTurn);}
-        if self.turn_phase        != Play   {return Err(PlayDuringSpinPhase);}
-        if self.size() <= r                 {return Err(InvalidLocation);}
-        if self.size() <= c                 {return Err(InvalidLocation);}
-        if self.board[r][c].stone != None   {return Err(PieceAlreadyThere);}
+        if self.size() <= pr                {return Err(InvalidLocation);}
+        if self.size() <= pc                {return Err(InvalidLocation);}
+        if self.size() <= su + sz - 1       {return Err(InvalidLocation);}
+        if self.size() <= sl + sz - 1       {return Err(InvalidLocation);}
+        if self.board[pr][pc].stone != None {return Err(PieceAlreadyThere);}
+        
+        // Place the stone.
 
-        self.board[r][c].stone = Some((self.turn, Up, false));
-        self.turn_phase = Spin;
+        self.board[pr][pc].stone = Some((self.turn, Up, false));
 
-        Ok(None)
-    }
+        // Spin the section.
 
-    pub fn spin(&mut self, player: Player, u: usize, l: usize, size: usize, dir: SpinDirection) -> TurnResult {
-        if self.outcome           != None   {return Err(GameAlreadyOver);}
-        if self.whose_turn()      != player {return Err(NotYourTurn);}
-        if self.turn_phase        != Spin   {return Err(SpinDuringPlayPhase);}
-        if self.size() <= u + size - 1      {return Err(InvalidLocation);}
-        if self.size() <= l + size - 1      {return Err(InvalidLocation);}
+        let mut slice = self.copy_slice_out(su, sl, sz);
 
-        let mut slice = self.copy_slice_out(u, l, size);
+        match sd {
+            CW => {
+                slice = spin_cell_grid(slice);
+            },
+            CCW => {
+                slice = spin_cell_grid(slice);
+                slice = spin_cell_grid(slice);
+                slice = spin_cell_grid(slice);
+            },
+        };
 
-        slice = spin_cell_grid(slice);
-        if dir == CCW {
-            slice = spin_cell_grid(slice);
-            slice = spin_cell_grid(slice);
-        }
-
-        self.copy_slice_in(u, l, slice);
-
+        self.copy_slice_in(su, sl, slice);
         self.update_outcome();
-
         self.turn += 1;
-        self.turn_phase = Play;
 
         Ok(self.outcome)
     }

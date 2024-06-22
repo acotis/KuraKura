@@ -7,7 +7,7 @@ use std::fmt::Error;
 use crate::types::Player::*;
 use crate::types::Orientation::*;
 
-// Elementary types for the game Kura Kura. All types are simple enums except TurnResult.
+// Elementary types for the game Kura Kura.
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)] pub enum Orientation {Up, Right, Down, Left}
 #[derive(Clone, Copy, PartialEq, Eq, Debug)] pub enum SpinDirection {CW, CCW}
@@ -26,6 +26,18 @@ use crate::types::Orientation::*;
     SpinDuringPlayPhase,
     InvalidLocation,
     PieceAlreadyThere,
+}
+#[derive(Clone, Copy, PartialEq, Eq, Debug)] pub struct TurnDetails {
+    pub play_row:       usize,
+    pub play_col:       usize,
+    pub spin_ul_row:    usize,
+    pub spin_ul_col:    usize,
+    pub spin_size:      usize,
+    pub spin_dir:       SpinDirection,
+}
+#[derive(Clone, Copy, PartialEq, Eq, Debug)] pub struct Turn {
+    pub player:         Player,
+    pub details:        TurnDetails,
 }
 
 pub type TurnResult = Result<Option<GameOutcome>, TurnError>;
