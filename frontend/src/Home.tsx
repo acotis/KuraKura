@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import Board from "./Board";
 import { applyMove } from "./logic";
 import { Grid, boardLinesFor } from "./types";
+import { WebSocketContext, useWebSocketContext } from "./WebSocketContext";
 
 const grid = `......
 7.....
@@ -47,17 +48,7 @@ const example3 = applyMove(
 );
 
 export default function Home() {
-  const [gameSocket, setGameSocket] = useState<WebSocket>();
-  const testConnection = () => {
-    if (gameSocket) {
-      return;
-    }
-    const socket = new WebSocket("ws://localhost:3000");
-    setGameSocket(socket);
-    socket.addEventListener("open", () => {
-      socket.send(JSON.stringify("MakeUser"));
-    });
-  };
+  const { send } = useContext(WebSocketContext)!;
 
   return (
     <main className="flex flex-col items-center gap-12 p-8">
@@ -97,7 +88,12 @@ export default function Home() {
           </svg>
           <input type="text" className="grow" placeholder="Name" />
         </label>
-        <button onClick={testConnection} className="btn btn-primary">
+        <button
+          onClick={() => {
+            send("MakeUser");
+          }}
+          className="btn btn-primary"
+        >
           Start a game
         </button>
       </div>
