@@ -4,16 +4,31 @@ use std::time::{Instant, Duration};
 use std::collections::HashMap;
 use uuid::Uuid;
 
+// Public-facing types.
+
 type UserId = String;
 type RoomId = String;
 
-// "API calls" for the server to implement:
-//
-//      - [       ] createUser()     -> Result<UserId, ServerError>
-//      - [auth: U] setName(N)       -> Result<(), ServerError>
-//      - [auth: U] createRoom()     -> Result<RoomId, ServerError>
-//      - [auth: U] joinRoom(R)      -> Result<(), ServerError>
-//      - [auth: U] play(move)       -> Result<(), ServerError>
+enum KuraKuraRequest {
+    CreateUser  {},
+    SetName     {auth: UserId, name: String},
+    CreateRoom  {auth: UserId},
+    JoinRoom    {auth: UserId, room: RoomId},
+    TakeTurn    {auth: UserId, details: TurnDetails},
+}
+
+enum KuraKuraResponse {
+    UserCreated {id: UserId},
+    NameSet     {},
+    RoomCreated {id: RoomId},
+    RoomJoined  {},
+    TurnTaken   {},
+
+    UserNotFound,
+    UserAlreadyHasRoom,
+}
+
+// Implementation of server which publically deals in those types.
 
 struct User {
     name:   String,
@@ -28,44 +43,35 @@ struct Room {
     creation_time:      Instant,
 }
 
-enum KuraKuraRequest {
-    CreateUser  {},
-    SetName     {auth: UserId, name: String},
-    CreateRoom  {auth: UserId},
-    JoinRoom    {auth: UserId, room: RoomId},
-    Play        {auth: UserId, play: //todo 
-}
-
-enum KuraKuraResponse {
-    UserCreated {id: UserId},
-
-
-
 struct Server {
     users:  HashMap<UserId, User>;
     rooms:  HashMap<RoomId, Room>;
 }
 
-enum ServerError {
-    UserNotFound,
-    UserAlreadyHasRoom,
-}
-
 impl Server {
+    pub fn handle_request(&mut self, request: KuraKuraRequest) -> KuraKuraResponse {
+        match request {
+            CreateUser  {}              => {create_user()}
+            SetName     {auth, name}    => {set_name(auth, name)}
+            CreateRoom  {auth}          => {create_room(auth)}
+            JoinRoom    {auth, room}    => {join_room(auth, room)}
+            Taketurn    {auth, details} => {take_turn(auth, details)}
+        }
+    }
 
-    // createUser() can't fail right now, but I'm defining the return type as
-    // a Result just in case we ever decide there's a case where it should.
-
-    fn createUser(self, name: String) -> Result<UserId, ServerError> {
+    fn create_user() {
         let user_id = Uuid::new_v4().to_string();
 
         self.users.insert(user_id, User {
-            name: name,
+            name: "".into(),
             room: None,
         }
 
-        user_id
+        UserCreated(user_id)
     }
+
+
+
 
     fn createRoom(self, user_id: UserId) -> Result<RoomId, ServerError> {
         let user = self.get_user(user_id)?;
