@@ -402,6 +402,8 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "insta",
+ "serde",
+ "serde_json",
  "tokio",
  "uuid",
 ]
