@@ -1,8 +1,8 @@
-import { useContext, useState } from "react";
+import { useContext } from "react";
 import Board from "./Board";
 import { applyMove } from "./logic";
 import { Grid, boardLinesFor } from "./types";
-import { WebSocketContext, useWebSocketContext } from "./WebSocketContext";
+import { WebSocketContext } from "./WebSocketContext";
 
 const grid = `......
 7.....
@@ -90,7 +90,7 @@ export default function Home() {
         </label>
         <button
           onClick={() => {
-            send("MakeUser");
+            send({ CreateUser: {} });
           }}
           className="btn btn-primary"
         >

@@ -5,6 +5,10 @@ import { Color, Grid, boardLinesFor, boardSize } from "./types";
 import { applyMove } from "./logic";
 
 function Game() {
+  const params = new URLSearchParams(location.search);
+  const gameId = params.get("id");
+  console.log(gameId);
+
   const [grid, setGrid] = useState<Grid>(
     new Array(boardSize).fill(undefined).map((_, y) =>
       new Array(boardSize).fill(undefined).map((_, x) => ({
