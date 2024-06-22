@@ -14,8 +14,8 @@ use serde::Serialize;
 #[tokio::main]
 async fn main() {
     //let app = Router::new().route("/", get(|| async { "Secret string for Lynn" }));
-    //let app = Router::new().route("/", get(handler));
-    let app = Router::new().route("/", get(send_json));
+    let app = Router::new().route("/", get(handler));
+    //let app = Router::new().route("/", get(send_json));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
@@ -39,6 +39,8 @@ async fn handler(ws: WebSocketUpgrade) -> Response {
 
 async fn handle_socket(mut socket: WebSocket) {
     println!("handle socket");
+    socket.send("The password is fire".into());
+
     while let Some(msg) = socket.recv().await {
         let msg = if let Ok(msg) = msg {
             msg
