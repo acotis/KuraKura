@@ -10,7 +10,16 @@ use axum::{
 };
 
 use serde::Serialize;
+use std::collections::HashMap;
 
+fn main() {
+    let mut map: HashMap<usize, usize> = HashMap::new();
+
+    map.insert(3, 3);
+}
+
+
+/*
 #[tokio::main]
 async fn main() {
     //let app = Router::new().route("/", get(|| async { "Secret string for Lynn" }));
@@ -57,4 +66,4 @@ async fn handle_socket(mut socket: WebSocket) {
         }
     }
 }
-
+*/
