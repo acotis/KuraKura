@@ -8,12 +8,15 @@ use uuid::Uuid;
 use std::time::{Instant, Duration};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Error};
+use std::process::ExitCode;
+use std::process::Termination;
 
 // Public-facing types.
 
 type UserId = String;
 type RoomId = String;
 
+#[derive(Debug)]
 pub enum KuraKuraRequest {
     CreateUser  {},
     SetName     {auth: UserId, name: String},
@@ -22,6 +25,7 @@ pub enum KuraKuraRequest {
     TakeTurn    {auth: UserId, details: TurnDetails},
 }
 
+#[derive(Debug)]
 pub enum KuraKuraOk {
     UserCreated {id: UserId},
     NameSet     {},
@@ -30,6 +34,11 @@ pub enum KuraKuraOk {
     TurnTaken   {},
 }
 
+impl Termination for KuraKuraOk {
+    fn report(self) -> ExitCode {ExitCode::from(0)}
+}
+
+#[derive(Debug)]
 pub enum KuraKuraErr {
     UserNotFound,
     RoomNotFound,
@@ -114,7 +123,7 @@ impl Server {
             id:                 room_id.clone(),
             host_user_id:       auth,
             guest_user_id:      None,
-            game:               Game::new(9, 5),
+            game:               Game::new(4, 2),
             host_plays_black:   true, // todo: make this random
             creation_time:      Instant::now(),
         });
@@ -195,7 +204,7 @@ impl Display for User {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         let bold = "\x1b[1m";
         let reset = "\x1b[0m";
-        write!(f, "{bold}ID:{reset} {}... {bold}Name:{reset} {}", &self.id[0..4], self.name)
+        write!(f, "{bold}User ID:{reset} {}... {bold}Name:{reset} {}", &self.id[0..4], self.name)
     }
 }
 
@@ -203,28 +212,49 @@ impl Display for Room {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         let bold = "\x1b[1m";
         let reset = "\x1b[0m";
-        write!(f, "{bold}ID:{reset} {}... {bold}Host ID:{reset} {}... {bold}Guest ID:{reset} {}...",
+
+        writeln!(f, "{bold}Room ID:{reset} {}... {bold}Host ID:{reset} {}... {bold}Guest ID:{reset} {}{}",
                &self.id[0..4],
                &self.host_user_id[0..4],
                match &self.guest_user_id {
                    None => "None",
                    Some(id) => &id[0..4],
-               })
+               },
+               match &self.guest_user_id {
+                   None => "",
+                   Some(_) => "..."
+               })?;
+        
+        for line in self.game.to_string().lines() {
+            writeln!(f, "  {}", line)?;
+        }
+
+        Ok(())
     }
 }
 
 impl Display for Server {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
-        writeln!(f, "Users:")?;
+        let under = "\x1b[4m";
+        let reset = "\x1b[0m";
+
+        writeln!(f);
+        writeln!(f, "{under}Users:{reset}")?;
+        writeln!(f);
 
         for user in self.users.keys() {
             writeln!(f, "    {}", self.users.get(user).unwrap())?;
         }
 
-        writeln!(f, "Rooms:")?;
+        writeln!(f);
+        writeln!(f, "{under}Rooms:{reset}")?;
+        writeln!(f);
 
         for room in self.rooms.keys() {
-            writeln!(f, "    {}", self.rooms.get(room).unwrap())?;
+            for line in self.rooms.get(room).unwrap().to_string().lines() {
+                writeln!(f, "    {}", line)?;
+            }
+            writeln!(f);
         }
 
         Ok(())

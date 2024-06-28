@@ -12,16 +12,32 @@ use axum::{
 use serde::Serialize;
 use std::collections::HashMap;
 
-use kurakura::server::Server;
-use kurakura::server::KuraKuraRequest::*;
+use kurakura::server::{
+    Server,
+    KuraKuraRequest::{self, *},
+    KuraKuraOk::{self, *},
+    KuraKuraResponse,
+};
 
-fn main() {
+fn main() -> KuraKuraResponse {
     let mut server = Server::new();
 
-    let lynn = server.handle_request(CreateUser {});
+    let evan = match server.handle_request(CreateUser {})? {UserCreated {id} => id, _ => panic!()};
+    let lynn = match server.handle_request(CreateUser {})? {UserCreated {id} => id, _ => panic!()};
+    let lexi = match server.handle_request(CreateUser {})? {UserCreated {id} => id, _ => panic!()};
 
-    println!();
-    println!("{server}");
+    server.handle_request(SetName {auth: evan.clone(), name: "Evan is my name".into()})?;
+    server.handle_request(SetName {auth: lynn.clone(), name: "Laqme".into()})?;
+    server.handle_request(SetName {auth: lexi.clone(), name: "The Lex".into()})?;
+
+    let room1 = match server.handle_request(CreateRoom {auth: lynn.clone()})? {RoomCreated {id} => id, _ => panic!()};
+    let room2 = match server.handle_request(CreateRoom {auth: lexi.clone()})? {RoomCreated {id} => id, _ => panic!()};
+    
+    server.handle_request(JoinRoom {auth: evan.clone(), room: room1.clone()});
+
+    print!("{server}");
+
+    Ok(TurnTaken {})
 }
 
 
