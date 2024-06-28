@@ -12,10 +12,16 @@ use axum::{
 use serde::Serialize;
 use std::collections::HashMap;
 
-fn main() {
-    let mut map: HashMap<usize, usize> = HashMap::new();
+use kurakura::server::Server;
+use kurakura::server::KuraKuraRequest::*;
 
-    map.insert(3, 3);
+fn main() {
+    let mut server = Server::new();
+
+    let lynn = server.handle_request(CreateUser {});
+
+    println!();
+    println!("{server}");
 }
 
 
