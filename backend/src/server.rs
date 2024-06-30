@@ -46,6 +46,7 @@ pub enum KuraKuraErr {
     RoomAlreadyHasGuest,    // (probably don't add such a parameter here for the player ID) (definitely not, that would reveal someone else's API key)
     NameTooLong,
     NotImplemented,
+    InvalidJson,
 }
 
 pub type KuraKuraResponse = Result<KuraKuraOk, KuraKuraErr>;
@@ -75,6 +76,9 @@ pub struct Server {
 // Public method.
 
 impl Server {
+    pub fn handle_json(&mut self, json: String) -> KuraKuraResponse {
+    }
+
     pub fn handle_request(&mut self, request: KuraKuraRequest) -> KuraKuraResponse {
         match request {
             CreateUser  {}              => {self.create_user()}
