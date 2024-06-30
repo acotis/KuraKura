@@ -10,14 +10,14 @@ use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Error};
 use std::process::ExitCode;
 use std::process::Termination;
-//use serde::{Serialize, Deserialize};
+use serde::{Serialize, Deserialize};
 
 // Public-facing types.
 
 type UserId = String;
 type RoomId = String;
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub enum KuraKuraRequest {
     CreateUser  {},
     SetName     {auth: UserId, name: String},
@@ -26,7 +26,7 @@ pub enum KuraKuraRequest {
     TakeTurn    {auth: UserId, details: Turn},
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub enum KuraKuraOk {
     UserCreated {id: UserId},
     NameSet     {},
@@ -39,7 +39,7 @@ impl Termination for KuraKuraOk {
     fn report(self) -> ExitCode {ExitCode::from(0)}
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub enum KuraKuraErr {
     UserNotFound,
     RoomNotFound,
