@@ -11,8 +11,8 @@ use crate::types::Orientation::*;
 // Elementary types for the game Kura Kura.
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]              pub enum Orientation {Up, Right, Down, Left}
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Deserialize)] pub enum SpinDirection {CW, CCW}
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Deserialize)] pub enum Player {Black, White}
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Deserialize, Serialize)] pub enum SpinDirection {CW, CCW}
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Deserialize, Serialize)] pub enum Player {Black, White}
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]              pub enum TurnPhase {Play, Spin}
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]              pub enum GameOutcome {
     BlackWin,
@@ -28,7 +28,7 @@ use crate::types::Orientation::*;
     InvalidLocation,
     PieceAlreadyThere,
 }
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Deserialize)] pub struct Turn {
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Deserialize, Serialize)] pub struct Turn {
     pub player:         Player,
     pub play_row:       usize,
     pub play_col:       usize,

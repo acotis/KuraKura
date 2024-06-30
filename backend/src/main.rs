@@ -10,6 +10,7 @@ use axum::{
 };
 
 use serde::Serialize;
+use serde_json::to_string;
 use std::collections::HashMap;
 
 use kurakura::server::{
@@ -22,20 +23,43 @@ use kurakura::server::{
 fn main() -> KuraKuraResponse {
     let mut server = Server::new();
 
-    let UserCreated {id: evan} = server.handle_request(CreateUser {})? else {panic!();};
-    let UserCreated {id: lynn} = server.handle_request(CreateUser {})? else {panic!();};
-    let UserCreated {id: lexi} = server.handle_request(CreateUser {})? else {panic!();};
+    let cu  = &format!(r#"{{"CreateUser": {{}}}}"#);
 
-    server.handle_request(SetName {auth: evan.clone(), name: "Evan is my name".into()})?;
-    server.handle_request(SetName {auth: lynn.clone(), name: "Laqme".into()})?;
-    server.handle_request(SetName {auth: lexi.clone(), name: "The Lex".into()})?;
+    let UserCreated {id: evan } = server.handle_json(cu)?  else {panic!();};
+    let UserCreated {id: lynn } = server.handle_json(cu)?  else {panic!();};
+    let UserCreated {id: lexi } = server.handle_json(cu)?  else {panic!();};
 
-    let RoomCreated {id: room1} = server.handle_request(CreateRoom {auth: lynn.clone()})? else {panic!();};
-    let RoomCreated {id: room2} = server.handle_request(CreateRoom {auth: lexi.clone()})? else {panic!();};
-    
-    server.handle_request(JoinRoom {auth: evan.clone(), room: room1.clone()});
+    let sn1 = &format!(r#"{{"SetName": {{"auth": "{evan}", "name": "Evan is my name"}}}}"#);
+    let sn2 = &format!(r#"{{"SetName": {{"auth": "{lynn}", "name": "Laqme"}}}}"#);
+    let sn3 = &format!(r#"{{"SetName": {{"auth": "{lexi}", "name": "The Lex"}}}}"#);
+
+    let NameSet     {         } = server.handle_json(sn1)? else {panic!();};
+    let NameSet     {         } = server.handle_json(sn2)? else {panic!();};
+    let NameSet     {         } = server.handle_json(sn3)? else {panic!();};
+
+    let cr1 = &format!(r#"{{"CreateRoom": {{"auth": "{lynn}"}}}}"#);
+    let cr2 = &format!(r#"{{"CreateRoom": {{"auth": "{lexi}"}}}}"#);
+
+    let RoomCreated {id: room1} = server.handle_json(cr1)? else {panic!();};
+    let RoomCreated {id: room2} = server.handle_json(cr2)? else {panic!();};
+
+    let jr  = &format!(r#"{{"JoinRoom": {{"auth": "{evan}", "room": "{room1}"}}}}"#);
+
+    let RoomJoined  {         } = server.handle_json(jr )? else {panic!();};
+
+    let tt  = &format!(r#"{{"TakeTurn": {{"auth": "{lynn}", "turn": {{"player": "Black", "play_row": 1, "play_col": 1, "spin_ul_row": 1, "spin_ul_col": 1, "spin_size": 3, "spin_dir": "CW"}}}}}}"#);
+
+    //let TurnTaken   {         } = server.handle_json(tt )? else {panic!();};
 
     print!("{server}");
+    println!("{}", cu);
+    println!("{}", sn1);
+    println!("{}", sn2);
+    println!("{}", sn3);
+    println!("{}", cr1);
+    println!("{}", cr2);
+    println!("{}", jr);
+    println!("{}", tt);
 
     Ok(TurnTaken {})
 }

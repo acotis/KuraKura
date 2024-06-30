@@ -11,19 +11,20 @@ use std::fmt::{Display, Formatter, Error};
 use std::process::ExitCode;
 use std::process::Termination;
 use serde::{Serialize, Deserialize};
+use serde_json::from_str;
 
 // Public-facing types.
 
 type UserId = String;
 type RoomId = String;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub enum KuraKuraRequest {
     CreateUser  {},
     SetName     {auth: UserId, name: String},
     CreateRoom  {auth: UserId},
     JoinRoom    {auth: UserId, room: RoomId},
-    TakeTurn    {auth: UserId, details: Turn},
+    TakeTurn    {auth: UserId, turn: Turn},
 }
 
 #[derive(Debug, Serialize)]
@@ -77,17 +78,14 @@ pub struct Server {
 // Public method.
 
 impl Server {
-    pub fn handle_json(&mut self, json: String) -> KuraKuraResponse {
-        Ok(TurnTaken {})
-    }
-
-    pub fn handle_request(&mut self, request: KuraKuraRequest) -> KuraKuraResponse {
-        match request {
-            CreateUser  {}              => {self.create_user()}
-            SetName     {auth, name}    => {self.set_name(auth, name)}
-            CreateRoom  {auth}          => {self.create_room(auth)}
-            JoinRoom    {auth, room}    => {self.join_room(auth, room)}
-            TakeTurn    {auth, details} => {self.take_turn(auth, details)}
+    pub fn handle_json(&mut self, json: &str) -> KuraKuraResponse {
+        match from_str(&json) {
+            Ok(CreateUser  {}             ) => {self.create_user()}
+            Ok(SetName     {auth, name}   ) => {self.set_name(auth, name)}
+            Ok(CreateRoom  {auth}         ) => {self.create_room(auth)}
+            Ok(JoinRoom    {auth, room}   ) => {self.join_room(auth, room)}
+            Ok(TakeTurn    {auth, turn}   ) => {self.take_turn(auth, turn)}
+            Err(_)                          => {Err(InvalidJson {})}
         }
     }
 }
