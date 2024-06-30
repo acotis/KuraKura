@@ -1,6 +1,6 @@
 
 use crate::Game;
-use crate::TurnDetails;
+use crate::Turn;
 use crate::server::KuraKuraRequest::*;
 use crate::server::KuraKuraOk::*;
 use crate::server::KuraKuraErr::*;
@@ -10,6 +10,7 @@ use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Error};
 use std::process::ExitCode;
 use std::process::Termination;
+//use serde::{Serialize, Deserialize};
 
 // Public-facing types.
 
@@ -22,7 +23,7 @@ pub enum KuraKuraRequest {
     SetName     {auth: UserId, name: String},
     CreateRoom  {auth: UserId},
     JoinRoom    {auth: UserId, room: RoomId},
-    TakeTurn    {auth: UserId, details: TurnDetails},
+    TakeTurn    {auth: UserId, details: Turn},
 }
 
 #[derive(Debug)]
@@ -77,6 +78,7 @@ pub struct Server {
 
 impl Server {
     pub fn handle_json(&mut self, json: String) -> KuraKuraResponse {
+        Ok(TurnTaken {})
     }
 
     pub fn handle_request(&mut self, request: KuraKuraRequest) -> KuraKuraResponse {
@@ -167,7 +169,7 @@ impl Server {
         Ok(RoomJoined {})
     }
 
-    fn take_turn(&mut self, auth: UserId, details: TurnDetails) -> KuraKuraResponse {
+    fn take_turn(&mut self, auth: UserId, turn: Turn) -> KuraKuraResponse {
         // todo
         Err(NotImplemented)
     }

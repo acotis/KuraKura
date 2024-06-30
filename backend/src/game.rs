@@ -13,7 +13,6 @@ use crate::types::TurnResult;
 use crate::cell::Cell;
 use crate::cell::spin_cell_grid;
 use crate::Turn;
-use crate::TurnDetails;
 
 // Game type.
 
@@ -62,16 +61,13 @@ impl Game {
 
     pub fn turn(&mut self, turn: Turn) -> TurnResult {
         let Turn {
-            player: player,
-
-            details: TurnDetails {
-                play_row:       pr,
-                play_col:       pc,
-                spin_ul_row:    su,
-                spin_ul_col:    sl,
-                spin_size:      sz,
-                spin_dir:       sd,
-            },
+            player:         player,
+            play_row:       pr,
+            play_col:       pc,
+            spin_ul_row:    su,
+            spin_ul_col:    sl,
+            spin_size:      sz,
+            spin_dir:       sd,
         } = turn;
         
         // Validate the turn.

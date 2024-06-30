@@ -27,17 +27,14 @@ use crate::types::Orientation::*;
     InvalidLocation,
     PieceAlreadyThere,
 }
-#[derive(Clone, Copy, PartialEq, Eq, Debug)] pub struct TurnDetails {
+#[derive(Clone, Copy, PartialEq, Eq, Debug)] pub struct Turn {
+    pub player:         Player,
     pub play_row:       usize,
     pub play_col:       usize,
     pub spin_ul_row:    usize,
     pub spin_ul_col:    usize,
     pub spin_size:      usize,
     pub spin_dir:       SpinDirection,
-}
-#[derive(Clone, Copy, PartialEq, Eq, Debug)] pub struct Turn {
-    pub player:         Player,
-    pub details:        TurnDetails,
 }
 
 pub type TurnResult = Result<Option<GameOutcome>, TurnError>;
