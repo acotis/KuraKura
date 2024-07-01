@@ -5,8 +5,9 @@ use crate::TurnError;
 use crate::server::KuraKuraRequest::*;
 use crate::server::KuraKuraOk::*;
 use crate::server::KuraKuraErr::*;
+use crate::Player::Black;
 use uuid::Uuid;
-use std::time::{Instant, Duration};
+use std::time::{Instant};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Error};
 use std::process::ExitCode;
@@ -50,6 +51,7 @@ pub enum KuraKuraErr {
     NameTooLong,
     UserDoesntHaveRoom,
     RoomDoesntHaveGuest,
+    AccountPlayedWrongColor,
     InvalidTurn {error: TurnError},
     NotImplemented,
     InvalidJson,
@@ -177,7 +179,12 @@ impl Server {
         let Some(user)    = self.users.get_mut(&auth)    else {return Err(UserNotFound);};
         let Some(room_id) = user.room_id.clone()         else {return Err(UserDoesntHaveRoom);};
         let Some(room)    = self.rooms.get_mut(&room_id) else {return Err(RoomNotFound);};
-        let Some(_)       = room.guest_user_id.clone()   else {return Err(RoomDoesntHaveGuest);};
+        let Some(guest)   = room.guest_user_id.clone()   else {return Err(RoomDoesntHaveGuest);};
+        let host          = room.host_user_id.clone();
+
+        if (room.host_plays_black == (turn.player == Black)) != (auth == host) {
+            return Err(AccountPlayedWrongColor);
+        }
 
         // Todo: make sure that user really is that player!
 
@@ -209,12 +216,12 @@ impl Server {
         }
     }
 
-    fn get_room(&mut self, room_id: &RoomId) -> Result<&mut Room, KuraKuraErr> {
-        match self.rooms.get_mut(room_id) {
-            Some(u) => Ok(u),
-            None => Err(RoomNotFound),
-        }
-    }
+    //fn get_room(&mut self, room_id: &RoomId) -> Result<&mut Room, KuraKuraErr> {
+        //match self.rooms.get_mut(room_id) {
+            //Some(u) => Ok(u),
+            //None => Err(RoomNotFound),
+        //}
+    //}
 }
 
 // Display stuff.

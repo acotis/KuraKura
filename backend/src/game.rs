@@ -8,7 +8,7 @@ use crate::types::Orientation::*;
 use crate::types::TurnPhase::{self, *};
 use crate::types::TurnError::*;
 use crate::types::GameOutcome::{self, *};
-use crate::types::SpinDirection::{self, *};
+use crate::types::SpinDirection::*;
 use crate::types::TurnResult;
 use crate::cell::Cell;
 use crate::cell::spin_cell_grid;
