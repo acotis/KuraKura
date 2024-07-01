@@ -1,6 +1,7 @@
 
 use crate::Game;
 use crate::Turn;
+use crate::TurnError;
 use crate::server::KuraKuraRequest::*;
 use crate::server::KuraKuraOk::*;
 use crate::server::KuraKuraErr::*;
@@ -18,7 +19,7 @@ use serde_json::from_str;
 type UserId = String;
 type RoomId = String;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum KuraKuraRequest {
     CreateUser  {},
     SetName     {auth: UserId, name: String},
@@ -27,7 +28,7 @@ pub enum KuraKuraRequest {
     TakeTurn    {auth: UserId, turn: Turn},
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum KuraKuraOk {
     UserCreated {id: UserId},
     NameSet     {},
@@ -40,13 +41,16 @@ impl Termination for KuraKuraOk {
     fn report(self) -> ExitCode {ExitCode::from(0)}
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum KuraKuraErr {
     UserNotFound,
     RoomNotFound,
     UserAlreadyHasRoom,     // Todo: add a paramater giving the room ID?
     RoomAlreadyHasGuest,    // (probably don't add such a parameter here for the player ID) (definitely not, that would reveal someone else's API key)
     NameTooLong,
+    UserDoesntHaveRoom,
+    RoomDoesntHaveGuest,
+    InvalidTurn {error: TurnError},
     NotImplemented,
     InvalidJson,
 }
@@ -143,7 +147,9 @@ impl Server {
         // each one returns also keeps the mutable reference to self alive,
         // meaning that there would be two mutable references to self alive
         // at the same time, which is disallowed. So, I need to figure
-        // out how to resolve this without violating DRY.
+        // out how to resolve this without violating DRY. Whatever solution
+        // I come to, I should apply it to any other usage of this DRY
+        // violation.
 
         let user = match self.users.get_mut(&auth) {
             Some(u) => Ok(u),
@@ -168,8 +174,17 @@ impl Server {
     }
 
     fn take_turn(&mut self, auth: UserId, turn: Turn) -> KuraKuraResponse {
-        // todo
-        Err(NotImplemented)
+        let Some(user)    = self.users.get_mut(&auth)    else {return Err(UserNotFound);};
+        let Some(room_id) = user.room_id.clone()         else {return Err(UserDoesntHaveRoom);};
+        let Some(room)    = self.rooms.get_mut(&room_id) else {return Err(RoomNotFound);};
+        let Some(guest)   = room.guest_user_id.clone()   else {return Err(RoomDoesntHaveGuest);};
+
+        // Todo: make sure that user really is that player!
+
+        match room.game.turn(turn) {
+            Ok(_) => Ok(TurnTaken {}),
+            Err(turn_error) => Err(InvalidTurn {error: turn_error}),
+        }
     }
 }
 

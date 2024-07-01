@@ -47,9 +47,11 @@ fn main() -> KuraKuraResponse {
 
     let RoomJoined  {         } = server.handle_json(jr )? else {panic!();};
 
-    let tt  = &format!(r#"{{"TakeTurn": {{"auth": "{lynn}", "turn": {{"player": "Black", "play_row": 1, "play_col": 1, "spin_ul_row": 1, "spin_ul_col": 1, "spin_size": 3, "spin_dir": "CW"}}}}}}"#);
+    let tt1 = &format!(r#"{{"TakeTurn": {{"auth": "{lynn}", "turn": {{"player": "Black", "play_row": 0, "play_col": 0, "spin_ul_row": 0, "spin_ul_col": 0, "spin_size": 3, "spin_dir": "CW"}}}}}}"#);
+    let tt2 = &format!(r#"{{"TakeTurn": {{"auth": "{evan}", "turn": {{"player": "White", "play_row": 1, "play_col": 2, "spin_ul_row": 1, "spin_ul_col": 2, "spin_size": 1, "spin_dir": "CCW"}}}}}}"#);
 
-    //let TurnTaken   {         } = server.handle_json(tt )? else {panic!();};
+    let TurnTaken   {         } = server.handle_json(tt1)? else {panic!();};
+    let TurnTaken   {         } = server.handle_json(tt2)? else {panic!();};
 
     print!("{server}");
     println!("{}", cu);
@@ -59,7 +61,8 @@ fn main() -> KuraKuraResponse {
     println!("{}", cr1);
     println!("{}", cr2);
     println!("{}", jr);
-    println!("{}", tt);
+    println!("{}", tt1);
+    println!("{}", tt2);
 
     Ok(TurnTaken {})
 }
