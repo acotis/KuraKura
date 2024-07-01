@@ -7,7 +7,7 @@ use crate::server::KuraKuraOk::*;
 use crate::server::KuraKuraErr::*;
 use crate::Player::Black;
 use uuid::Uuid;
-use std::time::{Instant};
+//use std::time::{Instant};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Error};
 use std::process::ExitCode;
@@ -73,7 +73,7 @@ struct Room {
     guest_user_id:      Option<UserId>,
     game:               Game,
     host_plays_black:   bool,
-    creation_time:      Instant,
+    //creation_time:      Instant,
 }
 
 pub struct Server {
@@ -135,7 +135,7 @@ impl Server {
             guest_user_id:      None,
             game:               Game::new(4, 2),
             host_plays_black:   true, // todo: make this random
-            creation_time:      Instant::now(),
+            //creation_time:      Instant::now(),
         });
 
         Ok(RoomCreated {id: room_id})
@@ -179,7 +179,7 @@ impl Server {
         let Some(user)    = self.users.get_mut(&auth)    else {return Err(UserNotFound);};
         let Some(room_id) = user.room_id.clone()         else {return Err(UserDoesntHaveRoom);};
         let Some(room)    = self.rooms.get_mut(&room_id) else {return Err(RoomNotFound);};
-        let Some(guest)   = room.guest_user_id.clone()   else {return Err(RoomDoesntHaveGuest);};
+        let Some(_)       = room.guest_user_id.clone()   else {return Err(RoomDoesntHaveGuest);};
         let host          = room.host_user_id.clone();
 
         if (room.host_plays_black == (turn.player == Black)) != (auth == host) {

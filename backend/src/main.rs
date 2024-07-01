@@ -9,8 +9,6 @@ use axum::{
     Json,
 };
 
-use std::collections::HashMap;
-
 use kurakura::server::{
     Server,
     KuraKuraOk::*,
@@ -38,7 +36,7 @@ fn main() -> KuraKuraResponse {
     let cr2 = &format!(r#"{{"CreateRoom": {{"auth": "{lexi}"}}}}"#);
 
     let RoomCreated {id: room1} = server.handle_json(cr1)? else {panic!();};
-    let RoomCreated {id: room2} = server.handle_json(cr2)? else {panic!();};
+    let RoomCreated {id: _    } = server.handle_json(cr2)? else {panic!();};
 
     let jr  = &format!(r#"{{"JoinRoom": {{"auth": "{evan}", "room": "{room1}"}}}}"#);
 

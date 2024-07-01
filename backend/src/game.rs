@@ -1,4 +1,6 @@
 
+#![allow(non_shorthand_field_patterns)] // I like these sometimes.
+
 use std::fmt::Formatter;
 use std::fmt::Display;
 use std::fmt::Error;
