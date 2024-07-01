@@ -177,7 +177,7 @@ impl Server {
         let Some(user)    = self.users.get_mut(&auth)    else {return Err(UserNotFound);};
         let Some(room_id) = user.room_id.clone()         else {return Err(UserDoesntHaveRoom);};
         let Some(room)    = self.rooms.get_mut(&room_id) else {return Err(RoomNotFound);};
-        let Some(guest)   = room.guest_user_id.clone()   else {return Err(RoomDoesntHaveGuest);};
+        let Some(_)       = room.guest_user_id.clone()   else {return Err(RoomDoesntHaveGuest);};
 
         // Todo: make sure that user really is that player!
 
@@ -257,23 +257,23 @@ impl Display for Server {
         let under = "\x1b[4m";
         let reset = "\x1b[0m";
 
-        writeln!(f);
+        writeln!(f)?;
         writeln!(f, "{under}Users:{reset}")?;
-        writeln!(f);
+        writeln!(f)?;
 
         for user in self.users.keys() {
             writeln!(f, "    {}", self.users.get(user).unwrap())?;
         }
 
-        writeln!(f);
+        writeln!(f)?;
         writeln!(f, "{under}Rooms:{reset}")?;
-        writeln!(f);
+        writeln!(f)?;
 
         for room in self.rooms.keys() {
             for line in self.rooms.get(room).unwrap().to_string().lines() {
                 writeln!(f, "    {}", line)?;
             }
-            writeln!(f);
+            writeln!(f)?;
         }
 
         Ok(())
