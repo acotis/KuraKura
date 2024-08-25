@@ -2,16 +2,11 @@
 - In cell.rs, make a Stone type instead of having it be a tuple in Cell.
 - Remove the concept of a turn phase, those aren't a thing anymore.
 
-+ Get the web app to manage websocket connections.
++ Integrate the web app with *actual* websockets.
+    - It should actively send updates to all participants in a room when:
+        - Anyone in the room changes name (including a guest I guess).
+        - A move is made.
     - It should delete any socket that hasn't had activity in, say, an hour.
-+ Get the web app to return JSON.
-
-
-- first step no matter what: if socket invalid, return error.
-- Register: if socket has account, error. else, create account, link it, and return it.
-- Login: if socket has account, error. 
-
-
 
 + Write tests for the web app?
     - Host can't play until player arrives.
