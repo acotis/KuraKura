@@ -19,8 +19,12 @@ use kurakura::server::{
 fn call(server: &mut Server, socket: &SocketId, json: &str) -> UserResponse {
     match server.handle_json(socket, json) {
         Err(_) => panic!("server's response was an error"),
-        Ok(response) => serde_json::from_str(&response)
-                        .expect("server's response was not valid"),
+        Ok(response) => {
+            let value = serde_json::from_str(&response)
+                        .expect("server's response was not JSON representing a valid value");
+            println!("Server's response was: {value:?}");
+            value
+        }
     }
 }
 
@@ -37,15 +41,15 @@ fn main() {
     let Ok(AccountRegistered {id: _lynn}) = call(&mut server, &lynn1, cu) else {panic!();};
     let Ok(AccountRegistered {id: _lexi}) = call(&mut server, &lexi1, cu) else {panic!();};
 
-    /*
-
     let sn1 = &format!(r#"{{"SetName": {{"name": "Evan is my name"}}}}"#);
     let sn2 = &format!(r#"{{"SetName": {{"name": "Laqme"}}}}"#);
     let sn3 = &format!(r#"{{"SetName": {{"name": "The Lex"}}}}"#);
 
-    let NameSet     {         } = server.handle_json(sn1)? else {panic!();};
-    let NameSet     {         } = server.handle_json(sn2)? else {panic!();};
-    let NameSet     {         } = server.handle_json(sn3)? else {panic!();};
+    let Ok(Okay) = call(&mut server, &evan1, sn1) else {panic!();};
+    let Ok(Okay) = call(&mut server, &lynn1, sn2) else {panic!();};
+    let Ok(Okay) = call(&mut server, &lexi1, sn3) else {panic!();};
+
+    /*
 
     let cr1 = &format!(r#"{{"CreateRoom": {{"auth": "{lynn}"}}}}"#);
     let cr2 = &format!(r#"{{"CreateRoom": {{"auth": "{lexi}"}}}}"#);

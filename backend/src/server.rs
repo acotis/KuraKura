@@ -169,6 +169,8 @@ impl Server {
         let account = Account::new();
         let account_id = account.id.clone();
         self.accounts.insert(account_id.clone(), account);
+        self.login(socket_id, account_id.clone()).expect("couldn't log user in when they just created an account??");
+
         Ok(AccountRegistered {id: account_id})
     }
 
