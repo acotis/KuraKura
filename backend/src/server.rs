@@ -36,7 +36,7 @@ pub enum KuraKuraRequest {
 pub enum KuraKuraOk {
     AccountRegistered   {id: AccountId},
     RoomCreated         {id: RoomId},
-    Ok,
+    KuraKuraOk,
 }
 
 impl Termination for KuraKuraOk {
@@ -88,7 +88,7 @@ impl Server {
     pub fn handle_json(&mut self, json: &str) -> KuraKuraResponse {
         match from_str(&json) {
             Ok(Register       ) => {self.register()}
-            Ok(Login    {auth}) => {self.login(auth)}
+            Ok(Login    {auth}) => {Err(NotImplemented)} //self.login(auth)}
             Ok(SetName  {name}) => {self.set_name(name)}
             Ok(CreateRoom     ) => {self.create_room()}
             Ok(JoinRoom {room}) => {self.join_room(room)}
@@ -110,31 +110,31 @@ impl Server {
             room_id:    None,
         });
 
-        Ok(AccountCreated {id: account_id})
+        Ok(AccountRegistered {id: account_id})
     }
 
     fn set_name(&mut self, auth: AccountId, name: String) -> KuraKuraResponse {
         if name.len() > 250 {return Err(NameTooLong);}
 
-        let user: &mut User = self.get_user(&auth)?;
-        (*user).name = name;
-        Ok(NameSet {})
+        let account: &mut Account = self.get_account(&auth)?;
+        (*account).name = name;
+        Ok(KuraKuraOk)
     }
 
-    fn create_room(&mut self, auth: UserId) -> KuraKuraResponse {
-        let user: &mut User = self.get_user(&auth)?;
+    fn create_room(&mut self, auth: AccountId) -> KuraKuraResponse {
+        let account: &mut Account = self.get_account(&auth)?;
 
-        if user.room_id != None {
-            return Err(UserAlreadyHasRoom);
+        if account.room_id != None {
+            return Err(AccountAlreadyHasRoom);
         }
 
         let room_id = Uuid::new_v4().to_string();
-        user.room_id = Some(room_id.clone());
+        account.room_id = Some(room_id.clone());
 
         self.rooms.insert(room_id.clone(), Room {
             id:                 room_id.clone(),
-            host_user_id:       auth,
-            guest_user_id:      None,
+            host_account_id:    auth,
+            guest_account_id:   None,
             game:               Game::new(4, 2),
             host_plays_black:   true, // todo: make this random
             //creation_time:      Instant::now(),
@@ -143,11 +143,11 @@ impl Server {
         Ok(RoomCreated {id: room_id})
     }
 
-    fn join_room(&mut self, auth: UserId, room_id: RoomId) -> KuraKuraResponse {
+    fn join_room(&mut self, auth: AccountId, room_id: RoomId) -> KuraKuraResponse {
 
         // Todo: these two stanzas of code are copied from the methods
-        // .get_user() and .get_room(), which I can't just call directly
-        // I think because the mutable reference to a User or Room that
+        // .get_account() and .get_room(), which I can't just call directly
+        // I think because the mutable reference to a Account or Room that
         // each one returns also keeps the mutable reference to self alive,
         // meaning that there would be two mutable references to self alive
         // at the same time, which is disallowed. So, I need to figure
@@ -155,9 +155,9 @@ impl Server {
         // I come to, I should apply it to any other usage of this DRY
         // violation.
 
-        let user = match self.users.get_mut(&auth) {
+        let account = match self.accounts.get_mut(&auth) {
             Some(u) => Ok(u),
-            None => Err(UserNotFound),
+            None => Err(AccountNotFound),
         }?;
 
         let room = match self.rooms.get_mut(&room_id) {
@@ -165,33 +165,33 @@ impl Server {
             None => Err(RoomNotFound),
         }?;
 
-        //let user: &mut User = self.get_user(&auth)?;
+        //let account: &mut Account = self.get_account(&auth)?;
         //let room: &mut Room = self.get_room(&room_id)?;
 
-        if user.room_id != None {return Err(UserAlreadyHasRoom);}
-        if room.guest_user_id != None {return Err(RoomAlreadyHasGuest);}
+        if account.room_id != None {return Err(AccountAlreadyHasRoom);}
+        if room.guest_account_id != None {return Err(RoomAlreadyHasGuest);}
 
-        user.room_id = Some(room_id);
-        room.guest_user_id = Some(auth);
+        account.room_id = Some(room_id);
+        room.guest_account_id = Some(auth);
 
-        Ok(RoomJoined {})
+        Ok(KuraKuraOk)
     }
 
-    fn take_turn(&mut self, auth: UserId, turn: Turn) -> KuraKuraResponse {
-        let Some(user)    = self.users.get_mut(&auth)    else {return Err(UserNotFound);};
-        let Some(room_id) = user.room_id.clone()         else {return Err(UserDoesntHaveRoom);};
-        let Some(room)    = self.rooms.get_mut(&room_id) else {return Err(RoomNotFound);};
-        let Some(_)       = room.guest_user_id.clone()   else {return Err(RoomDoesntHaveGuest);};
-        let host          = room.host_user_id.clone();
+    fn take_turn(&mut self, auth: AccountId, turn: Turn) -> KuraKuraResponse {
+        let Some(account) = self.accounts.get_mut(&auth)    else {return Err(AccountNotFound);};
+        let Some(room_id) = account.room_id.clone()         else {return Err(AccountDoesntHaveRoom);};
+        let Some(room)    = self.rooms.get_mut(&room_id)    else {return Err(RoomNotFound);};
+        let Some(_)       = room.guest_account_id.clone()   else {return Err(RoomDoesntHaveGuest);};
+        let host          = room.host_account_id.clone();
 
         if (room.host_plays_black == (turn.player == Black)) != (auth == host) {
             return Err(AccountPlayedWrongColor);
         }
 
-        // Todo: make sure that user really is that player!
+        // Todo: make sure that account really is that player!
 
         match room.game.turn(turn) {
-            Ok(_) => Ok(TurnTaken {}),
+            Ok(_) => Ok(KuraKuraOk),
             Err(turn_error) => Err(InvalidTurn {error: turn_error}),
         }
     }
@@ -202,7 +202,7 @@ impl Server {
 impl Server {
     pub fn new() -> Self {
         Server {
-            users: HashMap::new(),
+            accounts: HashMap::new(),
             rooms: HashMap::new(),
         }
     }
@@ -211,10 +211,10 @@ impl Server {
 // Private utility methods.
 
 impl Server {
-    fn get_user(&mut self, user_id: &UserId) -> Result<&mut User, KuraKuraErr> {
-        match self.users.get_mut(user_id) {
+    fn get_account(&mut self, account_id: &AccountId) -> Result<&mut Account, KuraKuraErr> {
+        match self.accounts.get_mut(account_id) {
             Some(u) => Ok(u),
-            None => Err(UserNotFound),
+            None => Err(AccountNotFound),
         }
     }
 
@@ -228,11 +228,11 @@ impl Server {
 
 // Display stuff.
 
-impl Display for User {
+impl Display for Account {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         let bold = "\x1b[1m";
         let reset = "\x1b[0m";
-        write!(f, "{bold}User ID:{reset} {}... {bold}Name:{reset} {}", &self.id[0..4], self.name)
+        write!(f, "{bold}Account ID:{reset} {}... {bold}Name:{reset} {}", &self.id[0..4], self.name)
     }
 }
 
@@ -243,12 +243,12 @@ impl Display for Room {
 
         writeln!(f, "{bold}Room ID:{reset} {}... {bold}Host ID:{reset} {}... {bold}Guest ID:{reset} {}{}",
                &self.id[0..4],
-               &self.host_user_id[0..4],
-               match &self.guest_user_id {
+               &self.host_account_id[0..4],
+               match &self.guest_account_id {
                    None => "None",
                    Some(id) => &id[0..4],
                },
-               match &self.guest_user_id {
+               match &self.guest_account_id {
                    None => "",
                    Some(_) => "..."
                })?;
@@ -267,11 +267,11 @@ impl Display for Server {
         let reset = "\x1b[0m";
 
         writeln!(f)?;
-        writeln!(f, "{under}Users:{reset}")?;
+        writeln!(f, "{under}Accounts:{reset}")?;
         writeln!(f)?;
 
-        for user in self.users.keys() {
-            writeln!(f, "    {}", self.users.get(user).unwrap())?;
+        for account in self.accounts.keys() {
+            writeln!(f, "    {}", self.accounts.get(account).unwrap())?;
         }
 
         writeln!(f)?;
