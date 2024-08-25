@@ -7,7 +7,6 @@ use std::fmt::Error;
 
 use crate::types::Player::{self, *};
 use crate::types::Orientation::*;
-use crate::types::TurnPhase::{self, *};
 use crate::types::TurnError::*;
 use crate::types::GameOutcome::{self, *};
 use crate::types::SpinDirection::*;
@@ -22,7 +21,6 @@ pub struct Game {
     win_len:    usize,                  // Line length needed to win.
     board:      Vec<Vec<Cell>>,         // State of the board.
     turn:       usize,                  // Number of the active turn's stone.
-    turn_phase: TurnPhase,              // Phase of the active turn.
 
     outcome:    Option<GameOutcome>,    // [Cache] Outcome (= None until the game is over).
 }
@@ -33,7 +31,6 @@ impl Game {
             win_len:    win_len,
             board:      vec![],
             turn:       1,
-            turn_phase: Play,
             outcome:    None,
         };
 
@@ -335,11 +332,9 @@ impl Display for Game {
             Some(Stalemate) => {write!(f, "Stalemate.")?;},
             Some(DoubleWin) => {write!(f, "Double win!")?;},
             None => {
-                match (self.whose_turn(), self.turn_phase) {
-                    (Black, Play) => {write!(f, "Black to play...")?;},
-                    (Black, Spin) => {write!(f, "Black to spin...")?;},
-                    (White, Play) => {write!(f, "White to play...")?;},
-                    (White, Spin) => {write!(f, "White to spin...")?;},
+                match self.whose_turn() {
+                    Black => {write!(f, "Black to play...")?;},
+                    White => {write!(f, "White to play...")?;},
                 };
             }
         }

@@ -20,9 +20,6 @@ pub enum SpinDirection {CW, CCW}
 pub enum Player {Black, White}
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
-pub enum TurnPhase {Play, Spin}
-
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum GameOutcome {
     BlackWin,
     WhiteWin,
@@ -34,8 +31,6 @@ pub enum GameOutcome {
 pub enum TurnError {
     GameAlreadyOver,
     NotYourTurn,
-    PlayDuringSpinPhase,
-    SpinDuringPlayPhase,
     InvalidLocation,
     PieceAlreadyThere,
 }
