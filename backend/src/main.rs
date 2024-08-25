@@ -49,24 +49,20 @@ fn main() {
     let Ok(Okay) = call(&mut server, &lynn1, sn2) else {panic!();};
     let Ok(Okay) = call(&mut server, &lexi1, sn3) else {panic!();};
 
-    /*
+    let cr = &format!(r#""CreateRoom""#);
 
-    let cr1 = &format!(r#"{{"CreateRoom": {{"auth": "{lynn}"}}}}"#);
-    let cr2 = &format!(r#"{{"CreateRoom": {{"auth": "{lexi}"}}}}"#);
+    let Ok(RoomCreated {id:  room1}) = call(&mut server, &lynn1, cr) else {panic!();};
+    let Ok(RoomCreated {id: _room2}) = call(&mut server, &lexi1, cr) else {panic!();};
 
-    let RoomCreated {id: room1} = server.handle_json(cr1)? else {panic!();};
-    let RoomCreated {id: _    } = server.handle_json(cr2)? else {panic!();};
+    let jr  = &format!(r#"{{"JoinRoom": {{"room": "{room1}"}}}}"#);
 
-    let jr  = &format!(r#"{{"JoinRoom": {{"auth": "{evan}", "room": "{room1}"}}}}"#);
+    let Ok(Okay) = call(&mut server, &evan1, jr) else {panic!();};
 
-    let RoomJoined  {         } = server.handle_json(jr )? else {panic!();};
+    let tt1 = &format!(r#"{{"TakeTurn": {{"turn": {{"player": "Black", "play_row": 0, "play_col": 0, "spin_ul_row": 0, "spin_ul_col": 0, "spin_size": 3, "spin_dir": "CW"}}}}}}"#);
+    let tt2 = &format!(r#"{{"TakeTurn": {{"turn": {{"player": "White", "play_row": 1, "play_col": 2, "spin_ul_row": 1, "spin_ul_col": 2, "spin_size": 1, "spin_dir": "CCW"}}}}}}"#);
 
-    let tt1 = &format!(r#"{{"TakeTurn": {{"auth": "{lynn}", "turn": {{"player": "Black", "play_row": 0, "play_col": 0, "spin_ul_row": 0, "spin_ul_col": 0, "spin_size": 3, "spin_dir": "CW"}}}}}}"#);
-    let tt2 = &format!(r#"{{"TakeTurn": {{"auth": "{evan}", "turn": {{"player": "White", "play_row": 1, "play_col": 2, "spin_ul_row": 1, "spin_ul_col": 2, "spin_size": 1, "spin_dir": "CCW"}}}}}}"#);
-
-    let TurnTaken   {         } = server.handle_json(tt1)? else {panic!();};
-    let TurnTaken   {         } = server.handle_json(tt2)? else {panic!();};
-    */
+    let Ok(Okay) = call(&mut server, &lynn1, tt1) else {panic!();};
+    let Ok(Okay) = call(&mut server, &evan1, tt2) else {panic!();};
 
     print!("{server}");
 
