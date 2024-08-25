@@ -17,25 +17,26 @@ use serde_json::from_str;
 
 // Public-facing types.
 
-type UserId = String;
+type AccountId = String;
 type RoomId = String;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum KuraKuraRequest {
-    CreateUser  {},
-    SetName     {auth: UserId, name: String},
-    CreateRoom  {auth: UserId},
-    JoinRoom    {auth: UserId, room: RoomId},
-    TakeTurn    {auth: UserId, turn: Turn},
+    Register,
+    Login       {auth: AccountId},
+    
+    CreateRoom,
+    JoinRoom    {room: RoomId},
+    SetName     {name: String},
+
+    TakeTurn    {turn: Turn},
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum KuraKuraOk {
-    UserCreated {id: UserId},
-    NameSet     {},
-    RoomCreated {id: RoomId},
-    RoomJoined  {},
-    TurnTaken   {},
+    AccountRegistered   {id: AccountId},
+    RoomCreated         {id: RoomId},
+    Ok,
 }
 
 impl Termination for KuraKuraOk {
@@ -44,12 +45,12 @@ impl Termination for KuraKuraOk {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum KuraKuraErr {
-    UserNotFound,
+    AccountNotFound,
     RoomNotFound,
-    UserAlreadyHasRoom,     // Todo: add a paramater giving the room ID?
+    AccountAlreadyHasRoom,     // Todo: add a paramater giving the room ID?
     RoomAlreadyHasGuest,    // (probably don't add such a parameter here for the player ID) (definitely not, that would reveal someone else's API key)
     NameTooLong,
-    UserDoesntHaveRoom,
+    AccountDoesntHaveRoom,
     RoomDoesntHaveGuest,
     AccountPlayedWrongColor,
     InvalidTurn {error: TurnError},
@@ -61,23 +62,23 @@ pub type KuraKuraResponse = Result<KuraKuraOk, KuraKuraErr>;
 
 // Implementation of server which publically deals in those types.
 
-struct User {
-    id:         UserId,
+struct Account {
+    id:         AccountId,
     name:       String,
     room_id:    Option<RoomId>,
 }
 
 struct Room {
     id:                 RoomId,
-    host_user_id:       UserId,
-    guest_user_id:      Option<UserId>,
+    host_id:            AccountId,
+    guest_id:           Option<AccountId>,
     game:               Game,
     host_plays_black:   bool,
     //creation_time:      Instant,
 }
 
 pub struct Server {
-    users:  HashMap<UserId, User>,
+    accounts:  HashMap<AccountId, Account>,
     rooms:  HashMap<RoomId, Room>,
 }
 
@@ -86,12 +87,13 @@ pub struct Server {
 impl Server {
     pub fn handle_json(&mut self, json: &str) -> KuraKuraResponse {
         match from_str(&json) {
-            Ok(CreateUser  {}             ) => {self.create_user()}
-            Ok(SetName     {auth, name}   ) => {self.set_name(auth, name)}
-            Ok(CreateRoom  {auth}         ) => {self.create_room(auth)}
-            Ok(JoinRoom    {auth, room}   ) => {self.join_room(auth, room)}
-            Ok(TakeTurn    {auth, turn}   ) => {self.take_turn(auth, turn)}
-            Err(_)                          => {Err(InvalidJson {})}
+            Ok(Register       ) => {self.register()}
+            Ok(Login    {auth}) => {self.login(auth)}
+            Ok(SetName  {name}) => {self.set_name(name)}
+            Ok(CreateRoom     ) => {self.create_room()}
+            Ok(JoinRoom {room}) => {self.join_room(room)}
+            Ok(TakeTurn {turn}) => {self.take_turn(turn)}
+            Err(_)              => {Err(InvalidJson {})}
         }
     }
 }
@@ -99,19 +101,19 @@ impl Server {
 // Private methods directly corresponding to API calls.
 
 impl Server {
-    fn create_user(&mut self) -> KuraKuraResponse {
-        let user_id = Uuid::new_v4().to_string();
+    fn register(&mut self) -> KuraKuraResponse {
+        let account_id = Uuid::new_v4().to_string();
 
-        self.users.insert(user_id.clone(), User {
-            id:         user_id.clone(),
+        self.accounts.insert(account_id.clone(), Account {
+            id:         account_id.clone(),
             name:       "".into(),
             room_id:    None,
         });
 
-        Ok(UserCreated {id: user_id})
+        Ok(AccountCreated {id: account_id})
     }
 
-    fn set_name(&mut self, auth: UserId, name: String) -> KuraKuraResponse {
+    fn set_name(&mut self, auth: AccountId, name: String) -> KuraKuraResponse {
         if name.len() > 250 {return Err(NameTooLong);}
 
         let user: &mut User = self.get_user(&auth)?;

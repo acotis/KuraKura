@@ -1,7 +1,14 @@
 
-+ Get the web app to parse JSON.
++ Get the web app to manage websocket connections.
++ Get the web app to return JSON.
 + Write tests for the web app?
     - Host can't play until player arrives.
+    - Frame all tests in terms of the actions of *clients* (i.e. WebSocket connections).
+      These clients can do things like create accounts, take actions with those accounts
+      (by providing the API-given credential), and maybe other things? But ultimately
+      they are the things that the server deals with.
+    - Same user can have multiple clients and they all work.
++ Make there be a 1/100 chance that a stone is textured with the stare emoji (not in the first ~5 moves so as not to be confusing).
 
 + Write a bunch of insta tests.
     - Wins.
