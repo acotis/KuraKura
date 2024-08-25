@@ -4,6 +4,7 @@ use insta::internals::SettingsBindDropGuard;
 
 use kurakura::Player::{self, *};
 use kurakura::Game;
+use kurakura::Turn;
 use kurakura::SpinDirection::{self, *};
 
 #[test]
@@ -11,14 +12,10 @@ fn original_test() {
     let _guard = configure_insta();
     let game = &mut Game::new(9, 2);
 
-    insta::assert_snapshot!(play(game, Black, 0, 0));
-    insta::assert_snapshot!(spin(game, Black, 0, 0, 1, CW));
-    insta::assert_snapshot!(play(game, White, 0, 0));
-    insta::assert_snapshot!(spin(game, White, 0, 0, 1, CW));
-    insta::assert_snapshot!(play(game, White, 0, 1));
-    insta::assert_snapshot!(spin(game, White, 0, 0, 5, CW));
-    insta::assert_snapshot!(play(game, Black, 0, 3));
-    insta::assert_snapshot!(spin(game, Black, 0, 3, 2, CCW));
+    insta::assert_snapshot!(turn(game, Black, (0, 0), (0, 0), 1, CW));
+    insta::assert_snapshot!(turn(game, White, (0, 0), (0, 0), 1, CW));
+    insta::assert_snapshot!(turn(game, White, (0, 1), (0, 0), 5, CW));
+    insta::assert_snapshot!(turn(game, Black, (0, 3), (0, 3), 2, CCW));
 }
 
 fn configure_insta() -> SettingsBindDropGuard {
@@ -27,23 +24,31 @@ fn configure_insta() -> SettingsBindDropGuard {
     return settings.bind_to_scope();
 }
 
-fn play(game: &mut Game, player: Player, r: usize, c: usize) -> String {
+fn turn(game: &mut Game, player: Player, (r, c): (usize, usize), (sr, sc): (usize, usize), ss: usize, dir: SpinDirection) -> String {
+    let turn = Turn {
+        player: player,
+        play_row: r,
+        play_col: c,
+        spin_ul_row: sr,
+        spin_ul_col: sc,
+        spin_size: ss,
+        spin_dir: dir,
+    };
+
     let initial = game.to_string();
-    let result  = game.play(player, r, c);
+    let result  = game.turn(turn);
     let ending  = game.to_string();
 
-    let mut ret = format!("{player:?} plays at ({r}, {c})... => {result:?}\n");
-
-    ret.push_str(&juxtapose(&initial, &ending));
-    return ret;
-}
-
-fn spin(game: &mut Game, player: Player, r: usize, c: usize, s: usize, d: SpinDirection) -> String {
-    let initial = game.to_string();
-    let result  = game.spin(player, r, c, s, d);
-    let ending  = game.to_string();
-
-    let mut ret = format!("{player:?} spins from ({r}, {c}) {s} tile {d:?}... => {result:?}\n");
+    let mut ret = format!(
+        "{:?} plays at ({}, {}) and spins from ({}, {}) {} tiles {:?}... => {result:?}\n",
+        turn.player,
+        turn.play_row,
+        turn.play_col,
+        turn.spin_ul_row,
+        turn.spin_ul_col,
+        turn.spin_size,
+        turn.spin_dir
+    );
 
     ret.push_str(&juxtapose(&initial, &ending));
     return ret;

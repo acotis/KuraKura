@@ -1,6 +1,5 @@
 
 - In cell.rs, make a Stone type instead of having it be a tuple in Cell.
-- Remove the concept of a turn phase, those aren't a thing anymore.
 
 + Integrate the web app with *actual* websockets.
     - It should actively send updates to all participants in a room when:
