@@ -138,8 +138,9 @@ pub struct Server {
 impl Server {
     pub fn new_socket(&mut self) -> SocketId {
         let socket = Socket::new();
-        self.sockets.insert(socket.id, socket);
-        socket.id
+        let socket_id = socket.id.clone();
+        self.sockets.insert(socket_id.clone(), socket);
+        socket_id
     }
 
     pub fn handle_json(&mut self, socket_id: SocketId, json: &str) -> ServerResult {
@@ -172,13 +173,14 @@ impl Server {
         }
         
         let account = Account::new();
-        self.accounts.insert(account.id, account);
-        Ok(AccountRegistered {id: account.id})
+        let account_id = account.id.clone();
+        self.accounts.insert(account_id.clone(), account);
+        Ok(AccountRegistered {id: account_id})
     }
 
     fn login(&mut self, socket_id: SocketId, account_id: AccountId) -> UserResponse {
-        let Some(socket)  = self.sockets.get_mut(&socket_id)   else {unreachable!()};
-        let Some(account) = self.accounts.get_mut(&account_id) else {return Err(AccountNotFound);};
+        let Some(socket) = self.sockets.get_mut(&socket_id)   else {unreachable!()};
+        let Some(_)      = self.accounts.get_mut(&account_id) else {return Err(AccountNotFound);};
 
         if socket.account_id != None {
             return Err(AlreadyLoggedIn);
@@ -190,7 +192,7 @@ impl Server {
 
     fn set_name(&mut self, socket_id: SocketId, name: String) -> UserResponse {
         let Some(socket)     = self.sockets.get_mut(&socket_id)   else {unreachable!()};
-        let Some(account_id) = socket.account_id                  else {return Err(NotLoggedIn);};
+        let Some(account_id) = socket.account_id.clone()          else {return Err(NotLoggedIn);};
         let Some(account)    = self.accounts.get_mut(&account_id) else {return Err(AccountNotFound);};
 
         if name.len() > 250 {
@@ -203,7 +205,7 @@ impl Server {
 
     fn create_room(&mut self, socket_id: SocketId) -> UserResponse {
         let Some(socket)     = self.sockets.get_mut(&socket_id)   else {unreachable!()};
-        let Some(account_id) = socket.account_id                  else {return Err(NotLoggedIn);};
+        let Some(account_id) = socket.account_id.clone()          else {return Err(NotLoggedIn);};
         let Some(account)    = self.accounts.get_mut(&account_id) else {return Err(AccountNotFound);};
 
         if account.room_id != None {
@@ -211,14 +213,15 @@ impl Server {
         }
 
         let room = Room::new(&account_id);
-        self.rooms.insert(room.id, room);
-        account.room_id = Some(room.id);
-        Ok(RoomCreated {id: room.id})
+        let room_id = room.id.clone();
+        self.rooms.insert(room_id.clone(), room);
+        account.room_id = Some(room_id.clone());
+        Ok(RoomCreated {id: room_id})
     }
 
     fn join_room(&mut self, socket_id: SocketId, room_id: RoomId) -> UserResponse {
         let Some(socket)     = self.sockets.get_mut(&socket_id)   else {unreachable!()};
-        let Some(account_id) = socket.account_id                  else {return Err(NotLoggedIn);};
+        let Some(account_id) = socket.account_id.clone()          else {return Err(NotLoggedIn);};
         let Some(account)    = self.accounts.get_mut(&account_id) else {return Err(AccountNotFound);};
         let Some(room)       = self.rooms.get_mut(&room_id)       else {return Err(RoomNotFound);};
 
@@ -237,7 +240,7 @@ impl Server {
 
     fn take_turn(&mut self, socket_id: SocketId, turn: Turn) -> UserResponse {
         let Some(socket)     = self.sockets.get_mut(&socket_id)   else {unreachable!()};
-        let Some(account_id) = socket.account_id                  else {return Err(NotLoggedIn);};
+        let Some(account_id) = socket.account_id.clone()          else {return Err(NotLoggedIn);};
         let Some(account)    = self.accounts.get_mut(&account_id) else {return Err(AccountNotFound);};
         let Some(room_id)    = account.room_id.clone()            else {return Err(AccountDoesntHaveRoom);};
         let Some(room)       = self.rooms.get_mut(&room_id)       else {return Err(RoomNotFound);};
