@@ -11,8 +11,6 @@ use uuid::Uuid;
 //use std::time::{Instant};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Error};
-use std::process::ExitCode;
-use std::process::Termination;
 use serde::{Serialize, Deserialize};
 use serde_json::from_str;
 
@@ -20,7 +18,7 @@ use serde_json::from_str;
 
 type AccountId = String;
 type RoomId = String;
-type SocketId = String;
+pub type SocketId = String;
 
 // User inputs and outputs (i.e., things the user sends us and receives in response).
 
@@ -39,10 +37,6 @@ pub enum UserOk {
     AccountRegistered   {id: AccountId},
     RoomCreated         {id: RoomId},
     Okay,
-}
-
-impl Termination for UserOk {
-    fn report(self) -> ExitCode {ExitCode::from(0)}
 }
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -11,22 +11,37 @@ use axum::{
 
 use kurakura::server::{
     Server,
-    KuraKuraOk::*,
-    KuraKuraResponse,
+    UserOk::*,
+    UserResponse,
+    SocketId,
 };
 
-fn main() -> KuraKuraResponse {
+fn call(server: &mut Server, socket: SocketId, json: &str) -> UserResponse {
+    match server.handle_json(socket, json) {
+        Err(_) => panic!(),
+        Ok(response) => serde_json::from_str(&response)
+                        .expect("server's response was not valid"),
+    }
+}
+
+fn main() {
     let mut server = Server::new();
 
-    let cu  = &format!(r#"{{"CreateUser": {{}}}}"#);
+    let evan1 = server.new_socket();
+    let lynn1 = server.new_socket();
+    let lexi1 = server.new_socket();
 
-    let UserCreated {id: evan } = server.handle_json(cu)?  else {panic!();};
-    let UserCreated {id: lynn } = server.handle_json(cu)?  else {panic!();};
-    let UserCreated {id: lexi } = server.handle_json(cu)?  else {panic!();};
+    let cu  = &format!(r#"{{"Register": {{}}}}"#);
 
-    let sn1 = &format!(r#"{{"SetName": {{"auth": "{evan}", "name": "Evan is my name"}}}}"#);
-    let sn2 = &format!(r#"{{"SetName": {{"auth": "{lynn}", "name": "Laqme"}}}}"#);
-    let sn3 = &format!(r#"{{"SetName": {{"auth": "{lexi}", "name": "The Lex"}}}}"#);
+    let Ok(AccountRegistered {id: _evan}) = call(&mut server, evan1, cu) else {panic!();};
+    let Ok(AccountRegistered {id: _lynn}) = call(&mut server, lynn1, cu) else {panic!();};
+    let Ok(AccountRegistered {id: _lexi}) = call(&mut server, lexi1, cu) else {panic!();};
+
+    /*
+
+    let sn1 = &format!(r#"{{"SetName": {{"name": "Evan is my name"}}}}"#);
+    let sn2 = &format!(r#"{{"SetName": {{"name": "Laqme"}}}}"#);
+    let sn3 = &format!(r#"{{"SetName": {{"name": "The Lex"}}}}"#);
 
     let NameSet     {         } = server.handle_json(sn1)? else {panic!();};
     let NameSet     {         } = server.handle_json(sn2)? else {panic!();};
@@ -60,6 +75,7 @@ fn main() -> KuraKuraResponse {
     println!("{}", tt2);
 
     Ok(TurnTaken {})
+    */
 }
 
 
