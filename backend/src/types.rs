@@ -40,7 +40,8 @@ pub enum TurnError {
     PieceAlreadyThere,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)] pub struct Turn {
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+pub struct Turn {
     pub player:         Player,
     pub play_row:       usize,
     pub play_col:       usize,
