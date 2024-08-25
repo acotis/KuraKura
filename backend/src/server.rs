@@ -137,8 +137,8 @@ impl Server {
         socket_id
     }
 
-    pub fn handle_json(&mut self, socket_id: SocketId, json: &str) -> ServerResult {
-        let Some(_) = self.sockets.get(&socket_id) else {return Err(SocketNotFound);};
+    pub fn handle_json(&mut self, socket_id: &SocketId, json: &str) -> ServerResult {
+        let Some(_) = self.sockets.get(socket_id) else {return Err(SocketNotFound);};
 
         Ok(
             serde_json::to_string(
@@ -159,8 +159,8 @@ impl Server {
 // Private methods directly corresponding to API calls.
 
 impl Server {
-    fn register(&mut self, socket_id: SocketId) -> UserResponse {
-        let Some(socket) = self.sockets.get_mut(&socket_id) else {unreachable!()};
+    fn register(&mut self, socket_id: &SocketId) -> UserResponse {
+        let Some(socket) = self.sockets.get_mut(socket_id) else {unreachable!()};
 
         if socket.account_id != None {
             return Err(AlreadyLoggedIn);
@@ -172,8 +172,8 @@ impl Server {
         Ok(AccountRegistered {id: account_id})
     }
 
-    fn login(&mut self, socket_id: SocketId, account_id: AccountId) -> UserResponse {
-        let Some(socket) = self.sockets.get_mut(&socket_id)   else {unreachable!()};
+    fn login(&mut self, socket_id: &SocketId, account_id: AccountId) -> UserResponse {
+        let Some(socket) = self.sockets.get_mut(socket_id)    else {unreachable!()};
         let Some(_)      = self.accounts.get_mut(&account_id) else {return Err(AccountNotFound);};
 
         if socket.account_id != None {
@@ -184,8 +184,8 @@ impl Server {
         Ok(Okay)
     }
 
-    fn set_name(&mut self, socket_id: SocketId, name: String) -> UserResponse {
-        let Some(socket)     = self.sockets.get_mut(&socket_id)   else {unreachable!()};
+    fn set_name(&mut self, socket_id: &SocketId, name: String) -> UserResponse {
+        let Some(socket)     = self.sockets.get_mut(socket_id)    else {unreachable!()};
         let Some(account_id) = socket.account_id.clone()          else {return Err(NotLoggedIn);};
         let Some(account)    = self.accounts.get_mut(&account_id) else {return Err(AccountNotFound);};
 
@@ -197,8 +197,8 @@ impl Server {
         Ok(Okay)
     }
 
-    fn create_room(&mut self, socket_id: SocketId) -> UserResponse {
-        let Some(socket)     = self.sockets.get_mut(&socket_id)   else {unreachable!()};
+    fn create_room(&mut self, socket_id: &SocketId) -> UserResponse {
+        let Some(socket)     = self.sockets.get_mut(socket_id)    else {unreachable!()};
         let Some(account_id) = socket.account_id.clone()          else {return Err(NotLoggedIn);};
         let Some(account)    = self.accounts.get_mut(&account_id) else {return Err(AccountNotFound);};
 
@@ -213,8 +213,8 @@ impl Server {
         Ok(RoomCreated {id: room_id})
     }
 
-    fn join_room(&mut self, socket_id: SocketId, room_id: RoomId) -> UserResponse {
-        let Some(socket)     = self.sockets.get_mut(&socket_id)   else {unreachable!()};
+    fn join_room(&mut self, socket_id: &SocketId, room_id: RoomId) -> UserResponse {
+        let Some(socket)     = self.sockets.get_mut(socket_id)    else {unreachable!()};
         let Some(account_id) = socket.account_id.clone()          else {return Err(NotLoggedIn);};
         let Some(account)    = self.accounts.get_mut(&account_id) else {return Err(AccountNotFound);};
         let Some(room)       = self.rooms.get_mut(&room_id)       else {return Err(RoomNotFound);};
@@ -232,8 +232,8 @@ impl Server {
         Ok(Okay)
     }
 
-    fn take_turn(&mut self, socket_id: SocketId, turn: Turn) -> UserResponse {
-        let Some(socket)     = self.sockets.get_mut(&socket_id)   else {unreachable!()};
+    fn take_turn(&mut self, socket_id: &SocketId, turn: Turn) -> UserResponse {
+        let Some(socket)     = self.sockets.get_mut(socket_id)    else {unreachable!()};
         let Some(account_id) = socket.account_id.clone()          else {return Err(NotLoggedIn);};
         let Some(account)    = self.accounts.get_mut(&account_id) else {return Err(AccountNotFound);};
         let Some(room_id)    = account.room_id.clone()            else {return Err(AccountDoesntHaveRoom);};

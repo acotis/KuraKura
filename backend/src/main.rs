@@ -16,9 +16,9 @@ use kurakura::server::{
     SocketId,
 };
 
-fn call(server: &mut Server, socket: SocketId, json: &str) -> UserResponse {
+fn call(server: &mut Server, socket: &SocketId, json: &str) -> UserResponse {
     match server.handle_json(socket, json) {
-        Err(_) => panic!(),
+        Err(_) => panic!("server's response was an error"),
         Ok(response) => serde_json::from_str(&response)
                         .expect("server's response was not valid"),
     }
@@ -31,11 +31,11 @@ fn main() {
     let lynn1 = server.new_socket();
     let lexi1 = server.new_socket();
 
-    let cu  = &format!(r#"{{"Register": {{}}}}"#);
+    let cu  = &format!(r#""Register""#);
 
-    let Ok(AccountRegistered {id: _evan}) = call(&mut server, evan1, cu) else {panic!();};
-    let Ok(AccountRegistered {id: _lynn}) = call(&mut server, lynn1, cu) else {panic!();};
-    let Ok(AccountRegistered {id: _lexi}) = call(&mut server, lexi1, cu) else {panic!();};
+    let Ok(AccountRegistered {id: _evan}) = call(&mut server, &evan1, cu) else {panic!();};
+    let Ok(AccountRegistered {id: _lynn}) = call(&mut server, &lynn1, cu) else {panic!();};
+    let Ok(AccountRegistered {id: _lexi}) = call(&mut server, &lexi1, cu) else {panic!();};
 
     /*
 
@@ -62,8 +62,11 @@ fn main() {
 
     let TurnTaken   {         } = server.handle_json(tt1)? else {panic!();};
     let TurnTaken   {         } = server.handle_json(tt2)? else {panic!();};
+    */
 
     print!("{server}");
+
+    /*
     println!("{}", cu);
     println!("{}", sn1);
     println!("{}", sn2);
@@ -73,8 +76,6 @@ fn main() {
     println!("{}", jr);
     println!("{}", tt1);
     println!("{}", tt2);
-
-    Ok(TurnTaken {})
     */
 }
 
