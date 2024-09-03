@@ -7,6 +7,9 @@
         - A move is made.
     - It should delete any socket that hasn't had activity in, say, an hour.
 
+- Parameterize Server over Game and Turn types.
+- Separate Server out into its own crate.
+
 + Write tests for the web app?
     - Host can't play until player arrives.
     - Frame all tests in terms of the actions of *clients* (i.e. WebSocket connections).
