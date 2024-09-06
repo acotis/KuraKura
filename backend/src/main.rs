@@ -1,6 +1,8 @@
 
 #[allow(unused)]
 
+use std::sync::Mutex;
+
 use axum::{
     extract::ws::{WebSocketUpgrade, WebSocket},
     routing::get,
@@ -9,12 +11,18 @@ use axum::{
     Json,
 };
 
+use serde::Serialize;
+
 use kurakura::server::{
     Server,
     UserOk::*,
     UserResponse,
     SocketId,
 };
+
+static mut X: Mutex<u32> = Mutex::new(42);
+
+/*
 
 fn call(server: &mut Server, socket: &SocketId, json: &str) -> UserResponse {
     match server.handle_json(socket, json) {
@@ -78,9 +86,10 @@ fn main() {
     println!("{}", tt2);
     */
 }
+*/
 
 
-/*
+
 #[tokio::main]
 async fn main() {
     //let app = Router::new().route("/", get(|| async { "Secret string for Lynn" }));
@@ -119,12 +128,15 @@ async fn handle_socket(mut socket: WebSocket) {
             return;
         };
 
-        println!("{msg:?}");
+        unsafe {
+            println!("X = {X:?} {msg:?}");
+        }
 
         if socket.send(msg).await.is_err() {
+            println!("couldn't send response because client disconnected");
             // client disconnected
             return;
         }
     }
 }
-*/
+
