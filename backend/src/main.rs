@@ -1,15 +1,21 @@
 
 #[allow(unused)]
 
-use std::sync::Mutex;
-use axum::{extract::ws::{WebSocketUpgrade, WebSocket}, routing::get, response::{Response}, Router};
+use tokio::sync::Mutex;
+use std::cell::OnceCell;
 //use axum::{extract::ws::{WebSocketUpgrade, WebSocket}, routing::get, response::{IntoResponse, Response}, Router, Json};
+use axum::{
+    extract::ws::{WebSocketUpgrade, WebSocket, Message::Text},
+    routing::get,
+    response::Response,
+    Router
+};
 //use serde::Serialize;
 //use kurakura::server::{Server, UserOk::*, UserResponse, SocketId};
+use kurakura::server::Server;
+use futures_util::stream::StreamExt;
 
-static mut X: Mutex<u32> = Mutex::new(0);
-
-//static mut X: u32 = 0;
+static mut SERVER: Mutex<OnceCell<Server>> = Mutex::new(OnceCell::<Server>::new());
 
 #[tokio::main]
 async fn main() {
@@ -23,26 +29,30 @@ async fn handler(ws: WebSocketUpgrade) -> Response {
     ws.on_upgrade(handle_socket)
 }
 
-async fn handle_socket(mut socket: WebSocket) {
-    while let Some(msg) = socket.recv().await {
-        let msg = if let Ok(msg) = msg {
-            msg
-        } else {
-            // client disconnected
-            return;
-        };
+async fn handle_socket(socket: WebSocket) {
+    let (sender, mut receiver) = socket.split();
 
+    let handle = unsafe {
+        SERVER.lock()
+              .await
+              .get_or_init(|| Server::new());
+
+        SERVER.lock()
+              .await
+              .get_mut()
+              .expect("server magically doesn't exist yet (registering socket)")
+              .register_socket(sender)
+    };
+
+    while let Some(Ok(Text(msg))) = receiver.next().await {
         unsafe {
-            let mut ptr = X.lock().unwrap();
-            *ptr += 1;
-            println!("X = {ptr:?}");
-        }
-
-        if socket.send(msg).await.is_err() {
-            // client disconnected
-
-            println!("couldn't send response because client disconnected");
-            return;
+            SERVER.lock()
+                  .await
+                  .get_mut()
+                  .expect("server magically doesn't exist yet (handling request)")
+                  .handle_request(&handle, &msg)
+                  .await
+                  .expect("server gave error");
         }
     }
 }

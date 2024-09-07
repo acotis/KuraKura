@@ -13,6 +13,8 @@ use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Error};
 use serde::{Serialize, Deserialize};
 use serde_json::from_str;
+use axum::extract::ws::{WebSocket, Message::{self, Text}};
+use futures_util::{SinkExt, stream::SplitSink};
 
 // Public-facing types.
 
@@ -58,17 +60,18 @@ pub enum UserErr {
 
 pub type UserResponse = Result<UserOk, UserErr>;
 
-// Server outputs (i.e., possible return values of the server's .handle_json() method).
+// Server outputs (i.e., possible return values of the server's .handle_request() method).
 
+#[derive(Debug)]
 pub enum ServerError {SocketNotFound}
-pub type ServerResult = Result<String, ServerError>;
+pub type ServerResult = Result<(), ServerError>;
 
 // Basic entities recognized by the server.
 
 struct Socket {
     id:         SocketId,
     account_id: Option<AccountId>,
-    //writer:     SplitSink<WebSocket, Message>
+    writer:     SplitSink<WebSocket, Message>,
 }
 
 struct Account {
@@ -89,12 +92,11 @@ struct Room {
 // Basic methods for those entities.
 
 impl Socket {
-    //fn new(writer: SplitSink<WebSocket, Message>) -> Self {
-    fn new() -> Self {
+    fn new(writer: SplitSink<WebSocket, Message>) -> Self {
         Socket {
             id:         Uuid::new_v4().to_string(),
             account_id: None,
-            //writer:     writer,
+            writer:     writer,
         }
     }
 }
@@ -133,16 +135,31 @@ pub struct Server {
 // Public methods of Server.
 
 impl Server {
-    //pub fn new_socket(&mut self, writer: SplitSink<Websocket, Message>) -> SocketId {
-    pub fn new_socket(&mut self) -> SocketId {
-        //let socket = Socket::new(writer);
-        let socket = Socket::new();
+    pub fn register_socket(&mut self, writer: SplitSink<WebSocket, Message>) -> SocketId {
+        let socket = Socket::new(writer);
         let socket_id = socket.id.clone();
         self.sockets.insert(socket_id.clone(), socket);
         socket_id
     }
 
-    pub fn handle_json(&mut self, socket_id: &SocketId, json: &str) -> ServerResult {
+    pub async fn handle_request(&mut self, socket_id: &SocketId, json: &str) -> ServerResult {
+        for (_, socket) in &mut self.sockets {
+            if socket.writer.send(Text(json.into())).await.is_err() {
+                // client disconnected
+
+                //println!("couldn't send response because client disconnected");
+                //return;
+            }
+        }
+
+        Ok(())
+    }
+
+
+
+    
+
+        /*
         let Some(_) = self.sockets.get(socket_id) else {return Err(SocketNotFound);};
 
         Ok(
@@ -158,7 +175,7 @@ impl Server {
                 }
             ).expect("serde JSON error")
         )
-    }
+        */
 }
 
 // Private methods directly corresponding to API calls.
