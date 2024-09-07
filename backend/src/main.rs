@@ -2,25 +2,55 @@
 #[allow(unused)]
 
 use std::sync::Mutex;
+use axum::{extract::ws::{WebSocketUpgrade, WebSocket}, routing::get, response::{Response}, Router};
+//use axum::{extract::ws::{WebSocketUpgrade, WebSocket}, routing::get, response::{IntoResponse, Response}, Router, Json};
+//use serde::Serialize;
+//use kurakura::server::{Server, UserOk::*, UserResponse, SocketId};
 
-use axum::{
-    extract::ws::{WebSocketUpgrade, WebSocket},
-    routing::get,
-    response::{IntoResponse, Response},
-    Router,
-    Json,
-};
+//static mut X: Mutex<u32> = Mutex::new(0);
 
-use serde::Serialize;
+static mut X: u32 = 0;
 
-use kurakura::server::{
-    Server,
-    UserOk::*,
-    UserResponse,
-    SocketId,
-};
+#[tokio::main]
+async fn main() {
+    let app = Router::new().route("/", get(handler));
 
-static mut X: Mutex<u32> = Mutex::new(42);
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    axum::serve(listener, app).await.unwrap();
+}
+
+async fn handler(ws: WebSocketUpgrade) -> Response {
+    ws.on_upgrade(handle_socket)
+}
+
+async fn handle_socket(mut socket: WebSocket) {
+    while let Some(msg) = socket.recv().await {
+        let msg = if let Ok(msg) = msg {
+            msg
+        } else {
+            // client disconnected
+            return;
+        };
+
+        unsafe {
+            X += 1;
+            println!("X = {X}");
+        }
+
+        if socket.send(msg).await.is_err() {
+            // client disconnected
+
+            println!("couldn't send response because client disconnected");
+            return;
+        }
+    }
+}
+
+
+
+
+
+
 
 /*
 
@@ -88,55 +118,4 @@ fn main() {
 }
 */
 
-
-
-#[tokio::main]
-async fn main() {
-    //let app = Router::new().route("/", get(|| async { "Secret string for Lynn" }));
-    let app = Router::new().route("/", get(handler));
-    //let app = Router::new().route("/", get(send_json));
-
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
-    axum::serve(listener, app).await.unwrap();
-}
-
-#[derive(Serialize)]
-struct MyStruct {
-    first_field: u32,
-    second_field: String,
-}
-
-async fn send_json() -> Json<MyStruct> {
-    Json(MyStruct { first_field: 1, second_field: "hello".into() })
-}
-
-
-async fn handler(ws: WebSocketUpgrade) -> Response {
-    println!("handler");
-    ws.on_upgrade(handle_socket)
-}
-
-async fn handle_socket(mut socket: WebSocket) {
-    println!("handle socket");
-    socket.send("The password is fire".into());
-
-    while let Some(msg) = socket.recv().await {
-        let msg = if let Ok(msg) = msg {
-            msg
-        } else {
-            // client disconnected
-            return;
-        };
-
-        unsafe {
-            println!("X = {X:?} {msg:?}");
-        }
-
-        if socket.send(msg).await.is_err() {
-            println!("couldn't send response because client disconnected");
-            // client disconnected
-            return;
-        }
-    }
-}
 

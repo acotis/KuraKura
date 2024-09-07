@@ -68,6 +68,7 @@ pub type ServerResult = Result<String, ServerError>;
 struct Socket {
     id:         SocketId,
     account_id: Option<AccountId>,
+    //writer:     SplitSink<WebSocket, Message>
 }
 
 struct Account {
@@ -88,10 +89,12 @@ struct Room {
 // Basic methods for those entities.
 
 impl Socket {
+    //fn new(writer: SplitSink<WebSocket, Message>) -> Self {
     fn new() -> Self {
         Socket {
             id:         Uuid::new_v4().to_string(),
             account_id: None,
+            //writer:     writer,
         }
     }
 }
@@ -130,7 +133,9 @@ pub struct Server {
 // Public methods of Server.
 
 impl Server {
+    //pub fn new_socket(&mut self, writer: SplitSink<Websocket, Message>) -> SocketId {
     pub fn new_socket(&mut self) -> SocketId {
+        //let socket = Socket::new(writer);
         let socket = Socket::new();
         let socket_id = socket.id.clone();
         self.sockets.insert(socket_id.clone(), socket);
