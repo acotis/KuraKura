@@ -1,11 +1,12 @@
 
-#[allow(unused)]
+#![allow(unused)]
 
 use tokio::sync::Mutex;
 use std::sync::LazyLock;
+use std::sync::Arc;
 //use axum::{extract::ws::{WebSocketUpgrade, WebSocket}, routing::get, response::{IntoResponse, Response}, Router, Json};
 use axum::{
-    extract::ws::{WebSocketUpgrade, WebSocket, Message::Text},
+    extract::{State, ws::{WebSocketUpgrade, WebSocket, Message::Text}},
     routing::get,
     response::Response,
     Router
@@ -15,37 +16,35 @@ use axum::{
 use kurakura::server::Server;
 use futures_util::stream::StreamExt;
 
-static SERVER: LazyLock<Mutex<Server>> = LazyLock::new(|| Mutex::new(Server::new()));
-
 #[tokio::main]
 async fn main() {
-    let app = Router::new().route("/", get(handler));
+    let server = Arc::new(Mutex::new(Server::new()));
+    let app = Router::new().route("/", get(handler)).with_state(server);
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
 
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn handler(ws: WebSocketUpgrade) -> Response {
-    ws.on_upgrade(handle_socket)
+#[axum::debug_handler]
+async fn handler(State(state): State<Arc::<Mutex::<Server>>>, ws: WebSocketUpgrade) -> Response {
+    ws.on_upgrade(|socket| async {handle_socket(state, socket).await})
 }
 
-async fn handle_socket(socket: WebSocket) {
+async fn handle_socket(state: Arc::<Mutex::<Server>>, socket: WebSocket) {
     let (sender, mut receiver) = socket.split();
 
-    let handle = unsafe {
-        SERVER.lock()
-              .await
-              .register_socket(sender)
+    let handle = {
+        state.lock()
+             .await
+             .register_socket(sender)
     };
 
     while let Some(Ok(Text(msg))) = receiver.next().await {
-        unsafe {
-            SERVER.lock()
-                  .await
-                  .handle_request(&handle, &msg)
-                  .await
-                  .expect("server gave error");
-        }
+        state.lock()
+             .await
+             .handle_request(&handle, &msg)
+             .await
+             .expect("server gave error");
     }
 }
 

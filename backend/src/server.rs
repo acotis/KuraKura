@@ -1,4 +1,6 @@
 
+#![allow(unused)]
+
 use crate::Game;
 use crate::Turn;
 use crate::TurnError;
