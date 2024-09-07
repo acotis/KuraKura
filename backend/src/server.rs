@@ -146,7 +146,7 @@ impl Server {
 
     pub async fn handle_request(&mut self, socket_id: &SocketId, json: &str) -> ServerResult {
         for (_, socket) in &mut self.sockets {
-            if socket.writer.send(Text(json.into())).await.is_err() {
+            if socket.writer.send(Text(String::from("[") + socket_id + "] " + json)).await.is_err() {
                 // client disconnected
 
                 //println!("couldn't send response because client disconnected");
