@@ -7,9 +7,9 @@ use axum::{extract::ws::{WebSocketUpgrade, WebSocket}, routing::get, response::{
 //use serde::Serialize;
 //use kurakura::server::{Server, UserOk::*, UserResponse, SocketId};
 
-//static mut X: Mutex<u32> = Mutex::new(0);
+static mut X: Mutex<u32> = Mutex::new(0);
 
-static mut X: u32 = 0;
+//static mut X: u32 = 0;
 
 #[tokio::main]
 async fn main() {
@@ -33,8 +33,9 @@ async fn handle_socket(mut socket: WebSocket) {
         };
 
         unsafe {
-            X += 1;
-            println!("X = {X}");
+            let mut ptr = X.lock().unwrap();
+            *ptr += 1;
+            println!("X = {ptr:?}");
         }
 
         if socket.send(msg).await.is_err() {
