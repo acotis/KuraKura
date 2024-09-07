@@ -2,7 +2,7 @@
 #[allow(unused)]
 
 use tokio::sync::Mutex;
-use std::cell::OnceCell;
+use std::sync::LazyLock;
 //use axum::{extract::ws::{WebSocketUpgrade, WebSocket}, routing::get, response::{IntoResponse, Response}, Router, Json};
 use axum::{
     extract::ws::{WebSocketUpgrade, WebSocket, Message::Text},
@@ -15,13 +15,13 @@ use axum::{
 use kurakura::server::Server;
 use futures_util::stream::StreamExt;
 
-static mut SERVER: Mutex<OnceCell<Server>> = Mutex::new(OnceCell::<Server>::new());
+static SERVER: LazyLock<Mutex<Server>> = LazyLock::new(|| Mutex::new(Server::new()));
 
 #[tokio::main]
 async fn main() {
     let app = Router::new().route("/", get(handler));
-
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+
     axum::serve(listener, app).await.unwrap();
 }
 
@@ -35,12 +35,6 @@ async fn handle_socket(socket: WebSocket) {
     let handle = unsafe {
         SERVER.lock()
               .await
-              .get_or_init(|| Server::new());
-
-        SERVER.lock()
-              .await
-              .get_mut()
-              .expect("server magically doesn't exist yet (registering socket)")
               .register_socket(sender)
     };
 
@@ -48,8 +42,6 @@ async fn handle_socket(socket: WebSocket) {
         unsafe {
             SERVER.lock()
                   .await
-                  .get_mut()
-                  .expect("server magically doesn't exist yet (handling request)")
                   .handle_request(&handle, &msg)
                   .await
                   .expect("server gave error");
