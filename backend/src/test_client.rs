@@ -1,8 +1,7 @@
 
-use std::pin::Pin;
-use std::task::{self, Poll::*};
+use std::task::Poll::*;
 
-use futures_util::{SinkExt, StreamExt, stream::{SplitSink, SplitStream}, Future, poll};
+use futures_util::{SinkExt, StreamExt, stream::{SplitSink, SplitStream}, poll};
 use http::Uri;
 use tokio_websockets::{ClientBuilder, Message, WebSocketStream, MaybeTlsStream};
 use tokio::net::TcpStream;
@@ -65,7 +64,7 @@ async fn call_and_response(target_id: usize, actual_id: usize, sender: &mut Send
     let response = get_response(actual_id, receiver).await;
 
     if actual_id == target_id {
-        pause(900);
+        pause(900).await;
     } else {
         pause(800 - 100 * actual_id).await;
     }
@@ -97,7 +96,7 @@ pub async fn run_test_client(id: usize) {
 
     let cu = "hi";
 
-    let resp = call_and_response(1, id, &mut sender, &mut receiver, cu).await;
+    let _resp = call_and_response(1, id, &mut sender, &mut receiver, cu).await;
 
 
 
