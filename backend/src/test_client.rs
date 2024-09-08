@@ -1,12 +1,16 @@
 
-use futures_util::{SinkExt, StreamExt, stream::{SplitSink, SplitStream}};
+use std::pin::Pin;
+use std::task::{self, Poll::*};
+
+use futures_util::{SinkExt, StreamExt, stream::{SplitSink, SplitStream}, Future};
 use http::Uri;
 use tokio_websockets::{ClientBuilder, Message, WebSocketStream, MaybeTlsStream};
 use tokio::net::TcpStream;
 
 use crate::server::UserResponse;
 
-static mut RESPONSES: Vec<String> = Vec::<String>::new();
+type Receiver = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
+type Sender = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>;
 
 fn get_symbol(id: usize) -> char {
     match id {
@@ -20,7 +24,7 @@ async fn pause(millis: usize) {
     tokio::time::sleep(std::time::Duration::from_millis(millis as u64)).await;
 }
 
-async fn send(client_id: usize, client: &mut SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>, text: &'static str) {
+async fn send(client_id: usize, sender: &mut Sender, text: &'static str) {
     println!();
     println!(
         "<—— Client {}: {}",
@@ -28,64 +32,71 @@ async fn send(client_id: usize, client: &mut SplitSink<WebSocketStream<MaybeTlsS
         text
     );
 
-    client.send(Message::text(text))
+    sender.send(Message::text(text))
           .await
           .expect(&format!("couldn't send this text: {text}"));
 }
 
-async fn follow(client_id: usize, mut client: SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>) {
-    loop {
-        let message = client.next().await.unwrap().unwrap();
-        let text = message.as_text().unwrap();
+//fn get_response(client_id: usize, receiver: &mut Receiver) -> Option<UserResponse> {
+fn get_response(client_id: usize, receiver: &mut Receiver) -> Option<String> {
+    let mut cx = task::Context::from_waker(task::Waker::noop()); // Create nothingburger Context.
+    let mut next = receiver.next(); // Create the future for getting next message.
+    let future = Pin::new(&mut next); // Pin the future.
 
-        println!(
-            "——> Client {}: {}",
-            get_symbol(client_id),
-            text,
-        );
+    // Attempt to resolve future (returns Poll<Message>):
 
-        unsafe {
-            while RESPONSES.len() < client_id {
-                RESPONSES.push("".into());
-            }
-
-            RESPONSES[client_id-1] = text.to_owned();
+    match future.poll(&mut cx) {
+        Pending => None,
+        Ready(msg) => {
+            let message = msg.unwrap().unwrap();
+            let text = message.as_text().unwrap();
+            println!("——> Client {}: {}", get_symbol(client_id), text);
+            //serde_json::from_str(&text).expect("server's response was not valid JSON") // parse
+            Some(text.to_owned())
         }
     }
-}
 
-fn get_response(client_id: usize) -> UserResponse {
-    let string = unsafe {RESPONSES[client_id-1].clone()};
-
-    serde_json::from_str(&string)
-                .expect("server's response was not JSON representing a valid value")
+    // Now the future is dropped and thus, if necessary, cancelled.
 }
 
 pub async fn run_test_client(id: usize) {
+
+    // Wait for server to be set up.
+
+    pause(1000).await;
+
+    // Get into numerical order.
+
     pause(100 * id).await;
 
     let uri = Uri::from_static("ws://127.0.0.1:3000");
     let (client, _) = ClientBuilder::from_uri(uri).connect().await.unwrap();
-    let (mut sender, receiver) = client.split();
+    let (mut sender, mut receiver) = client.split();
 
     println!("*** Client {} connected", get_symbol(id));
 
-    tokio::spawn(follow(id, receiver));
+    // Sync up again.
 
-    pause(1000).await;
+    pause(1000 - 100 * id).await;
+
+    // Client 1 sends first message.
 
     //let cu  = format!(r#""Register""#);
 
     let cu = "hi";
 
-    match id {
-        1 => send(id, &mut sender, cu).await,
-        2 => send(id, &mut sender, cu).await,
-        2 => send(id, &mut sender, cu).await,
-        _ => panic!(),
+    if id == 1 {
+        send(id, &mut sender, cu).await;
+    } else {
+        pause(100).await;
     }
 
-    //let response = get_response(id);
+    pause(100).await;
+    let _response = get_response(id, &mut receiver);
+
+    if id == 1 {
+        pause(100).await;
+    }
 
 
 

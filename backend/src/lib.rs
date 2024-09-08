@@ -1,4 +1,6 @@
 
+#![feature(noop_waker)]
+
 mod types;
 mod game;
 mod cell;
