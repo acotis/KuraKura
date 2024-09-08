@@ -145,60 +145,43 @@ impl Server {
     }
 
     pub async fn handle_request(&mut self, socket_id: &SocketId, json: &str) -> ServerResult {
-        for (_, socket) in &mut self.sockets {
-            if socket.writer.send(Text(String::from("[") + socket_id + "] " + json)).await.is_err() {
-                // client disconnected
+        let Some(_) = self.sockets.get(socket_id) else {return Err(SocketNotFound);};
 
-                //println!("couldn't send response because client disconnected");
-                //return;
-            }
-        }
+        match from_str(&json) {
+            Ok(Register       ) => {self.register   (socket_id      )},
+            //Ok(Login    {auth}) => {self.login      (socket_id, auth)},
+            //Ok(SetName  {name}) => {self.set_name   (socket_id, name)},
+            //Ok(CreateRoom     ) => {self.create_room(socket_id      )},
+            //Ok(JoinRoom {room}) => {self.join_room  (socket_id, room)},
+            //Ok(TakeTurn {turn}) => {self.take_turn  (socket_id, turn)},
+            Err(_)              => {self.send(socket_id, Err(InvalidJson));},
+            _                   => {unreachable!();}
+        };
 
         Ok(())
     }
-
-
-
-    
-
-        /*
-        let Some(_) = self.sockets.get(socket_id) else {return Err(SocketNotFound);};
-
-        Ok(
-            serde_json::to_string(
-                &match from_str(&json) {
-                    Ok(Register       ) => {self.register   (socket_id      )},
-                    Ok(Login    {auth}) => {self.login      (socket_id, auth)},
-                    Ok(SetName  {name}) => {self.set_name   (socket_id, name)},
-                    Ok(CreateRoom     ) => {self.create_room(socket_id      )},
-                    Ok(JoinRoom {room}) => {self.join_room  (socket_id, room)},
-                    Ok(TakeTurn {turn}) => {self.take_turn  (socket_id, turn)},
-                    Err(_)              => {Err(InvalidJson)},
-                }
-            ).expect("serde JSON error")
-        )
-        */
 }
 
 // Private methods directly corresponding to API calls.
 
 impl Server {
-    fn register(&mut self, socket_id: &SocketId) -> UserResponse {
+    fn register(&mut self, socket_id: &SocketId) {
         let Some(socket) = self.sockets.get_mut(socket_id) else {unreachable!()};
 
         if socket.account_id != None {
-            return Err(AlreadyLoggedIn);
+            self.send(socket_id, Err(AlreadyLoggedIn)); return;
         }
         
         let account = Account::new();
         let account_id = account.id.clone();
         self.accounts.insert(account_id.clone(), account);
-        self.login(socket_id, account_id.clone()).expect("couldn't log user in when they just created an account??");
 
-        Ok(AccountRegistered {id: account_id})
+        self.send(socket_id, Ok(AccountRegistered {id: account_id}));
     }
 
-    fn login(&mut self, socket_id: &SocketId, account_id: AccountId) -> UserResponse {
+    /*
+
+    fn login(&mut self, socket_id: &SocketId, account_id: AccountId) {
         let Some(socket) = self.sockets.get_mut(socket_id)    else {unreachable!()};
         let Some(_)      = self.accounts.get_mut(&account_id) else {return Err(AccountNotFound);};
 
@@ -210,7 +193,7 @@ impl Server {
         Ok(Okay)
     }
 
-    fn set_name(&mut self, socket_id: &SocketId, name: String) -> UserResponse {
+    fn set_name(&mut self, socket_id: &SocketId, name: String) {
         let Some(socket)     = self.sockets.get_mut(socket_id)    else {unreachable!()};
         let Some(account_id) = socket.account_id.clone()          else {return Err(NotLoggedIn);};
         let Some(account)    = self.accounts.get_mut(&account_id) else {return Err(AccountNotFound);};
@@ -223,7 +206,7 @@ impl Server {
         Ok(Okay)
     }
 
-    fn create_room(&mut self, socket_id: &SocketId) -> UserResponse {
+    fn create_room(&mut self, socket_id: &SocketId) {
         let Some(socket)     = self.sockets.get_mut(socket_id)    else {unreachable!()};
         let Some(account_id) = socket.account_id.clone()          else {return Err(NotLoggedIn);};
         let Some(account)    = self.accounts.get_mut(&account_id) else {return Err(AccountNotFound);};
@@ -239,7 +222,7 @@ impl Server {
         Ok(RoomCreated {id: room_id})
     }
 
-    fn join_room(&mut self, socket_id: &SocketId, room_id: RoomId) -> UserResponse {
+    fn join_room(&mut self, socket_id: &SocketId, room_id: RoomId) {
         let Some(socket)     = self.sockets.get_mut(socket_id)    else {unreachable!()};
         let Some(account_id) = socket.account_id.clone()          else {return Err(NotLoggedIn);};
         let Some(account)    = self.accounts.get_mut(&account_id) else {return Err(AccountNotFound);};
@@ -258,7 +241,7 @@ impl Server {
         Ok(Okay)
     }
 
-    fn take_turn(&mut self, socket_id: &SocketId, turn: Turn) -> UserResponse {
+    fn take_turn(&mut self, socket_id: &SocketId, turn: Turn) {
         let Some(socket)     = self.sockets.get_mut(socket_id)    else {unreachable!()};
         let Some(account_id) = socket.account_id.clone()          else {return Err(NotLoggedIn);};
         let Some(account)    = self.accounts.get_mut(&account_id) else {return Err(AccountNotFound);};
@@ -277,6 +260,16 @@ impl Server {
             Ok(_) => Ok(Okay),
             Err(turn_error) => Err(InvalidTurn {error: turn_error}),
         }
+    }
+
+    */
+}
+
+// Utility methods.
+
+impl Server {
+    async fn send(&mut self, socket_id: &SocketId, msg: UserResponse) {
+        self.sockets.get_mut(socket_id).unwrap().writer.send(Text(serde_json::to_string(&msg).unwrap())).await;
     }
 }
 
