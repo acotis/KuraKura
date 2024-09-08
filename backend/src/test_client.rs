@@ -50,7 +50,7 @@ async fn get_response(client_id: usize, receiver: &mut Receiver) -> Option<Strin
     }
 }
 
-async fn call_and_response(target_id: usize, actual_id: usize, sender: &mut Sender, receiver: &mut Receiver, text: &str) -> Option<String> {
+async fn call_and_response(sender: &mut Sender, receiver: &mut Receiver, actual_id: usize, target_id: usize, text: &str) -> Option<String> {
     if actual_id == target_id {
         send(actual_id, sender, text).await;
     }
@@ -72,29 +72,50 @@ async fn call_and_response(target_id: usize, actual_id: usize, sender: &mut Send
     response
 }
 
+struct Client {
+    sender: Sender,
+    receiver: Receiver,
+    id: usize,
+}
+
+impl Client {
+    async fn car(&mut self, target_id: usize, text: &str) -> Option<String>  {
+        call_and_response(
+            &mut self.sender,
+            &mut self.receiver,
+            self.id,
+            target_id,
+            text
+        ).await
+    }
+}
+
 pub async fn run_test_client(id: usize) {
 
-    // Wait for server to be set up.
+    // Wait for server to be set up, then get into numerical order.
 
-    pause(1000).await;
+    pause(1000 + 100 * id).await;
 
-    // Get into numerical order, connect to the server, and sync up again.
-
-    pause(100 * id).await;
+    // Connect to server.
 
     let uri = Uri::from_static("ws://127.0.0.1:3000");
-    let (client, _) = ClientBuilder::from_uri(uri).connect().await.unwrap();
-    let (mut sender, mut receiver) = client.split();
+    let (websocket, _) = ClientBuilder::from_uri(uri).connect().await.unwrap();
+    let (sender, receiver)  = websocket.split();
+    let mut client = Client {sender, receiver, id};
 
     println!("*** Client {} connected", get_symbol(id));
 
+    // Sync up again.
+
     pause(1000 - 100 * id).await;
 
-    // Client 1 sends first message.
+    // Run scenario.
 
-    let cu = &format!(r#""Register""#);
+    //let cu = &format!(r#""Register""#);
+    //let _resp = call_and_response(cs, 1, cu).await;
 
-    let _resp = call_and_response(1, id, &mut sender, &mut receiver, cu).await;
+    let _ = client.car(1, "Hello world").await;
+    let _ = client.car(2, "hi there").await;
 
 
 
