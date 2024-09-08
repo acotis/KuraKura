@@ -23,7 +23,7 @@ async fn pause(millis: usize) {
     tokio::time::sleep(std::time::Duration::from_millis(millis as u64)).await;
 }
 
-async fn send(client_id: usize, sender: &mut Sender, text: &'static str) {
+async fn send(client_id: usize, sender: &mut Sender, text: &str) {
     println!();
     println!(
         "<—— Client {}: {}",
@@ -31,7 +31,7 @@ async fn send(client_id: usize, sender: &mut Sender, text: &'static str) {
         text
     );
 
-    sender.send(Message::text(text))
+    sender.send(Message::text(text.to_owned()))
           .await
           .expect(&format!("couldn't send this text: {text}"));
 }
@@ -50,7 +50,7 @@ async fn get_response(client_id: usize, receiver: &mut Receiver) -> Option<Strin
     }
 }
 
-async fn call_and_response(target_id: usize, actual_id: usize, sender: &mut Sender, receiver: &mut Receiver, text: &'static str) -> Option<String> {
+async fn call_and_response(target_id: usize, actual_id: usize, sender: &mut Sender, receiver: &mut Receiver, text: &str) -> Option<String> {
     if actual_id == target_id {
         send(actual_id, sender, text).await;
     }
@@ -92,9 +92,7 @@ pub async fn run_test_client(id: usize) {
 
     // Client 1 sends first message.
 
-    //let cu  = format!(r#""Register""#);
-
-    let cu = "hi";
+    let cu = &format!(r#""Register""#);
 
     let _resp = call_and_response(1, id, &mut sender, &mut receiver, cu).await;
 
