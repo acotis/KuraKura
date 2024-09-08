@@ -148,13 +148,13 @@ impl Server {
         let Some(_) = self.sockets.get(socket_id) else {return Err(SocketNotFound);};
 
         match from_str(&json) {
-            Ok(Register       ) => {self.register   (socket_id      )},
+            Ok(Register       ) => {self.register   (socket_id      ).await},
             //Ok(Login    {auth}) => {self.login      (socket_id, auth)},
             //Ok(SetName  {name}) => {self.set_name   (socket_id, name)},
             //Ok(CreateRoom     ) => {self.create_room(socket_id      )},
             //Ok(JoinRoom {room}) => {self.join_room  (socket_id, room)},
             //Ok(TakeTurn {turn}) => {self.take_turn  (socket_id, turn)},
-            Err(_)              => {self.send(socket_id, Err(InvalidJson));},
+            Err(_)              => {self.send(socket_id, Err(InvalidJson)).await;},
             _                   => {unreachable!();}
         };
 
@@ -165,18 +165,18 @@ impl Server {
 // Private methods directly corresponding to API calls.
 
 impl Server {
-    fn register(&mut self, socket_id: &SocketId) {
+    async fn register(&mut self, socket_id: &SocketId) {
         let Some(socket) = self.sockets.get_mut(socket_id) else {unreachable!()};
 
         if socket.account_id != None {
-            self.send(socket_id, Err(AlreadyLoggedIn)); return;
+            self.send(socket_id, Err(AlreadyLoggedIn)).await; return;
         }
         
         let account = Account::new();
         let account_id = account.id.clone();
         self.accounts.insert(account_id.clone(), account);
 
-        self.send(socket_id, Ok(AccountRegistered {id: account_id}));
+        self.send(socket_id, Ok(AccountRegistered {id: account_id})).await;
     }
 
     /*

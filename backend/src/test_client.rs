@@ -111,11 +111,10 @@ pub async fn run_test_client(id: usize) {
 
     // Run scenario.
 
-    //let cu = &format!(r#""Register""#);
-    //let _resp = call_and_response(cs, 1, cu).await;
+    let cu = &format!(r#""Register""#);
 
-    let _ = client.car(1, "Hello world").await;
-    let _ = client.car(2, "hi there").await;
+    let _ = client.car(1, cu).await;
+    let _ = client.car(2, cu).await;
 
 
 
