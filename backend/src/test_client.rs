@@ -2,7 +2,7 @@
 use std::pin::Pin;
 use std::task::{self, Poll::*};
 
-use futures_util::{SinkExt, StreamExt, stream::{SplitSink, SplitStream}, Future};
+use futures_util::{SinkExt, StreamExt, stream::{SplitSink, SplitStream}, Future, poll};
 use http::Uri;
 use tokio_websockets::{ClientBuilder, Message, WebSocketStream, MaybeTlsStream};
 use tokio::net::TcpStream;
@@ -38,14 +38,8 @@ async fn send(client_id: usize, sender: &mut Sender, text: &'static str) {
 }
 
 //fn get_response(client_id: usize, receiver: &mut Receiver) -> Option<UserResponse> {
-fn get_response(client_id: usize, receiver: &mut Receiver) -> Option<String> {
-    let mut cx = task::Context::from_waker(task::Waker::noop()); // Create nothingburger Context.
-    let mut next = receiver.next(); // Create the future for getting next message.
-    let future = Pin::new(&mut next); // Pin the future.
-
-    // Attempt to resolve future (returns Poll<Message>):
-
-    match future.poll(&mut cx) {
+async fn get_response(client_id: usize, receiver: &mut Receiver) -> Option<String> {
+    match poll!(receiver.next()) {
         Pending => None,
         Ready(msg) => {
             let message = msg.unwrap().unwrap();
@@ -55,8 +49,6 @@ fn get_response(client_id: usize, receiver: &mut Receiver) -> Option<String> {
             Some(text.to_owned())
         }
     }
-
-    // Now the future is dropped and thus, if necessary, cancelled.
 }
 
 pub async fn run_test_client(id: usize) {
@@ -92,7 +84,7 @@ pub async fn run_test_client(id: usize) {
     }
 
     pause(100).await;
-    let _response = get_response(id, &mut receiver);
+    let _response = get_response(id, &mut receiver).await;
 
     if id == 1 {
         pause(100).await;
