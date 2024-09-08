@@ -1,20 +1,22 @@
 
-use tokio::sync::Mutex;
 use std::sync::Arc;
-//use axum::{extract::ws::{WebSocketUpgrade, WebSocket}, routing::get, response::{IntoResponse, Response}, Router, Json};
+
+use futures_util::{StreamExt};
+use tokio::sync::Mutex;
 use axum::{
     extract::{State, ws::{WebSocketUpgrade, WebSocket, Message::Text}},
     routing::get,
     response::Response,
     Router
 };
-//use serde::Serialize;
-//use kurakura::server::{Server, UserOk::*, UserResponse, SocketId};
+
 use kurakura::server::Server;
-use futures_util::stream::StreamExt;
+use kurakura::test_client::run_test_client;
 
 #[tokio::main]
 async fn main() {
+    tokio::spawn(run_test_client(1));
+
     let server = Arc::new(Mutex::new(Server::new()));
     let app = Router::new().route("/", get(handler)).with_state(server);
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();

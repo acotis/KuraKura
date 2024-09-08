@@ -8,9 +8,11 @@ edition = "2021"
 [dependencies]
 axum = { version = "0.7.5", features = ["macros", "ws"] }
 futures-util = "0.3.30"
+http = "1.1.0"
 serde = { version = "1.0.203", features = ["derive"] }
 serde_json = "1.0.117"
 tokio = { version = "1.38.0", features = ["macros", "rt-multi-thread"] }
+tokio-websockets = { version = "0.10.0", features = ["client", "rand", "sha1_smol"] }
 
 [dev-dependencies]
 insta = "1.38.0"
