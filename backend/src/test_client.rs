@@ -5,14 +5,25 @@ use tokio_websockets::{ClientBuilder, Message, WebSocketStream, MaybeTlsStream};
 
 use tokio::net::TcpStream;
 
-async fn pause(millis: u64) {
-    tokio::time::sleep(std::time::Duration::from_millis(millis)).await;
+static mut RESPONSES: Vec<String> = Vec::<String>::new();
+
+fn get_symbol(id: usize) -> char {
+    match id {
+        1 => 'L',
+        2 => 'E',
+        _ => panic!(),
+    }
 }
 
-async fn send(client_id: u64, client: &mut SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>, text: &'static str) {
+async fn pause(millis: usize) {
+    tokio::time::sleep(std::time::Duration::from_millis(millis as u64)).await;
+}
+
+async fn send(client_id: usize, client: &mut SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>, text: &'static str) {
+    println!();
     println!(
-        "<== Client {}: {}",
-        client_id,
+        "<—— Client {}: {}",
+        get_symbol(client_id),
         text
     );
 
@@ -21,28 +32,48 @@ async fn send(client_id: u64, client: &mut SplitSink<WebSocketStream<MaybeTlsStr
           .expect(&format!("couldn't send this text: {text}"));
 }
 
-async fn follow(client_id: u64, mut client: SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>) {
+async fn follow(client_id: usize, mut client: SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>) {
     loop {
+        let message = client.next().await.unwrap().unwrap();
+        let text = message.as_text().unwrap();
+
         println!(
-            "==> Client {}: {}",
-            client_id,
-            client.next().await.unwrap().unwrap().as_text().unwrap()
+            "——> Client {}: {}",
+            get_symbol(client_id),
+            text,
         );
+
+        unsafe {
+            while RESPONSES.len() < client_id {
+                RESPONSES.push("".into());
+            }
+
+            RESPONSES[client_id-1] = text.to_owned();
+        }
     }
 }
 
-pub async fn run_test_client(client_id: u64) {
-    pause(1000).await;
+fn get_response(client_id: usize) -> String {
+    unsafe {RESPONSES[client_id-1].clone()}
+}
+
+pub async fn run_test_client(id: usize) {
+    pause(100 * id).await;
 
     let uri = Uri::from_static("ws://127.0.0.1:3000");
     let (client, _) = ClientBuilder::from_uri(uri).connect().await.unwrap();
     let (mut sender, receiver) = client.split();
 
-    tokio::spawn(follow(client_id, receiver));
+    println!("*** Client {} connected", get_symbol(id));
 
-    send(client_id, &mut sender, "Hello world").await;
+    tokio::spawn(follow(id, receiver));
 
     pause(1000).await;
 
+    match id {
+        1 => send(id, &mut sender, "Hello world").await,
+        2 => send(id, &mut sender, "hi there").await,
+        _ => panic!(),
+    }
 }
 

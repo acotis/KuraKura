@@ -15,7 +15,10 @@ use kurakura::test_client::run_test_client;
 
 #[tokio::main]
 async fn main() {
-    tokio::spawn(run_test_client(1));
+    println!();
+    for i in 1..=2 {
+        tokio::spawn(run_test_client(i));
+    }
 
     let server = Arc::new(Mutex::new(Server::new()));
     let app = Router::new().route("/", get(handler)).with_state(server);
