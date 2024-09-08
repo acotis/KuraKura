@@ -51,13 +51,35 @@ async fn get_response(client_id: usize, receiver: &mut Receiver) -> Option<Strin
     }
 }
 
+async fn call_and_response(target_id: usize, actual_id: usize, sender: &mut Sender, receiver: &mut Receiver, text: &'static str) -> Option<String> {
+    if actual_id == target_id {
+        send(actual_id, sender, text).await;
+    }
+
+    if actual_id == target_id {
+        pause(100).await;
+    } else {
+        pause(200 + 100 * actual_id).await;
+    }
+
+    let response = get_response(actual_id, receiver).await;
+
+    if actual_id == target_id {
+        pause(900);
+    } else {
+        pause(800 - 100 * actual_id).await;
+    }
+
+    response
+}
+
 pub async fn run_test_client(id: usize) {
 
     // Wait for server to be set up.
 
     pause(1000).await;
 
-    // Get into numerical order.
+    // Get into numerical order, connect to the server, and sync up again.
 
     pause(100 * id).await;
 
@@ -67,8 +89,6 @@ pub async fn run_test_client(id: usize) {
 
     println!("*** Client {} connected", get_symbol(id));
 
-    // Sync up again.
-
     pause(1000 - 100 * id).await;
 
     // Client 1 sends first message.
@@ -77,18 +97,7 @@ pub async fn run_test_client(id: usize) {
 
     let cu = "hi";
 
-    if id == 1 {
-        send(id, &mut sender, cu).await;
-    } else {
-        pause(100).await;
-    }
-
-    pause(100).await;
-    let _response = get_response(id, &mut receiver).await;
-
-    if id == 1 {
-        pause(100).await;
-    }
+    let resp = call_and_response(1, id, &mut sender, &mut receiver, cu).await;
 
 
 
