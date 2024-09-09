@@ -131,7 +131,7 @@ impl Client {
         let response = self.set_name_unchecked(name).await;
 
         if response != Ok(Okay) {
-            panic!("When setting name, response was: {name:?}");
+            panic!("When setting name, response was: {response:?}");
         }
     }
 }
@@ -175,6 +175,8 @@ pub async fn run_test_clients() {
     let lexi_acct = lexi.register().await;
 
     evan.register().await; // todo: this should give an error
+
+    evan.set_name("Evan is my name").await;
 
     println!();
 }
