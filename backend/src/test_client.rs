@@ -1,7 +1,9 @@
 
-use std::task::Poll::*;
+use std::sync::Arc;
+use tokio::sync::Mutex;
+use tokio::sync::MutexGuard;
 
-use futures_util::{SinkExt, StreamExt, stream::{SplitSink, SplitStream}, poll};
+use futures_util::{SinkExt, StreamExt, stream::{SplitSink, SplitStream}};
 use http::Uri;
 use tokio_websockets::{ClientBuilder, Message, WebSocketStream, MaybeTlsStream};
 use tokio::net::TcpStream;
@@ -13,11 +15,51 @@ use crate::server::UserErr::*;
 type Receiver = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
 type Sender = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>;
 
-fn get_symbol(id: usize) -> char {
-    match id {
-        1 => 'L',
-        2 => 'E',
-        _ => panic!(),
+struct Client {
+    ident: String,
+    sender: Sender,
+    response_history: Arc<Mutex<Vec<UserResponse>>>,
+}
+
+impl Client {
+    async fn new(ident: &str) -> Self {
+        let uri = Uri::from_static("ws://127.0.0.1:3000");
+        let (websocket, _) = ClientBuilder::from_uri(uri).connect().await.unwrap();
+        let (sender, receiver)  = websocket.split();
+        let response_history = Arc::new(Mutex::new(vec![]));
+
+        tokio::spawn(follow(ident.to_owned(), receiver, response_history.clone()));
+
+        println!("*** Client {} connected", ident);
+
+        Client {
+            ident: ident.to_owned(),
+            sender,
+            response_history,
+        }
+    }
+
+    async fn send(&mut self, text: &str) {
+        println!();
+        println!("<—— Client {}: {}", self.ident, text);
+
+        self.sender
+            .send(Message::text(text.to_owned()))
+            .await
+            .expect(&format!("{} couldn't send this text: {}", self.ident, text));
+    }
+}
+
+async fn follow(ident: String, mut receiver: Receiver, accum: Arc<Mutex<Vec<UserResponse>>>) {
+    while let Some(Ok(message)) = receiver.next().await {
+        let text = message.as_text().unwrap();
+
+        println!("——> Client {ident}: {text}");
+
+        accum.lock()
+             .await
+             .push(serde_json::from_str(&text)
+                               .expect("server's response was not valid JSON"));
     }
 }
 
@@ -25,31 +67,17 @@ async fn pause(millis: usize) {
     tokio::time::sleep(std::time::Duration::from_millis(millis as u64)).await;
 }
 
-async fn send(client_id: usize, sender: &mut Sender, text: &str) {
-    println!();
-    println!(
-        "<—— Client {}: {}",
-        get_symbol(client_id),
-        text
-    );
+pub async fn run_test_clients() {
+    pause(1000).await;
 
-    sender.send(Message::text(text.to_owned()))
-          .await
-          .expect(&format!("couldn't send this text: {text}"));
+    let mut lynn = Client::new("Lynn").await;
+    let mut evan = Client::new("Evan").await;
+
+    lynn.send("hello world");
 }
 
-async fn get_response(client_id: usize, receiver: &mut Receiver) -> Option<UserResponse> {
-    match poll!(receiver.next()) {
-        Pending => None,
-        Ready(msg) => {
-            let message = msg.unwrap().unwrap();
-            let text = message.as_text().unwrap();
-            println!("——> Client {}: {}", get_symbol(client_id), text);
-            Some(serde_json::from_str(&text).expect("server's response was not valid JSON"))
-            //Some(text.to_owned())
-        }
-    }
-}
+
+/*
 
 async fn call_and_response(sender: &mut Sender, receiver: &mut Receiver, id: usize, text: Option<&str>) -> Option<UserResponse> {
     if let Some(t) = text {
@@ -147,12 +175,6 @@ pub async fn run_test_client(id: usize) {
 
     // Connect to server.
 
-    let uri = Uri::from_static("ws://127.0.0.1:3000");
-    let (websocket, _) = ClientBuilder::from_uri(uri).connect().await.unwrap();
-    let (sender, receiver)  = websocket.split();
-    let mut client = Client::new(sender, receiver, id);
-
-    println!("*** Client {} connected", get_symbol(id));
 
     // Sync up again.
 
@@ -214,4 +236,4 @@ pub async fn run_test_client(id: usize) {
 
 
 }
-
+*/
