@@ -96,11 +96,19 @@ async fn pause(millis: usize) {
 pub async fn run_test_clients() {
     pause(1000).await;
 
+    println!();
     let mut lynn = Client::new("Lynn").await;
     let mut evan = Client::new("Evan").await;
+    let mut lexi = Client::new("Lexi").await;
 
     lynn.send("hello world").await;
     evan.send("hello world").await;
+
+    println!();
+    let mut nav   = Client::new("Navneet").await;
+    let mut bijal = Client::new("Bijal").await;
+
+    nav.send("hi there").await;
 }
 
 

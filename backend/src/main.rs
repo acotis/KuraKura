@@ -15,7 +15,6 @@ use kurakura::test_client::run_test_clients;
 
 #[tokio::main]
 async fn main() {
-    println!();
     tokio::spawn(run_test_clients());
 
     let server = Arc::new(Mutex::new(Server::new()));
