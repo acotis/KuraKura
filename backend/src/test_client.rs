@@ -103,12 +103,6 @@ pub async fn run_test_clients() {
 
     lynn.send("hello world").await;
     evan.send("hello world").await;
-
-    println!();
-    let mut nav   = Client::new("Navneet").await;
-    let mut bijal = Client::new("Bijal").await;
-
-    nav.send("hi there").await;
 }
 
 
