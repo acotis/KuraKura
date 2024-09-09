@@ -67,24 +67,72 @@ impl Client {
         lock[lock.len() - 1].clone()
     }
 
-    async fn register(&mut self) -> UserResponse {
+    // Unchecked server interactions.
+
+    async fn register_unchecked(&mut self) -> UserResponse {
         self.send(&format!(r#""Register""#)).await
     }
 
-    async fn login(&mut self, account_id: &str) -> UserResponse {
+    async fn login_unchecked(&mut self, account_id: &str) -> UserResponse {
         self.send(&format!(r#"{{"Login": {{"auth": "{account_id}"}}}}"#)).await
     }
 
-    async fn create_room(&mut self) -> UserResponse {
+    async fn create_room_unchecked(&mut self) -> UserResponse {
         self.send(&format!(r#""Register""#)).await
     }
 
-    async fn join_room(&mut self, room_id: &str) -> UserResponse {
+    async fn join_room_unchecked(&mut self, room_id: &str) -> UserResponse {
         self.send(&format!(r#"{{"JoinRoom": {{"room": "{room_id}"}}}}"#)).await
     }
 
-    async fn set_name(&mut self, name: &str) -> UserResponse {
+    async fn set_name_unchecked(&mut self, name: &str) -> UserResponse {
         self.send(&format!(r#"{{"SetName": {{"name": "{name}"}}}}"#)).await
+    }
+
+    // Checked server interactions.
+
+    async fn register(&mut self) -> String {
+        let response = self.register_unchecked().await;
+
+        if let Ok(AccountRegistered {id}) = response {
+            id
+        } else {
+            panic!("When registering account, response was: {response:?}")
+        }
+    }
+
+    async fn login(&mut self, account_id: &str) {
+        let response = self.login_unchecked(account_id).await;
+
+        if response != Ok(Okay) {
+            panic!("When logging in, response was: {response:?}");
+        }
+    }
+
+    async fn create_room(&mut self) -> String {
+        let response = self.create_room_unchecked().await;
+
+        if let Ok(RoomCreated {id}) = response {
+            id
+        } else {
+            panic!("When creating room, response was: {response:?}")
+        }
+    }
+
+    async fn join_room(&mut self, room_id: &str) {
+        let response = self.join_room_unchecked(room_id).await;
+
+        if response != Ok(Okay) {
+            panic!("When joining room, response was: {response:?}");
+        }
+    }
+
+    async fn set_name(&mut self, name: &str) {
+        let response = self.set_name_unchecked(name).await;
+
+        if response != Ok(Okay) {
+            panic!("When setting name, response was: {name:?}");
+        }
     }
 }
 
@@ -95,7 +143,7 @@ async fn follow(ident: String, delay: usize, just_sent: Arc<Mutex<bool>>, mut re
         accum.lock()
              .await
              .push(serde_json::from_str(&text)
-                               .expect("server's response was not valid JSON"));
+                               .expect(&format!("server's message was not valid JSON: {}", text)));
 
         let mut sent_lock = just_sent.lock().await;
         let del = if *sent_lock {
@@ -115,16 +163,20 @@ async fn pause(millis: usize) {
 }
 
 pub async fn run_test_clients() {
+    println!();
     pause(1000).await;
 
-    println!();
     let mut lynn = Client::new("Lynn").await;
     let mut evan = Client::new("Evan").await;
     let mut lexi = Client::new("Lexi").await;
 
-    let Ok(AccountRegistered {id: lynn_acct}) = lynn.register().await else {panic!()};
-    let Ok(AccountRegistered {id: evan_acct}) = evan.register().await else {panic!()};
-    let Ok(AccountRegistered {id: lexi_acct}) = lexi.register().await else {panic!()};
+    let lynn_acct = lynn.register().await;
+    let evan_acct = evan.register().await;
+    let lexi_acct = lexi.register().await;
+
+    evan.register().await; // todo: this should give an error
+
+    println!();
 }
 
 

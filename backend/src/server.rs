@@ -36,14 +36,14 @@ pub enum UserRequest {
     TakeTurn    {turn: Turn},
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum UserOk {
     AccountRegistered   {id: AccountId},
     RoomCreated         {id: RoomId},
     Okay,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum UserErr {
     AccountNotFound,
     AlreadyLoggedIn,
