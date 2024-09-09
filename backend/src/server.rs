@@ -154,8 +154,8 @@ impl Server {
             //Ok(CreateRoom     ) => {self.create_room(socket_id      )},
             //Ok(JoinRoom {room}) => {self.join_room  (socket_id, room)},
             //Ok(TakeTurn {turn}) => {self.take_turn  (socket_id, turn)},
+            Ok(_)               => {self.send(socket_id, Err(NotImplemented)).await;}
             Err(_)              => {self.send(socket_id, Err(InvalidJson)).await;},
-            _                   => {unreachable!();}
         };
 
         Ok(())

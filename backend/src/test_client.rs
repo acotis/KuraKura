@@ -7,6 +7,8 @@ use tokio_websockets::{ClientBuilder, Message, WebSocketStream, MaybeTlsStream};
 use tokio::net::TcpStream;
 
 use crate::server::UserResponse;
+use crate::server::UserOk::*;
+use crate::server::UserErr::*;
 
 type Receiver = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
 type Sender = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>;
@@ -36,57 +38,104 @@ async fn send(client_id: usize, sender: &mut Sender, text: &str) {
           .expect(&format!("couldn't send this text: {text}"));
 }
 
-//fn get_response(client_id: usize, receiver: &mut Receiver) -> Option<UserResponse> {
-async fn get_response(client_id: usize, receiver: &mut Receiver) -> Option<String> {
+async fn get_response(client_id: usize, receiver: &mut Receiver) -> Option<UserResponse> {
     match poll!(receiver.next()) {
         Pending => None,
         Ready(msg) => {
             let message = msg.unwrap().unwrap();
             let text = message.as_text().unwrap();
             println!("——> Client {}: {}", get_symbol(client_id), text);
-            //serde_json::from_str(&text).expect("server's response was not valid JSON") // parse
-            Some(text.to_owned())
+            Some(serde_json::from_str(&text).expect("server's response was not valid JSON"))
+            //Some(text.to_owned())
         }
     }
 }
 
-async fn call_and_response(sender: &mut Sender, receiver: &mut Receiver, actual_id: usize, target_id: usize, text: &str) -> Option<String> {
-    if actual_id == target_id {
-        send(actual_id, sender, text).await;
-    }
-
-    if actual_id == target_id {
+async fn call_and_response(sender: &mut Sender, receiver: &mut Receiver, id: usize, text: Option<&str>) -> Option<UserResponse> {
+    if let Some(t) = text {
+        send(id, sender, t).await;
         pause(100).await;
     } else {
-        pause(200 + 100 * actual_id).await;
+        pause(200 + 100 * id).await;
     }
 
-    let response = get_response(actual_id, receiver).await;
+    let response = get_response(id, receiver).await;
 
-    if actual_id == target_id {
+    if let Some(_) = text {
         pause(900).await;
     } else {
-        pause(800 - 100 * actual_id).await;
+        pause(800 - 100 * id).await;
     }
 
     response
 }
 
+// Client struct and fundamental methods.
+
 struct Client {
     sender: Sender,
     receiver: Receiver,
-    id: usize,
+    client_id: usize,
+
+    account_id: Option<String>,
+    room_id: Option<String>,
 }
 
 impl Client {
-    async fn car(&mut self, target_id: usize, text: &str) -> Option<String>  {
+    async fn car(&mut self, text: &str) -> UserResponse {
         call_and_response(
             &mut self.sender,
             &mut self.receiver,
-            self.id,
-            target_id,
-            text
-        ).await
+            self.client_id,
+            Some(text)
+        ).await.unwrap()
+    }
+
+    async fn poll(&mut self) {
+        call_and_response(
+            &mut self.sender,
+            &mut self.receiver,
+            self.client_id,
+            None
+        ).await;
+    }
+
+    fn new(sender: Sender, receiver: Receiver, client_id: usize) -> Self {
+        Client {
+            sender,
+            receiver,
+            client_id,
+            account_id: None,
+            room_id: None,
+        }
+    }
+}
+
+// API call methods.
+
+impl Client {
+    async fn register(&mut self) {
+        if let Ok(AccountRegistered {id}) = self.car(r#""Register""#).await {
+            self.account_id = Some(id);
+        }
+    }
+
+    async fn login(&mut self) {
+        let _ = self.car(&format!(r#"{{"Login": {{"auth": "{}"}}}}"#, self.account_id.as_ref().unwrap())).await;
+    }
+
+    async fn create_room(&mut self) {
+        if let Ok(RoomCreated {id}) = self.car(r#""CreateRoom""#).await {
+            self.room_id = Some(id);
+        }
+    }
+
+    async fn join_room(&mut self) {
+        let _ = self.car(&format!(r#"{{"JoinRoom": {{"room": "{}"}}}}"#, self.room_id.as_ref().unwrap())).await;
+    }
+
+    async fn set_name(&mut self, name: &str) {
+        let _ = self.car(&format!(r#"{{"SetName": {{"name": "{name}"}}}}"#)).await;
     }
 }
 
@@ -101,7 +150,7 @@ pub async fn run_test_client(id: usize) {
     let uri = Uri::from_static("ws://127.0.0.1:3000");
     let (websocket, _) = ClientBuilder::from_uri(uri).connect().await.unwrap();
     let (sender, receiver)  = websocket.split();
-    let mut client = Client {sender, receiver, id};
+    let mut client = Client::new(sender, receiver, id);
 
     println!("*** Client {} connected", get_symbol(id));
 
@@ -111,10 +160,11 @@ pub async fn run_test_client(id: usize) {
 
     // Run scenario.
 
-    let cu = &format!(r#""Register""#);
+    let mut last: UserResponse = Err(NotImplemented);
 
-    let _ = client.car(1, cu).await;
-    let _ = client.car(2, cu).await;
+    if id == 1 {client.register().await} else {client.poll().await;}
+    if id == 2 {client.register().await} else {client.poll().await;}
+    if id == 2 {client.login().await} else {client.poll().await;}
 
 
 
