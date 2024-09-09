@@ -175,6 +175,7 @@ impl Server {
         let account = Account::new();
         let account_id = account.id.clone();
         self.accounts.insert(account_id.clone(), account);
+        socket.account_id = Some(account_id.clone());
 
         self.send(socket_id, Ok(AccountRegistered {id: account_id})).await;
     }
