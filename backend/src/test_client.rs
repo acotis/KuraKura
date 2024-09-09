@@ -85,7 +85,7 @@ async fn follow(ident: String, delay: usize, just_sent: Arc<Mutex<bool>>, mut re
 
         pause(del).await;
 
-        println!("——> Client {ident} [{del}]: {text}");
+        println!("——> Client {ident}: {text}");
     }
 }
 
