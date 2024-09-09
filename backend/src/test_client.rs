@@ -2,13 +2,11 @@
 use std::sync::Arc;
 use std::sync::LazyLock;
 
-use tokio::sync::Mutex;
-use tokio::sync::MutexGuard;
-
-use futures_util::{SinkExt, StreamExt, stream::{SplitSink, SplitStream}};
 use http::Uri;
-use tokio_websockets::{ClientBuilder, Message, WebSocketStream, MaybeTlsStream};
 use tokio::net::TcpStream;
+use tokio::sync::Mutex;
+use tokio_websockets::{ClientBuilder, Message, WebSocketStream, MaybeTlsStream};
+use futures_util::{SinkExt, StreamExt, stream::{SplitSink, SplitStream}};
 
 use crate::server::UserResponse;
 use crate::server::UserOk::*;
@@ -26,10 +24,10 @@ struct Client {
 
 impl Client {
     async fn new(ident: &str) -> Self {
-        static next_delay: LazyLock<Mutex<usize>> = LazyLock::new(|| Mutex::new(0));
+        static NEXT_DELAY: LazyLock<Mutex<usize>> = LazyLock::new(|| Mutex::new(0));
 
         let delay = {
-            let mut lock = next_delay.lock().await;
+            let mut lock = NEXT_DELAY.lock().await;
             *lock += 100;
             *lock
         };
