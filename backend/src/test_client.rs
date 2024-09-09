@@ -73,7 +73,7 @@ pub async fn run_test_clients() {
     let mut lynn = Client::new("Lynn").await;
     let mut evan = Client::new("Evan").await;
 
-    lynn.send("hello world");
+    lynn.send("hello world").await;
 }
 
 
