@@ -1,5 +1,7 @@
 
 use std::sync::Arc;
+use std::sync::LazyLock;
+
 use tokio::sync::Mutex;
 use tokio::sync::MutexGuard;
 
@@ -23,12 +25,20 @@ struct Client {
 
 impl Client {
     async fn new(ident: &str) -> Self {
+        static next_delay: LazyLock<Mutex<usize>> = LazyLock::new(|| Mutex::new(0));
+
+        let delay = {
+            let mut lock = next_delay.lock().await;
+            *lock += 100;
+            *lock
+        };
+
         let uri = Uri::from_static("ws://127.0.0.1:3000");
         let (websocket, _) = ClientBuilder::from_uri(uri).connect().await.unwrap();
         let (sender, receiver)  = websocket.split();
         let response_history = Arc::new(Mutex::new(vec![]));
 
-        tokio::spawn(follow(ident.to_owned(), receiver, response_history.clone()));
+        tokio::spawn(follow(ident.to_owned(), delay, receiver, response_history.clone()));
 
         println!("*** Client {} connected", ident);
 
@@ -50,16 +60,18 @@ impl Client {
     }
 }
 
-async fn follow(ident: String, mut receiver: Receiver, accum: Arc<Mutex<Vec<UserResponse>>>) {
+async fn follow(ident: String, delay: usize, mut receiver: Receiver, accum: Arc<Mutex<Vec<UserResponse>>>) {
     while let Some(Ok(message)) = receiver.next().await {
         let text = message.as_text().unwrap();
-
-        println!("——> Client {ident}: {text}");
 
         accum.lock()
              .await
              .push(serde_json::from_str(&text)
                                .expect("server's response was not valid JSON"));
+
+        pause(delay).await;
+
+        println!("——> Client {ident} [{delay}]: {text}");
     }
 }
 
@@ -74,6 +86,7 @@ pub async fn run_test_clients() {
     let mut evan = Client::new("Evan").await;
 
     lynn.send("hello world").await;
+    evan.send("hello world").await;
 }
 
 
