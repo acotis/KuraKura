@@ -71,10 +71,10 @@ async fn follow(ident: String, delay: usize, just_sent: Arc<Mutex<bool>>, mut re
     while let Some(Ok(message)) = receiver.next().await {
         let text = message.as_text().unwrap();
 
-        accum.lock()
-             .await
-             .push(serde_json::from_str(&text)
-                               .expect("server's response was not valid JSON"));
+        //accum.lock()
+             //.await
+             //.push(serde_json::from_str(&text)
+                               //.expect("server's response was not valid JSON"));
 
         let mut sent_lock = just_sent.lock().await;
         let del = if *sent_lock {
@@ -82,6 +82,8 @@ async fn follow(ident: String, delay: usize, just_sent: Arc<Mutex<bool>>, mut re
         } else {
             delay
         };
+
+        pause(del).await;
 
         println!("——> Client {ident} [{del}]: {text}");
     }
