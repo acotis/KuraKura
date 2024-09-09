@@ -21,6 +21,7 @@ struct Client {
     ident: String,
     sender: Sender,
     response_history: Arc<Mutex<Vec<UserResponse>>>,
+    just_sent: Arc<Mutex<bool>>,
 }
 
 impl Client {
@@ -37,8 +38,9 @@ impl Client {
         let (websocket, _) = ClientBuilder::from_uri(uri).connect().await.unwrap();
         let (sender, receiver)  = websocket.split();
         let response_history = Arc::new(Mutex::new(vec![]));
+        let just_sent = Arc::new(Mutex::new(false));
 
-        tokio::spawn(follow(ident.to_owned(), delay, receiver, response_history.clone()));
+        tokio::spawn(follow(ident.to_owned(), delay, just_sent.clone(), receiver, response_history.clone()));
 
         println!("*** Client {} connected", ident);
 
@@ -46,6 +48,7 @@ impl Client {
             ident: ident.to_owned(),
             sender,
             response_history,
+            just_sent,
         }
     }
 
@@ -53,14 +56,18 @@ impl Client {
         println!();
         println!("<—— Client {}: {}", self.ident, text);
 
+        *self.just_sent.lock().await = true;
+
         self.sender
             .send(Message::text(text.to_owned()))
             .await
             .expect(&format!("{} couldn't send this text: {}", self.ident, text));
+
+        pause(1000).await;
     }
 }
 
-async fn follow(ident: String, delay: usize, mut receiver: Receiver, accum: Arc<Mutex<Vec<UserResponse>>>) {
+async fn follow(ident: String, delay: usize, just_sent: Arc<Mutex<bool>>, mut receiver: Receiver, accum: Arc<Mutex<Vec<UserResponse>>>) {
     while let Some(Ok(message)) = receiver.next().await {
         let text = message.as_text().unwrap();
 
@@ -69,9 +76,14 @@ async fn follow(ident: String, delay: usize, mut receiver: Receiver, accum: Arc<
              .push(serde_json::from_str(&text)
                                .expect("server's response was not valid JSON"));
 
-        pause(delay).await;
+        let mut sent_lock = just_sent.lock().await;
+        let del = if *sent_lock {
+            *sent_lock = false; 0
+        } else {
+            delay
+        };
 
-        println!("——> Client {ident}: {text}");
+        println!("——> Client {ident} [{del}]: {text}");
     }
 }
 
