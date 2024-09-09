@@ -50,7 +50,7 @@ impl Client {
         }
     }
 
-    async fn send(&mut self, text: &str) {
+    async fn send(&mut self, text: &str) -> UserResponse {
         println!();
         println!("<—— Client {}: {}", self.ident, text);
 
@@ -62,6 +62,29 @@ impl Client {
             .expect(&format!("{} couldn't send this text: {}", self.ident, text));
 
         pause(1000).await;
+
+        let lock = self.response_history.lock().await;
+        lock[lock.len() - 1].clone()
+    }
+
+    async fn register(&mut self) -> UserResponse {
+        self.send(&format!(r#""Register""#)).await
+    }
+
+    async fn login(&mut self, account_id: &str) -> UserResponse {
+        self.send(&format!(r#"{{"Login": {{"auth": "{account_id}"}}}}"#)).await
+    }
+
+    async fn create_room(&mut self) -> UserResponse {
+        self.send(&format!(r#""Register""#)).await
+    }
+
+    async fn join_room(&mut self, room_id: &str) -> UserResponse {
+        self.send(&format!(r#"{{"JoinRoom": {{"room": "{room_id}"}}}}"#)).await
+    }
+
+    async fn set_name(&mut self, name: &str) -> UserResponse {
+        self.send(&format!(r#"{{"SetName": {{"name": "{name}"}}}}"#)).await
     }
 }
 
@@ -69,10 +92,10 @@ async fn follow(ident: String, delay: usize, just_sent: Arc<Mutex<bool>>, mut re
     while let Some(Ok(message)) = receiver.next().await {
         let text = message.as_text().unwrap();
 
-        //accum.lock()
-             //.await
-             //.push(serde_json::from_str(&text)
-                               //.expect("server's response was not valid JSON"));
+        accum.lock()
+             .await
+             .push(serde_json::from_str(&text)
+                               .expect("server's response was not valid JSON"));
 
         let mut sent_lock = just_sent.lock().await;
         let del = if *sent_lock {
@@ -99,8 +122,9 @@ pub async fn run_test_clients() {
     let mut evan = Client::new("Evan").await;
     let mut lexi = Client::new("Lexi").await;
 
-    lynn.send("hello world").await;
-    evan.send("hello world").await;
+    let Ok(AccountRegistered {id: lynn_acct}) = lynn.register().await else {panic!()};
+    let Ok(AccountRegistered {id: evan_acct}) = evan.register().await else {panic!()};
+    let Ok(AccountRegistered {id: lexi_acct}) = lexi.register().await else {panic!()};
 }
 
 
@@ -170,7 +194,7 @@ impl Client {
 
 impl Client {
     async fn register(&mut self) {
-        if let Ok(AccountRegistered {id}) = self.car(r#""Register""#).await {
+        if let Ok(AccountRegistered {id}) = self.car().await {
             self.account_id = Some(id);
         }
     }

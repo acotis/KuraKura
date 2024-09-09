@@ -36,14 +36,14 @@ pub enum UserRequest {
     TakeTurn    {turn: Turn},
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum UserOk {
     AccountRegistered   {id: AccountId},
     RoomCreated         {id: RoomId},
     Okay,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum UserErr {
     AccountNotFound,
     AlreadyLoggedIn,
@@ -145,18 +145,6 @@ impl Server {
     }
 
     pub async fn handle_request(&mut self, socket_id: &SocketId, json: &str) -> ServerResult {
-        for (_, socket) in &mut self.sockets {
-            if socket.writer.send(Text(String::from("[") + socket_id + "] " + json)).await.is_err() {
-                // client disconnected
-
-                //println!("couldn't send response because client disconnected");
-                //return;
-            }
-        }
-
-        Ok(())
-
-        /*
         let Some(_) = self.sockets.get(socket_id) else {return Err(SocketNotFound);};
 
         match from_str(&json) {
@@ -171,7 +159,6 @@ impl Server {
         };
 
         Ok(())
-        */
     }
 }
 
