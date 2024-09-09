@@ -71,7 +71,7 @@ async fn follow(ident: String, delay: usize, mut receiver: Receiver, accum: Arc<
 
         pause(delay).await;
 
-        println!("——> Client {ident} [{delay}]: {text}");
+        println!("——> Client {ident}: {text}");
     }
 }
 
