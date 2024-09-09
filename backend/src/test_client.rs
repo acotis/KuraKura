@@ -174,7 +174,7 @@ pub async fn run_test_clients() {
     let evan_acct = evan.register().await;
     let lexi_acct = lexi.register().await;
 
-    evan.register().await; // todo: this should give an error
+    let _ = evan.register_unchecked().await;
 
     evan.set_name("Evan is my name").await;
 
