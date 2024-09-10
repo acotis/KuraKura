@@ -60,20 +60,20 @@ pub enum UserErr {
     InvalidJson,
 }
 
-pub type UserResponse = Result<UserOk, UserErr>;
+pub type UserMessage = Result<UserOk, UserErr>;
 
 // Server outputs (i.e., possible return values of the server's .handle_request() method).
 
 #[derive(Debug)]
 pub enum ServerError {SocketNotFound}
-pub type ServerResult = Result<(), ServerError>;
+pub type ServerOk = Vec<(SocketId, UserMessage)>;
+pub type ServerResult = Result<ServerOk, ServerError>;
 
 // Basic entities recognized by the server.
 
 struct Socket {
     id:         SocketId,
     account_id: Option<AccountId>,
-    writer:     SplitSink<WebSocket, Message>,
 }
 
 struct Account {
@@ -94,11 +94,10 @@ struct Room {
 // Basic methods for those entities.
 
 impl Socket {
-    fn new(writer: SplitSink<WebSocket, Message>) -> Self {
+    fn new() -> Self {
         Socket {
             id:         Uuid::new_v4().to_string(),
             account_id: None,
-            writer:     writer,
         }
     }
 }
@@ -137,47 +136,49 @@ pub struct Server {
 // Public methods of Server.
 
 impl Server {
-    pub fn register_socket(&mut self, writer: SplitSink<WebSocket, Message>) -> SocketId {
-        let socket = Socket::new(writer);
+    pub fn register_socket(&mut self) -> SocketId {
+        let socket = Socket::new();
         let socket_id = socket.id.clone();
         self.sockets.insert(socket_id.clone(), socket);
         socket_id
     }
 
-    pub async fn handle_request(&mut self, socket_id: &SocketId, json: &str) -> ServerResult {
-        let Some(_) = self.sockets.get(socket_id) else {return Err(SocketNotFound);};
-
-        match from_str(&json) {
-            Ok(Register       ) => {self.register   (socket_id      ).await},
-            //Ok(Login    {auth}) => {self.login      (socket_id, auth)},
-            //Ok(SetName  {name}) => {self.set_name   (socket_id, name)},
-            //Ok(CreateRoom     ) => {self.create_room(socket_id      )},
-            //Ok(JoinRoom {room}) => {self.join_room  (socket_id, room)},
-            //Ok(TakeTurn {turn}) => {self.take_turn  (socket_id, turn)},
-            Ok(_)               => {self.send(socket_id, Err(NotImplemented)).await;}
-            Err(_)              => {self.send(socket_id, Err(InvalidJson)).await;},
-        };
-
-        Ok(())
+    pub fn handle_request(&mut self, socket_id: &SocketId, json: &str) -> ServerResult {
+        if self.sockets.get(socket_id).is_none() {
+            Err(SocketNotFound)
+        } else {
+            Ok(
+                match from_str(&json) {
+                    Ok(Register       ) => {self.register   (socket_id      )},
+                    //Ok(Login    {auth}) => {self.login      (socket_id, auth)},
+                    //Ok(SetName  {name}) => {self.set_name   (socket_id, name)},
+                    //Ok(CreateRoom     ) => {self.create_room(socket_id      )},
+                    //Ok(JoinRoom {room}) => {self.join_room  (socket_id, room)},
+                    //Ok(TakeTurn {turn}) => {self.take_turn  (socket_id, turn)},
+                    Ok(_)               => {vec![(socket_id.clone(), Err(NotImplemented))]},
+                    Err(_)              => {vec![(socket_id.clone(), Err(InvalidJson))]},
+                }
+            )
+        }
     }
 }
 
 // Private methods directly corresponding to API calls.
 
 impl Server {
-    async fn register(&mut self, socket_id: &SocketId) {
+    fn register(&mut self, socket_id: &SocketId) -> ServerOk {
         let Some(socket) = self.sockets.get_mut(socket_id) else {unreachable!()};
 
         if socket.account_id != None {
-            self.send(socket_id, Err(AlreadyLoggedIn)).await; return;
-        }
-        
-        let account = Account::new();
-        let account_id = account.id.clone();
-        self.accounts.insert(account_id.clone(), account);
-        socket.account_id = Some(account_id.clone());
+            vec![(socket_id.clone(), Err(AlreadyLoggedIn))]
+        } else {
+            let account = Account::new();
+            let account_id = account.id.clone();
+            self.accounts.insert(account_id.clone(), account);
+            socket.account_id = Some(account_id.clone());
 
-        self.send(socket_id, Ok(AccountRegistered {id: account_id})).await;
+            vec![(socket_id.clone(), Ok(AccountRegistered {id: account_id}))]
+        }
     }
 
     /*
@@ -268,11 +269,14 @@ impl Server {
 
 // Utility methods.
 
+/* to be removed
+ *
 impl Server {
-    async fn send(&mut self, socket_id: &SocketId, msg: UserResponse) {
+    async fn send(&mut self, socket_id: &SocketId, msg: UserMessage) {
         self.sockets.get_mut(socket_id).unwrap().writer.send(Text(serde_json::to_string(&msg).unwrap())).await;
     }
 }
+*/
 
 // Constructor.
 

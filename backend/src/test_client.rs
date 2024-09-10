@@ -8,7 +8,7 @@ use tokio::sync::Mutex;
 use tokio_websockets::{ClientBuilder, Message, WebSocketStream, MaybeTlsStream};
 use futures_util::{SinkExt, StreamExt, stream::{SplitSink, SplitStream}};
 
-use crate::server::UserResponse;
+use crate::server::UserMessage;
 use crate::server::UserOk::*;
 use crate::server::UserErr::*;
 
@@ -18,7 +18,7 @@ type Sender = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>;
 struct Client {
     ident: String,
     sender: Sender,
-    response_history: Arc<Mutex<Vec<UserResponse>>>,
+    response_history: Arc<Mutex<Vec<UserMessage>>>,
     just_sent: Arc<Mutex<bool>>,
 }
 
@@ -50,7 +50,7 @@ impl Client {
         }
     }
 
-    async fn send(&mut self, text: &str) -> UserResponse {
+    async fn send(&mut self, text: &str) -> UserMessage {
         println!();
         println!("<—— Client {}: {}", self.ident, text);
 
@@ -69,23 +69,23 @@ impl Client {
 
     // Unchecked server interactions.
 
-    async fn register_unchecked(&mut self) -> UserResponse {
+    async fn register_unchecked(&mut self) -> UserMessage {
         self.send(&format!(r#""Register""#)).await
     }
 
-    async fn login_unchecked(&mut self, account_id: &str) -> UserResponse {
+    async fn login_unchecked(&mut self, account_id: &str) -> UserMessage {
         self.send(&format!(r#"{{"Login": {{"auth": "{account_id}"}}}}"#)).await
     }
 
-    async fn create_room_unchecked(&mut self) -> UserResponse {
+    async fn create_room_unchecked(&mut self) -> UserMessage {
         self.send(&format!(r#""Register""#)).await
     }
 
-    async fn join_room_unchecked(&mut self, room_id: &str) -> UserResponse {
+    async fn join_room_unchecked(&mut self, room_id: &str) -> UserMessage {
         self.send(&format!(r#"{{"JoinRoom": {{"room": "{room_id}"}}}}"#)).await
     }
 
-    async fn set_name_unchecked(&mut self, name: &str) -> UserResponse {
+    async fn set_name_unchecked(&mut self, name: &str) -> UserMessage {
         self.send(&format!(r#"{{"SetName": {{"name": "{name}"}}}}"#)).await
     }
 
@@ -136,7 +136,7 @@ impl Client {
     }
 }
 
-async fn follow(ident: String, delay: usize, just_sent: Arc<Mutex<bool>>, mut receiver: Receiver, accum: Arc<Mutex<Vec<UserResponse>>>) {
+async fn follow(ident: String, delay: usize, just_sent: Arc<Mutex<bool>>, mut receiver: Receiver, accum: Arc<Mutex<Vec<UserMessage>>>) {
     while let Some(Ok(message)) = receiver.next().await {
         let text = message.as_text().unwrap();
 
