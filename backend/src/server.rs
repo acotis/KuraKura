@@ -149,12 +149,12 @@ impl Server {
         } else {
             Ok(
                 match from_str(&json) {
-                    Ok(Register       ) => {self.register   (socket_id      )},
-                    //Ok(Login    {auth}) => {self.login      (socket_id, auth)},
-                    //Ok(SetName  {name}) => {self.set_name   (socket_id, name)},
-                    //Ok(CreateRoom     ) => {self.create_room(socket_id      )},
-                    //Ok(JoinRoom {room}) => {self.join_room  (socket_id, room)},
-                    //Ok(TakeTurn {turn}) => {self.take_turn  (socket_id, turn)},
+                    Ok(Register       ) => {self.register   (socket_id.clone()      )},
+                    Ok(Login    {auth}) => {self.login      (socket_id.clone(), auth)},
+                    //Ok(SetName  {name}) => {self.set_name   (socket_id.clone(), name)},
+                    //Ok(CreateRoom     ) => {self.create_room(socket_id.clone()      )},
+                    //Ok(JoinRoom {room}) => {self.join_room  (socket_id.clone(), room)},
+                    //Ok(TakeTurn {turn}) => {self.take_turn  (socket_id.clone(), turn)},
                     Ok(_)               => {vec![(socket_id.clone(), Err(NotImplemented))]},
                     Err(_)              => {vec![(socket_id.clone(), Err(InvalidJson))]},
                 }
@@ -166,37 +166,37 @@ impl Server {
 // Private methods directly corresponding to API calls.
 
 impl Server {
-    fn register(&mut self, socket_id: &SocketId) -> ServerOk {
-        let Some(socket) = self.sockets.get_mut(socket_id) else {unreachable!()};
+    fn register(&mut self, socket_id: SocketId) -> ServerOk {
+        let Some(socket) = self.sockets.get_mut(&socket_id) else {unreachable!()};
 
         if socket.account_id != None {
-            vec![(socket_id.clone(), Err(AlreadyLoggedIn))]
+            vec![(socket_id, Err(AlreadyLoggedIn))]
         } else {
             let account = Account::new();
             let account_id = account.id.clone();
             self.accounts.insert(account_id.clone(), account);
             socket.account_id = Some(account_id.clone());
 
-            vec![(socket_id.clone(), Ok(AccountRegistered {id: account_id}))]
+            vec![(socket_id, Ok(AccountRegistered {id: account_id}))]
         }
+    }
+
+    fn login(&mut self, socket_id: SocketId, account_id: AccountId) -> ServerOk {
+        let Some(socket) = self.sockets.get_mut(&socket_id)   else {unreachable!()};
+        let Some(_)      = self.accounts.get_mut(&account_id) else {return vec![(socket_id, Err(AccountNotFound))];};
+
+        if socket.account_id != None {
+            return vec![(socket_id, Err(AlreadyLoggedIn))];
+        }
+
+        socket.account_id = Some(account_id);
+        vec![(socket_id, Ok(Okay))]
     }
 
     /*
 
-    fn login(&mut self, socket_id: &SocketId, account_id: AccountId) {
-        let Some(socket) = self.sockets.get_mut(socket_id)    else {unreachable!()};
-        let Some(_)      = self.accounts.get_mut(&account_id) else {return Err(AccountNotFound);};
-
-        if socket.account_id != None {
-            return Err(AlreadyLoggedIn);
-        }
-
-        socket.account_id = Some(account_id);
-        Ok(Okay)
-    }
-
-    fn set_name(&mut self, socket_id: &SocketId, name: String) {
-        let Some(socket)     = self.sockets.get_mut(socket_id)    else {unreachable!()};
+    fn set_name(&mut self, sid: SocketId, name: String) {
+        let Some(socket)     = self.sockets.get_mut(sid)    else {unreachable!()};
         let Some(account_id) = socket.account_id.clone()          else {return Err(NotLoggedIn);};
         let Some(account)    = self.accounts.get_mut(&account_id) else {return Err(AccountNotFound);};
 
@@ -208,8 +208,8 @@ impl Server {
         Ok(Okay)
     }
 
-    fn create_room(&mut self, socket_id: &SocketId) {
-        let Some(socket)     = self.sockets.get_mut(socket_id)    else {unreachable!()};
+    fn create_room(&mut self, sid: SocketId) {
+        let Some(socket)     = self.sockets.get_mut(sid)    else {unreachable!()};
         let Some(account_id) = socket.account_id.clone()          else {return Err(NotLoggedIn);};
         let Some(account)    = self.accounts.get_mut(&account_id) else {return Err(AccountNotFound);};
 
@@ -224,8 +224,8 @@ impl Server {
         Ok(RoomCreated {id: room_id})
     }
 
-    fn join_room(&mut self, socket_id: &SocketId, room_id: RoomId) {
-        let Some(socket)     = self.sockets.get_mut(socket_id)    else {unreachable!()};
+    fn join_room(&mut self, sid: SocketId, room_id: RoomId) {
+        let Some(socket)     = self.sockets.get_mut(sid)    else {unreachable!()};
         let Some(account_id) = socket.account_id.clone()          else {return Err(NotLoggedIn);};
         let Some(account)    = self.accounts.get_mut(&account_id) else {return Err(AccountNotFound);};
         let Some(room)       = self.rooms.get_mut(&room_id)       else {return Err(RoomNotFound);};
@@ -243,8 +243,8 @@ impl Server {
         Ok(Okay)
     }
 
-    fn take_turn(&mut self, socket_id: &SocketId, turn: Turn) {
-        let Some(socket)     = self.sockets.get_mut(socket_id)    else {unreachable!()};
+    fn take_turn(&mut self, sid: SocketId, turn: Turn) {
+        let Some(socket)     = self.sockets.get_mut(sid)    else {unreachable!()};
         let Some(account_id) = socket.account_id.clone()          else {return Err(NotLoggedIn);};
         let Some(account)    = self.accounts.get_mut(&account_id) else {return Err(AccountNotFound);};
         let Some(room_id)    = account.room_id.clone()            else {return Err(AccountDoesntHaveRoom);};
@@ -272,8 +272,8 @@ impl Server {
 /* to be removed
  *
 impl Server {
-    async fn send(&mut self, socket_id: &SocketId, msg: UserMessage) {
-        self.sockets.get_mut(socket_id).unwrap().writer.send(Text(serde_json::to_string(&msg).unwrap())).await;
+    async fn send(&mut self, sid: &SocketId, msg: UserMessage) {
+        self.sockets.get_mut(sid).unwrap().writer.send(Text(serde_json::to_string(&msg).unwrap())).await;
     }
 }
 */

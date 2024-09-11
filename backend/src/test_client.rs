@@ -40,7 +40,7 @@ impl Client {
 
         tokio::spawn(follow(ident.to_owned(), delay, just_sent.clone(), receiver, response_history.clone()));
 
-        println!("*** Client {} connected", ident);
+        println!("*** {} connected", ident);
 
         Client {
             ident: ident.to_owned(),
@@ -52,7 +52,7 @@ impl Client {
 
     async fn send(&mut self, text: &str) -> UserMessage {
         println!();
-        println!("<—— Client {}: {}", self.ident, text);
+        println!("<—— {}: {}", self.ident, text);
 
         *self.just_sent.lock().await = true;
 
@@ -154,7 +154,7 @@ async fn follow(ident: String, delay: usize, just_sent: Arc<Mutex<bool>>, mut re
 
         pause(del).await;
 
-        println!("——> Client {ident}: {text}");
+        println!("——> {ident}: {text}");
     }
 }
 
@@ -175,6 +175,11 @@ pub async fn run_test_clients() {
     let lexi_acct = lexi.register().await;
 
     let _ = evan.register_unchecked().await;
+    
+    println!();
+    let mut evan2 = Client::new("Evan (second tab)").await;
+
+    evan2.login(&evan_acct).await;
 
     evan.set_name("Evan is my name").await;
 
