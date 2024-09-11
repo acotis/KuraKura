@@ -2,7 +2,7 @@
 use std::sync::Arc;
 use std::collections::HashMap;
 
-use futures_util::{StreamExt, SinkExt, stream::{SplitStream, SplitSink}};
+use futures_util::{StreamExt, SinkExt, stream::{SplitSink}};
 use tokio::sync::Mutex;
 use axum::{
     extract::{State, ws::{WebSocketUpgrade, WebSocket, Message::{self, Text}}},
@@ -15,7 +15,6 @@ use kurakura::server::Server;
 use kurakura::server::SocketId;
 use kurakura::test_client::run_test_clients;
 
-type Receiver = SplitStream<WebSocket>;
 type Sender   = SplitSink<WebSocket, Message>;
 type Senders  = HashMap<SocketId, Sender>;
 type AppState = (Arc<Mutex<Server>>, Arc<Mutex<Senders>>);
@@ -54,7 +53,12 @@ async fn handle_socket((server, senders): AppState, socket: WebSocket) {
         let mut senders_lock = senders.lock().await;
 
         for (socket_id, message) in messages {
-            senders_lock.get_mut(&socket_id).unwrap().send(Text(serde_json::to_string(&message).unwrap())).await;
+            senders_lock
+                .get_mut(&socket_id)
+                .unwrap()
+                .send(Text(serde_json::to_string(&message).unwrap()))
+                .await
+                .unwrap();
         }
     }
 }

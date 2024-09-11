@@ -40,6 +40,7 @@ impl Client {
 
         tokio::spawn(follow(ident.to_owned(), delay, just_sent.clone(), receiver, response_history.clone()));
 
+        println!();
         println!("*** {} connected", ident);
 
         Client {
@@ -78,7 +79,7 @@ impl Client {
     }
 
     async fn create_room_unchecked(&mut self) -> UserMessage {
-        self.send(&format!(r#""Register""#)).await
+        self.send(&format!(r#""CreateRoom""#)).await
     }
 
     async fn join_room_unchecked(&mut self, room_id: &str) -> UserMessage {
@@ -87,6 +88,10 @@ impl Client {
 
     async fn set_name_unchecked(&mut self, name: &str) -> UserMessage {
         self.send(&format!(r#"{{"SetName": {{"name": "{name}"}}}}"#)).await
+    }
+
+    async fn debug_log_unchecked(&mut self) -> UserMessage {
+        self.send(&format!(r#""DebugLog""#)).await
     }
 
     // Checked server interactions.
@@ -134,6 +139,14 @@ impl Client {
             panic!("When setting name, response was: {response:?}");
         }
     }
+
+    async fn debug_log(&mut self) {
+        let response = self.debug_log_unchecked().await;
+
+        if response != Err(InvalidJson) {
+            panic!("When requesting debug log, response was: {response:?}");
+        }
+    }
 }
 
 async fn follow(ident: String, delay: usize, just_sent: Arc<Mutex<bool>>, mut receiver: Receiver, accum: Arc<Mutex<Vec<UserMessage>>>) {
@@ -163,25 +176,27 @@ async fn pause(millis: usize) {
 }
 
 pub async fn run_test_clients() {
-    println!();
     pause(1000).await;
 
-    let mut lynn = Client::new("Lynn").await;
-    let mut evan = Client::new("Evan").await;
-    let mut lexi = Client::new("Lexi").await;
+    let mut lynn  = Client::new("Lynn").await;
+    let mut evan  = Client::new("Evan").await;
+    let mut lexi  = Client::new("Lexi").await;
 
-    let lynn_acct = lynn.register().await;
     let evan_acct = evan.register().await;
-    let lexi_acct = lexi.register().await;
+    let _         = lynn.register().await;
+    let _         = lexi.register().await;
+    let _         = evan.register_unchecked().await;
 
-    let _ = evan.register_unchecked().await;
-    
-    println!();
-    let mut evan2 = Client::new("Evan (second tab)").await;
+    let _         = evan.set_name("Evan is my name").await;
+    let _         = lynn.set_name("Lynnn").await;
+    let _         = lexi.set_name("The LEX").await;
 
-    evan2.login(&evan_acct).await;
+    let mut evn2  = Client::new("Evan (second tab)").await;
 
-    evan.set_name("Evan is my name").await;
+    let _         = evn2.login(&evan_acct).await;
+    let evan_room = evn2.create_room().await;
+    let _         = lynn.join_room(&evan_room).await;
+    let _         = evan.debug_log().await;
 
     println!();
 }
