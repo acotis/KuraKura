@@ -157,8 +157,7 @@ impl Server {
                     Ok(CreateRoom     ) => {self.create_room(socket_id.clone()      )},
                     Ok(JoinRoom {room}) => {self.join_room  (socket_id.clone(), room)},
                     Ok(TakeTurn {turn}) => {self.take_turn  (socket_id.clone(), turn)},
-                    Ok(DebugLog       ) => {println!("{self}"); vec![(socket_id.clone(), Err(InvalidJson))]},
-                    Ok(_)               => {vec![(socket_id.clone(), Err(NotImplemented))]},
+                    Ok(DebugLog       ) => {print!("{self}"); vec![(socket_id.clone(), Err(InvalidJson))]},
                     Err(_)              => {vec![(socket_id.clone(), Err(InvalidJson))]},
                 }
             )
