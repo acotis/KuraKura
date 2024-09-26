@@ -135,6 +135,18 @@ pub struct Server {
     rooms:      HashMap<RoomId, Room>,
 }
 
+// Constructor.
+
+impl Server {
+    pub fn new() -> Self {
+        Server {
+            sockets: HashMap::new(),
+            accounts: HashMap::new(),
+            rooms: HashMap::new(),
+        }
+    }
+}
+
 // Public methods of Server.
 
 impl Server {
@@ -206,6 +218,16 @@ impl Server {
 
         account.name = name;
         vec![(socket_id, Ok(Okay))]
+
+        /*
+        match account.room_id {
+            None => vec![(socket_id, Ok(Okay))],
+            Some(room_id) => {
+                let Some(room) = self.rooms.get_mut(room_id) else {return vec![(socket_id, Err(RoomNotFound))];};
+
+            }
+        }
+        */
     }
 
     fn create_room(&mut self, socket_id: SocketId) -> ServerOk {
@@ -261,29 +283,6 @@ impl Server {
         match room.game.turn(turn) {
             Ok(_)           => vec![(socket_id, Ok(Okay))],
             Err(turn_error) => vec![(socket_id, Err(InvalidTurn {error: turn_error}))],
-        }
-    }
-}
-
-// Utility methods.
-
-/* to be removed
- *
-impl Server {
-    async fn send(&mut self, sid: &SocketId, msg: UserMessage) {
-        self.sockets.get_mut(sid).unwrap().writer.send(Text(serde_json::to_string(&msg).unwrap())).await;
-    }
-}
-*/
-
-// Constructor.
-
-impl Server {
-    pub fn new() -> Self {
-        Server {
-            sockets: HashMap::new(),
-            accounts: HashMap::new(),
-            rooms: HashMap::new(),
         }
     }
 }
