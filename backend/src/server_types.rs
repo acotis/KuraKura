@@ -80,7 +80,7 @@ pub struct Room {
 }
 
 impl Room {
-    pub fn new(host_id: &str) -> Self {
+    pub fn new() -> Self {
         Room {
             id:          Uuid::new_v4().to_string(),
             game:        Game::new(4, 2),
