@@ -127,7 +127,7 @@ impl Client {
     async fn join_room(&mut self, room_id: &str) {
         let response = self.join_room_unchecked(room_id).await;
 
-        if response != Ok(Okay) {
+        if response != Ok(JoinedAsPlayer) && response != Ok(JoinedAsSpectator) {
             panic!("When joining room, response was: {response:?}");
         }
     }

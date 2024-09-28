@@ -43,7 +43,7 @@ pub enum UserOk {
     AccountRegistered   {id: AccountId},
     RoomCreated         {id: RoomId},
     JoinedAsPlayer,
-    JoinedAsGuest,
+    JoinedAsSpectator,
     Okay,
 }
 
@@ -261,12 +261,12 @@ impl Server {
         account.room_id = Some(room_id);
         room.player_ids.push(account_id);
 
-        // todo: let the Game decide whether the new player is a player or a guest.
+        // todo: let the Game decide whether the new player is a player or a spectator.
 
         if room.player_ids.len() <= 2{
             vec![(socket_id, Ok(JoinedAsPlayer))]
         } else {
-            vec![(socket_id, Ok(JoinedAsGuest))]
+            vec![(socket_id, Ok(JoinedAsSpectator))]
         }
     }
 
@@ -304,7 +304,7 @@ impl Display for Room {
         writeln!(f, "{bold}Room ID:{reset} {}...", &self.id[0..4])?;
 
         for player_id in &self.player_ids {
-            writeln!(f, "{bold}Player ID:{reset} {}...", &player_id[0..4])?;
+            writeln!(f, " ⮡ {bold}Player ID:{reset} {}...", &player_id[0..4])?;
         }
 
         for line in self.game.to_string().lines() {
