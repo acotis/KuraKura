@@ -184,8 +184,9 @@ impl Server {
         if socket.account_id != None {
             vec![(socket_id, Err(AlreadyLoggedIn))]
         } else {
-            let account = Account::new();
+            let mut account = Account::new();
             let account_id = account.id.clone();
+            account.socket_ids.push(socket_id.clone());
             self.accounts.insert(account_id.clone(), account);
             socket.account_id = Some(account_id.clone());
 
@@ -194,14 +195,15 @@ impl Server {
     }
 
     fn login(&mut self, socket_id: SocketId, account_id: AccountId) -> ServerOk {
-        let Some(socket) = self.sockets.get_mut(&socket_id)   else {unreachable!()};
-        let Some(_)      = self.accounts.get_mut(&account_id) else {return vec![(socket_id, Err(AccountNotFound))];};
+        let Some(socket)  = self.sockets.get_mut(&socket_id)   else {unreachable!()};
+        let Some(account) = self.accounts.get_mut(&account_id) else {return vec![(socket_id, Err(AccountNotFound))];};
 
         if socket.account_id != None {
             return vec![(socket_id, Err(AlreadyLoggedIn))];
         }
 
         socket.account_id = Some(account_id);
+        account.socket_ids.push(socket_id.clone());
         vec![(socket_id, Ok(Okay))]
     }
 
