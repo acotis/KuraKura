@@ -2,15 +2,11 @@
 use std::clone::Clone;
 use std::ops::Deref;
 
-pub struct Foo {
-    pub field: u32,
-}
+pub struct Foo {}
 
 impl Clone for Foo {
     fn clone(&self) -> Self {
-        Foo {
-            field: self.field
-        }
+        Foo {}
     }
 }
 
@@ -21,7 +17,7 @@ impl Deref<str> for Foo {
 }
 
 pub fn main() {
-    let f = Foo {field: 1};
+    let f = Foo {};
     let _ = f.clone();
 }
 
