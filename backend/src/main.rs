@@ -10,11 +10,7 @@ impl Clone for Foo {
     }
 }
 
-impl Deref<str> for Foo {
-    fn deref(&self) -> &str {
-        "Hello world"
-    }
-}
+impl Deref for Foo {}
 
 pub fn main() {
     let f = Foo {};
