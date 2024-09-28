@@ -2,29 +2,26 @@
 use std::clone::Clone;
 use std::ops::Deref;
 
-pub struct Id {
-    pub id: u32,
+pub struct Foo {
+    pub field: u32,
 }
 
-impl Clone for Id {
+impl Clone for Foo {
     fn clone(&self) -> Self {
-        Id {
-            id: self.id
+        Foo {
+            field: self.field
         }
     }
 }
 
-impl Deref<str> for Id {
+impl Deref<str> for Foo {
     fn deref(&self) -> &str {
         "Hello world"
     }
 }
 
-pub fn clone_it() -> Id {
-    let id = Id {id: 1};
-    id.clone()
-}
-
 pub fn main() {
+    let f = Foo {field: 1};
+    let _ = f.clone();
 }
 
