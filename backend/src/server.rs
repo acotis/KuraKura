@@ -1,6 +1,7 @@
 
 #![allow(unused)]
 
+use std::clone::Clone;
 use crate::Game;
 use crate::Turn;
 use crate::TurnError;
