@@ -2,19 +2,28 @@
 #![allow(unused)]
 
 use std::clone::Clone;
-pub use crate::server_types::Id;
+use std::ops::Deref;
 
-// Server struct.
-
-pub struct Server {
-    dummy: Id
+pub struct Id {
+    pub id: u32,
 }
 
-// Constructor.
-
-impl Server {
-    pub fn get_dummy(&self) -> Id {
-        self.dummy.clone()
+impl Clone for Id {
+    fn clone(&self) -> Self {
+        Id {
+            id: self.id
+        }
     }
+}
+
+impl Deref<str> for Id {
+    fn deref(&self) -> &str {
+        "Hello world"
+    }
+}
+
+pub fn clone_it() -> Id {
+    let id = Id {id: 1};
+    id.clone()
 }
 
