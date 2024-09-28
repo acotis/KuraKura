@@ -218,8 +218,27 @@ impl Server {
             return vec![(socket_id, Err(NameTooLong))];
         }
 
+        // I think this should trigger:
+        //
+        //     socket <-- Okay
+        //     account <-- NameUpdated
+        //     room (if any) <-- RoomUpdated
+
+        let players_to_notify = match account.room_id.clone() {
+            None => vec![socket_id],
+            Some(room_id) => match self.rooms.get_mut(&room_id) {
+                None => {return vec![(socket_id, Err(RoomNotFound))]}
+                Some(room) => room.player_ids.clone()
+            }
+        };
+
+        let mut sockets_to_notify: Vec<SocketId> = vec![];
+
+
+
+        
+
         account.name = name;
-        vec![(socket_id, Ok(Okay))]
 
         /*
         match account.room_id {
