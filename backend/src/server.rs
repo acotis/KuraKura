@@ -81,16 +81,15 @@ struct Socket {
 
 struct Account {
     id:         AccountId,
-    name:       String,
     room_id:    Option<RoomId>,
     socket_ids: Vec<SocketId>,
+    name:       String,
 }
 
 struct Room {
     id:                 RoomId,
-    game:               Game,
-    host_plays_black:   bool,
     player_ids:         Vec<AccountId>, // must be a vec for multiplayer games (N > 2)
+    game:               Game,
     //creation_time:      Instant,
 }
 
@@ -121,7 +120,6 @@ impl Room {
         Room {
             id:                 Uuid::new_v4().to_string(),
             game:               Game::new(4, 2),
-            host_plays_black:   true, // todo: make this random
             player_ids:         vec![],
             //creation_time:      Instant::now(),
         }
@@ -220,7 +218,11 @@ impl Server {
         let room_id = room.id.clone();
         self.rooms.insert(room_id.clone(), room);
         account.room_id = Some(room_id.clone());
-        vec![(socket_id, Ok(RoomCreated {id: room_id}))]
+
+        account.socket_ids
+               .iter()
+               .map(|socket_id| (socket_id.clone(), Ok(RoomCreated {id: room_id.clone()})))
+               .collect()
     }
 
     fn join_room(&mut self, socket_id: SocketId, room_id: RoomId) -> ServerOk {

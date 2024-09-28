@@ -3,11 +3,11 @@
   (maybe [u8; 32]) instead of String. Non-copy types suck here.
 
 + Finish implementing the server.
-    + SetName should notify all participants of a room that the change occurred.
-    + TakeTurn should also be implemented and do the same.
+    + TakeTurn should be implemented and (if successful) notify all participants
+      of a room that the change occurred, *and what it was* (not just the new state).
+    + CreateRoom should notify all sockets of a player that the room was
+      created.
     + The server should delete any socket that hasn't had activity in, say, an hour.
-    + When one socket changes their name, other sockets of the same account
-      need to know that too!
 
 + Generalize the server.
     + Parameterize Server over Game and Turn types.
