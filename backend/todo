@@ -6,11 +6,17 @@
     + SetName should notify all participants of a room that the change occurred.
     + TakeTurn should also be implemented and do the same.
     + The server should delete any socket that hasn't had activity in, say, an hour.
+    + When one socket changes their name, other sockets of the same account
+      need to know that too!
 
-- In cell.rs, make a Stone type instead of having it be a tuple in Cell.
++ Generalize the server.
+    + Parameterize Server over Game and Turn types.
+    + Create the Game trait.
+    + Separate Server out into its own crate.
 
-- Parameterize Server over Game and Turn types.
-- Separate Server out into its own crate.
++ Finish implementing the game.
+    + In cell.rs, make a Stone type instead of having it be a tuple in Cell.
+    + Implement the "who plays black" thing as a game setting.
 
 + Write tests for the web app?
     - Host can't play until player arrives.

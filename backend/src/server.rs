@@ -42,6 +42,8 @@ pub enum UserRequest {
 pub enum UserOk {
     AccountRegistered   {id: AccountId},
     RoomCreated         {id: RoomId},
+    JoinedAsPlayer,
+    JoinedAsGuest,
     Okay,
 }
 
@@ -82,14 +84,14 @@ struct Account {
     id:         AccountId,
     name:       String,
     room_id:    Option<RoomId>,
+    socket_ids: Vec<SocketId>,
 }
 
 struct Room {
     id:                 RoomId,
-    host_id:            AccountId,
-    guest_id:           Option<AccountId>,
     game:               Game,
     host_plays_black:   bool,
+    player_ids:         Vec<AccountId>, // must be a vec for multiplayer games (N > 2)
     //creation_time:      Instant,
 }
 
@@ -107,9 +109,10 @@ impl Socket {
 impl Account {
     fn new() -> Self {
         Account {
-            id:      Uuid::new_v4().to_string(),
-            name:    "".into(),
-            room_id: None,
+            id:         Uuid::new_v4().to_string(),
+            name:       "".into(),
+            room_id:    None,
+            socket_ids: vec![],
         }
     }
 }
@@ -117,11 +120,10 @@ impl Account {
 impl Room {
     fn new(host_id: &str) -> Self {
         Room {
-            id:               Uuid::new_v4().to_string(),
-            host_id:          host_id.to_owned(),
-            guest_id:         None,
-            game:             Game::new(4, 2),
-            host_plays_black: true, // todo: make this random
+            id:                 Uuid::new_v4().to_string(),
+            game:               Game::new(4, 2),
+            host_plays_black:   true, // todo: make this random
+            player_ids:         vec![],
             //creation_time:      Instant::now(),
         }
     }
@@ -256,13 +258,16 @@ impl Server {
             return vec![(socket_id, Err(AccountAlreadyHasRoom))];
         }
 
-        if room.guest_id != None {
-            return vec![(socket_id, Err(RoomAlreadyHasGuest))];
-        }
-
         account.room_id = Some(room_id);
-        room.guest_id = Some(account_id);
-        vec![(socket_id, Ok(Okay))]
+        room.player_ids.push(account_id);
+
+        // todo: let the Game decide whether the new player is a player or a guest.
+
+        if room.player_ids.len() <= 2{
+            vec![(socket_id, Ok(JoinedAsPlayer))]
+        } else {
+            vec![(socket_id, Ok(JoinedAsGuest))]
+        }
     }
 
     fn take_turn(&mut self, socket_id: SocketId, turn: Turn) -> ServerOk {
@@ -271,12 +276,6 @@ impl Server {
         let Some(account)    = self.accounts.get_mut(&account_id) else {return vec![(socket_id, Err(AccountNotFound))];};
         let Some(room_id)    = account.room_id.clone()            else {return vec![(socket_id, Err(AccountDoesntHaveRoom))];};
         let Some(room)       = self.rooms.get_mut(&room_id)       else {return vec![(socket_id, Err(RoomNotFound))];};
-        let Some(_)          = room.guest_id.clone()              else {return vec![(socket_id, Err(RoomDoesntHaveGuest))];};
-        let host             = room.host_id.clone();
-
-        if (room.host_plays_black == (turn.player == Black)) != (account_id == host) {
-            return vec![(socket_id, Err(AccountPlayedWrongColor))];
-        }
 
         // Todo: make sure that account really is that player!
 
@@ -302,18 +301,12 @@ impl Display for Room {
         let bold = "\x1b[1m";
         let reset = "\x1b[0m";
 
-        writeln!(f, "{bold}Room ID:{reset} {}... {bold}Host ID:{reset} {}... {bold}Guest ID:{reset} {}{}",
-               &self.id[0..4],
-               &self.host_id[0..4],
-               match &self.guest_id {
-                   None => "None",
-                   Some(id) => &id[0..4],
-               },
-               match &self.guest_id {
-                   None => "",
-                   Some(_) => "..."
-               })?;
-        
+        writeln!(f, "{bold}Room ID:{reset} {}...", &self.id[0..4])?;
+
+        for player_id in &self.player_ids {
+            writeln!(f, "{bold}Player ID:{reset} {}...", &player_id[0..4])?;
+        }
+
         for line in self.game.to_string().lines() {
             writeln!(f, "  {}", line)?;
         }
