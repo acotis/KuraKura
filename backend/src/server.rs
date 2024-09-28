@@ -8,6 +8,7 @@ use crate::server::UserRequest::*;
 use crate::server::UserOk::*;
 use crate::server::UserErr::*;
 use crate::server::ServerError::*;
+use crate::server_types::*;
 use crate::Player::Black;
 use uuid::Uuid;
 //use std::time::{Instant};
@@ -18,11 +19,7 @@ use serde_json::from_str;
 use axum::extract::ws::{WebSocket, Message::{self, Text}};
 use futures_util::{SinkExt, stream::SplitSink};
 
-// Public-facing types.
-
-type AccountId = String;
-type RoomId = String;
-pub type SocketId = String;
+pub use crate::server_types::SocketId;
 
 // User inputs and outputs (i.e., things the user sends us and receives in response).
 

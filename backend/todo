@@ -5,8 +5,6 @@
 + Finish implementing the server.
     + TakeTurn should be implemented and (if successful) notify all participants
       of a room that the change occurred, *and what it was* (not just the new state).
-    + CreateRoom should notify all sockets of a player that the room was
-      created.
     + The server should delete any socket that hasn't had activity in, say, an hour.
 
 + Generalize the server.
