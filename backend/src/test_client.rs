@@ -18,7 +18,7 @@ type Sender = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>;
 struct Client {
     ident: String,
     sender: Sender,
-    response_history: Arc<Mutex<Vec<UserMessage>>>,
+    last_response: Arc<Mutex<Option<UserMessage>>>,
     just_sent: Arc<Mutex<bool>>,
 }
 
@@ -35,10 +35,10 @@ impl Client {
         let uri = Uri::from_static("ws://127.0.0.1:3000");
         let (websocket, _) = ClientBuilder::from_uri(uri).connect().await.unwrap();
         let (sender, receiver)  = websocket.split();
-        let response_history = Arc::new(Mutex::new(vec![]));
+        let last_response = Arc::new(Mutex::new(None));
         let just_sent = Arc::new(Mutex::new(false));
 
-        tokio::spawn(follow(ident.to_owned(), delay, just_sent.clone(), receiver, response_history.clone()));
+        tokio::spawn(follow(ident.to_owned(), delay, just_sent.clone(), receiver, last_response.clone()));
 
         println!();
         println!("*** {} connected", ident);
@@ -46,7 +46,7 @@ impl Client {
         Client {
             ident: ident.to_owned(),
             sender,
-            response_history,
+            last_response,
             just_sent,
         }
     }
@@ -64,8 +64,11 @@ impl Client {
 
         pause(1000).await;
 
-        let lock = self.response_history.lock().await;
-        lock[lock.len() - 1].clone()
+        self.last_response
+            .lock()
+            .await
+            .take()
+            .expect("Request was not responded to at all.")
     }
 
     // Unchecked server interactions.
@@ -137,14 +140,14 @@ impl Client {
     }
 }
 
-async fn follow(ident: String, delay: usize, just_sent: Arc<Mutex<bool>>, mut receiver: Receiver, accum: Arc<Mutex<Vec<UserMessage>>>) {
+async fn follow(ident: String, delay: usize, just_sent: Arc<Mutex<bool>>, mut receiver: Receiver, last: Arc<Mutex<Option<UserMessage>>>) {
     while let Some(Ok(message)) = receiver.next().await {
         let text = message.as_text().unwrap();
 
-        accum.lock()
-             .await
-             .push(serde_json::from_str(&text)
-                               .expect(&format!("server's message was not valid JSON: {}", text)));
+        last.lock()
+            .await
+            .replace(serde_json::from_str(&text)
+                                .expect(&format!("server's message was not valid JSON: {}", text)));
 
         let mut sent_lock = just_sent.lock().await;
         let del = if *sent_lock {
