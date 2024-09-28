@@ -69,60 +69,6 @@ pub enum ServerError {SocketNotFound}
 pub type ServerOk = Vec<(SocketId, UserMessage)>;
 pub type ServerResult = Result<ServerOk, ServerError>;
 
-// Basic entities recognized by the server.
-
-struct Socket {
-    id:         SocketId,
-    account_id: Option<AccountId>,
-}
-
-struct Account {
-    id:         AccountId,
-    room_id:    Option<RoomId>,
-    socket_ids: Vec<SocketId>,
-    name:       String,
-}
-
-struct Room {
-    id:                 RoomId,
-    player_ids:         Vec<AccountId>, // must be a vec for multiplayer games (N > 2)
-    game:               Game,
-    //creation_time:      Instant,
-}
-
-// Basic methods for those entities.
-
-impl Socket {
-    fn new() -> Self {
-        Socket {
-            id:         Uuid::new_v4().to_string(),
-            account_id: None,
-        }
-    }
-}
-
-impl Account {
-    fn new() -> Self {
-        Account {
-            id:         Uuid::new_v4().to_string(),
-            name:       "".into(),
-            room_id:    None,
-            socket_ids: vec![],
-        }
-    }
-}
-
-impl Room {
-    fn new(host_id: &str) -> Self {
-        Room {
-            id:                 Uuid::new_v4().to_string(),
-            game:               Game::new(4, 2),
-            player_ids:         vec![],
-            //creation_time:      Instant::now(),
-        }
-    }
-}
-
 // Server struct.
 
 pub struct Server {
@@ -235,11 +181,11 @@ impl Server {
         }
 
         account.room_id = Some(room_id);
-        room.player_ids.push(account_id);
+        room.account_ids.push(account_id);
 
         // todo: let the Game decide whether the new player is a player or a spectator.
 
-        if room.player_ids.len() <= 2{
+        if room.account_ids.len() <= 2{
             vec![(socket_id, Ok(JoinedAsPlayer))]
         } else {
             vec![(socket_id, Ok(JoinedAsSpectator))]
@@ -279,7 +225,7 @@ impl Display for Room {
 
         writeln!(f, "{bold}Room ID:{reset} {}...", &self.id[0..4])?;
 
-        for player_id in &self.player_ids {
+        for player_id in &self.account_ids {
             writeln!(f, " ⮡ {bold}Player ID:{reset} {}...", &player_id[0..4])?;
         }
 
