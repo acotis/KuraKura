@@ -2,27 +2,19 @@
 #![allow(unused)]
 
 use std::clone::Clone;
-pub use crate::server_types::SocketId;
+pub use crate::server_types::Id;
 
 // Server struct.
 
 pub struct Server {
-    dummy: SocketId
+    dummy: Id
 }
 
 // Constructor.
 
 impl Server {
-    pub fn new() -> Self {
-        Server {
-            dummy: SocketId::new();
-        }
+    pub fn get_dummy(&self) -> Id {
+        self.dummy.clone()
     }
-}
-
-// Public methods of Server.
-
-impl Server {
-    pub 
 }
 
