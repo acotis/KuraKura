@@ -2,33 +2,12 @@
 #![allow(unused)]
 
 use std::clone::Clone;
-use crate::Game;
-use crate::Turn;
-use crate::TurnError;
-use crate::server::UserRequest::*;
-use crate::server::UserOk::*;
-use crate::server::UserErr::*;
-use crate::server::ServerError::*;
-use crate::server_types::*;
-use crate::Player::Black;
-use uuid::Uuid;
-//use std::time::{Instant};
-use std::collections::HashMap;
-use std::fmt::{Display, Formatter, Error};
-use serde::{Serialize, Deserialize};
-use serde_json::from_str;
-use axum::extract::ws::{WebSocket, Message::{self, Text}};
-use futures_util::{SinkExt, stream::SplitSink};
-
 pub use crate::server_types::SocketId;
-pub use crate::server_message_types::*;
 
 // Server struct.
 
 pub struct Server {
-    sockets:    HashMap<SocketId, Socket>,
-    accounts:   HashMap<AccountId, Account>,
-    rooms:      HashMap<RoomId, Room>,
+    dummy: SocketId
 }
 
 // Constructor.
@@ -36,9 +15,7 @@ pub struct Server {
 impl Server {
     pub fn new() -> Self {
         Server {
-            sockets: HashMap::new(),
-            accounts: HashMap::new(),
-            rooms: HashMap::new(),
+            dummy: SocketId::new();
         }
     }
 }
@@ -46,176 +23,6 @@ impl Server {
 // Public methods of Server.
 
 impl Server {
-    pub fn register_socket(&mut self) -> SocketId {
-        let socket = Socket::new();
-        let socket_id = socket.id.clone();
-        self.sockets.insert(socket_id.clone(), socket);
-        socket_id
-    }
-
-    pub fn handle_request(&mut self, socket_id: &SocketId, json: &str) -> ServerResult {
-        if self.sockets.get(socket_id).is_none() {
-            Err(SocketNotFound)
-        } else {
-            Ok(
-                match from_str(&json) {
-                    Ok(Register {name}) => {self.register   (socket_id.clone()      )},
-                    Ok(Login    {auth}) => {self.login      (socket_id.clone(), auth)},
-                    Ok(CreateRoom     ) => {self.create_room(socket_id.clone()      )},
-                    Ok(JoinRoom {room}) => {self.join_room  (socket_id.clone(), room)},
-                    Ok(TakeTurn {turn}) => {self.take_turn  (socket_id.clone(), turn)},
-                    Ok(DebugLog       ) => {print!("{self}"); vec![(socket_id.clone(), Err(InvalidJson))]},
-                    Err(_)              => {vec![(socket_id.clone(), Err(InvalidJson))]},
-                }
-            )
-        }
-    }
-}
-
-// Private methods directly corresponding to API calls.
-
-impl Server {
-    fn register(&mut self, socket_id: SocketId) -> ServerOk {
-        let Some(socket) = self.sockets.get_mut(&socket_id) else {unreachable!()};
-
-        if socket.account_id != None {
-            vec![(socket_id, Err(AlreadyLoggedIn))]
-        } else {
-            let mut account = Account::new();
-            let account_id = account.id.clone();
-            account.socket_ids.push(socket_id.clone());
-            self.accounts.insert(account_id.clone(), account);
-            socket.account_id = Some(account_id.clone());
-
-            vec![(socket_id, Ok(AccountRegistered {id: account_id}))]
-        }
-    }
-
-    fn login(&mut self, socket_id: SocketId, account_id: AccountId) -> ServerOk {
-        let Some(socket)  = self.sockets.get_mut(&socket_id)   else {unreachable!()};
-        let Some(account) = self.accounts.get_mut(&account_id) else {return vec![(socket_id, Err(AccountNotFound))];};
-
-        if socket.account_id != None {
-            return vec![(socket_id, Err(AlreadyLoggedIn))];
-        }
-
-        socket.account_id = Some(account_id);
-        account.socket_ids.push(socket_id.clone());
-        vec![(socket_id, Ok(Okay))]
-    }
-
-    fn create_room(&mut self, socket_id: SocketId) -> ServerOk {
-        let Some(socket)     = self.sockets.get_mut(&socket_id)   else {unreachable!()};
-        let Some(account_id) = socket.account_id.clone()          else {return vec![(socket_id, Err(NotLoggedIn))];};
-        let Some(account)    = self.accounts.get_mut(&account_id) else {return vec![(socket_id, Err(AccountNotFound))];};
-
-        if account.room_id != None {
-            return vec![(socket_id, Err(AccountAlreadyHasRoom))];
-        }
-
-        let room = Room::new();
-        let room_id = room.id.clone();
-        self.rooms.insert(room_id.clone(), room);
-        account.room_id = Some(room_id.clone());
-
-        account.socket_ids
-               .iter()
-               .map(|socket_id| (socket_id.clone(), Ok(RoomCreated {id: room_id.clone()})))
-               .collect()
-    }
-
-    fn join_room(&mut self, socket_id: SocketId, room_id: RoomId) -> ServerOk {
-        let Some(socket)     = self.sockets.get_mut(&socket_id)   else {unreachable!()};
-        let Some(account_id) = socket.account_id.clone()          else {return vec![(socket_id, Err(NotLoggedIn))];};
-        let Some(account)    = self.accounts.get_mut(&account_id) else {return vec![(socket_id, Err(AccountNotFound))];};
-        let Some(room)       = self.rooms.get_mut(&room_id)       else {return vec![(socket_id, Err(RoomNotFound))];};
-
-        if account.room_id != None {
-            return vec![(socket_id, Err(AccountAlreadyHasRoom))];
-        }
-
-        account.room_id = Some(room_id);
-        room.account_ids.push(account_id);
-
-        // todo: let the Game decide whether the new player is a player or a spectator.
-
-        if room.account_ids.len() <= 2{
-            vec![(socket_id, Ok(JoinedAsPlayer))]
-        } else {
-            vec![(socket_id, Ok(JoinedAsSpectator))]
-        }
-    }
-
-    fn take_turn(&mut self, socket_id: SocketId, turn: Turn) -> ServerOk {
-        let Some(socket)     = self.sockets.get_mut(&socket_id)   else {unreachable!()};
-        let Some(account_id) = socket.account_id.clone()          else {return vec![(socket_id, Err(NotLoggedIn))];};
-        let Some(account)    = self.accounts.get_mut(&account_id) else {return vec![(socket_id, Err(AccountNotFound))];};
-        let Some(room_id)    = account.room_id.clone()            else {return vec![(socket_id, Err(AccountDoesntHaveRoom))];};
-        let Some(room)       = self.rooms.get_mut(&room_id)       else {return vec![(socket_id, Err(RoomNotFound))];};
-
-        // Todo: make sure that account really is that player!
-
-        match room.game.turn(turn) {
-            Ok(_)           => vec![(socket_id, Ok(Okay))],
-            Err(turn_error) => vec![(socket_id, Err(InvalidTurn {error: turn_error}))],
-        }
-    }
-}
-
-// Display stuff.
-
-impl Display for Account {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
-        let bold = "\x1b[1m";
-        let reset = "\x1b[0m";
-        write!(f, "{bold}Account ID:{reset} {}... {bold}Name:{reset} {}", &self.id[0..4], self.name)
-    }
-}
-
-impl Display for Room {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
-        let bold = "\x1b[1m";
-        let reset = "\x1b[0m";
-
-        writeln!(f, "{bold}Room ID:{reset} {}...", &self.id[0..4])?;
-
-        for player_id in &self.account_ids {
-            writeln!(f, " ⮡ {bold}Player ID:{reset} {}...", &player_id[0..4])?;
-        }
-
-        for line in self.game.to_string().lines() {
-            writeln!(f, "  {}", line)?;
-        }
-
-        Ok(())
-    }
-}
-
-impl Display for Server {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
-        let under = "\x1b[4m";
-        let reset = "\x1b[0m";
-
-        writeln!(f)?;
-        writeln!(f, "{under}Accounts:{reset}")?;
-        writeln!(f)?;
-
-        for account in self.accounts.keys() {
-            writeln!(f, "    {}", self.accounts.get(account).unwrap())?;
-        }
-
-        writeln!(f)?;
-        writeln!(f, "{under}Rooms:{reset}")?;
-        writeln!(f)?;
-
-        for room in self.rooms.keys() {
-            for line in self.rooms.get(room).unwrap().to_string().lines() {
-                writeln!(f, "    {}", line)?;
-            }
-            writeln!(f)?;
-        }
-
-        Ok(())
-    }
+    pub 
 }
 
