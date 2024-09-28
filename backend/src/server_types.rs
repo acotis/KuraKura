@@ -52,9 +52,10 @@ impl<T> Clone for Id<T> {
     }
 }
 
-impl<T> Deref<str> for Id<T> {
+impl<T> Deref for Id<T> {
+    type Target: str;
     fn deref(&self) -> &str {
-        unsafe {&selfid}
+        unsafe {&self.id}
     }
 }
 
