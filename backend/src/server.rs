@@ -28,11 +28,10 @@ pub type SocketId = String;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum UserRequest {
-    Register,
+    Register    {name: String},
     Login       {auth: AccountId},
     CreateRoom,
     JoinRoom    {room: RoomId},
-    SetName     {name: String},
     TakeTurn    {turn: Turn},
 
     DebugLog,   // Debugging only, turn this off in production.
@@ -165,9 +164,8 @@ impl Server {
         } else {
             Ok(
                 match from_str(&json) {
-                    Ok(Register       ) => {self.register   (socket_id.clone()      )},
+                    Ok(Register {name}) => {self.register   (socket_id.clone()      )},
                     Ok(Login    {auth}) => {self.login      (socket_id.clone(), auth)},
-                    Ok(SetName  {name}) => {self.set_name   (socket_id.clone(), name)},
                     Ok(CreateRoom     ) => {self.create_room(socket_id.clone()      )},
                     Ok(JoinRoom {room}) => {self.join_room  (socket_id.clone(), room)},
                     Ok(TakeTurn {turn}) => {self.take_turn  (socket_id.clone(), turn)},
@@ -207,48 +205,6 @@ impl Server {
 
         socket.account_id = Some(account_id);
         vec![(socket_id, Ok(Okay))]
-    }
-
-    fn set_name(&mut self, socket_id: SocketId, name: String) -> ServerOk {
-        let Some(socket)     = self.sockets.get_mut(&socket_id)   else {unreachable!()};
-        let Some(account_id) = socket.account_id.clone()          else {return vec![(socket_id, Err(NotLoggedIn))];};
-        let Some(account)    = self.accounts.get_mut(&account_id) else {return vec![(socket_id, Err(AccountNotFound))];};
-
-        if name.len() > 250 {
-            return vec![(socket_id, Err(NameTooLong))];
-        }
-
-        // I think this should trigger:
-        //
-        //     socket <-- Okay
-        //     account <-- NameUpdated
-        //     room (if any) <-- RoomUpdated
-
-        let players_to_notify = match account.room_id.clone() {
-            None => vec![socket_id],
-            Some(room_id) => match self.rooms.get_mut(&room_id) {
-                None => {return vec![(socket_id, Err(RoomNotFound))]}
-                Some(room) => room.player_ids.clone()
-            }
-        };
-
-        let mut sockets_to_notify: Vec<SocketId> = vec![];
-
-
-
-        
-
-        account.name = name;
-
-        /*
-        match account.room_id {
-            None => vec![(socket_id, Ok(Okay))],
-            Some(room_id) => {
-                let Some(room) = self.rooms.get_mut(room_id) else {return vec![(socket_id, Err(RoomNotFound))];};
-
-            }
-        }
-        */
     }
 
     fn create_room(&mut self, socket_id: SocketId) -> ServerOk {
