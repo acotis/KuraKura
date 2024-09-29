@@ -99,7 +99,7 @@ impl Client {
         let response = self.register_unchecked(name).await;
 
         if let Ok(AccountRegistered {id}) = response {
-            id
+            id.to_string()
         } else {
             panic!("When registering account, response was: {response:?}")
         }
@@ -117,7 +117,7 @@ impl Client {
         let response = self.create_room_unchecked().await;
 
         if let Ok(RoomCreated {id}) = response {
-            id
+            id.to_string()
         } else {
             panic!("When creating room, response was: {response:?}")
         }

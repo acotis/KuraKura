@@ -21,7 +21,7 @@ pub struct Socket {
 impl Socket {
     pub fn new() -> Self {
         Socket {
-            id:         Uuid::new_v4().to_string(),
+            id:         SocketId::new(),
             account_id: None,
         }
     }
@@ -39,7 +39,7 @@ pub struct Account {
 impl Account {
     pub fn new() -> Self {
         Account {
-            id:         Uuid::new_v4().to_string(),
+            id:         AccountId::new(),
             name:       "".into(),
             room_id:    None,
             socket_ids: vec![],
@@ -58,7 +58,7 @@ pub struct Room {
 impl Room {
     pub fn new() -> Self {
         Room {
-            id:          Uuid::new_v4().to_string(),
+            id:          RoomId::new(),
             game:        Game::new(4, 2),
             account_ids: vec![],
         }

@@ -2,8 +2,7 @@
 use std::marker::PhantomData;
 use std::hash::{Hash, Hasher};
 use std::fmt;
-use std::fmt::Debug;
-use std::fmt::Formatter;
+use std::fmt::{Debug, Display, Formatter};
 use serde::{Serialize, Serializer, Deserialize, Deserializer};
 use serde::de::Visitor;
 use serde::de;
@@ -102,6 +101,12 @@ impl<'de, T> Deserialize<'de> for CopyId<T> {
 // Formatting stuff.
 
 impl<T> Debug for CopyId<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(f, "{}", self.deref())
+    }
+}
+
+impl<T> Display for CopyId<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "{}", self.deref())
     }
