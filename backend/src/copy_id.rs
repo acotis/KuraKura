@@ -119,7 +119,7 @@ impl<T> Display for CopyId<T> {
 impl<T> CopyId<T> {
     pub fn new() -> Self {
         CopyId {
-            id: [0; 36],
+            id: Uuid::new_v4().to_string().as_bytes().try_into().expect("UUID wasn't 36 chars long"),
             dummy: PhantomData::<T>::default(),
         }
     }
