@@ -47,7 +47,7 @@ async fn handle_socket((server, senders): AppState, socket: WebSocket) {
         let messages = 
             server.lock()
                   .await
-                  .handle_request(&handle, &msg)
+                  .handle_request(handle, &msg)
                   .expect(&format!("server gave error, socket ID was {handle}"));
 
         let mut senders_lock = senders.lock().await;

@@ -48,24 +48,24 @@ impl Server {
 impl Server {
     pub fn register_socket(&mut self) -> SocketId {
         let socket = Socket::new();
-        let socket_id = socket.id.clone();
-        self.sockets.insert(socket_id.clone(), socket);
+        let socket_id = socket.id;
+        self.sockets.insert(socket_id, socket);
         socket_id
     }
 
-    pub fn handle_request(&mut self, socket_id: &SocketId, json: &str) -> ServerResult {
-        if self.sockets.get(socket_id).is_none() {
+    pub fn handle_request(&mut self, socket_id: SocketId, json: &str) -> ServerResult {
+        if self.sockets.get(&socket_id).is_none() {
             Err(SocketNotFound)
         } else {
             Ok(
                 match from_str(&json) {
-                    Ok(Register {name}) => {self.register   (socket_id.clone()      )},
-                    Ok(Login    {auth}) => {self.login      (socket_id.clone(), auth)},
-                    Ok(CreateRoom     ) => {self.create_room(socket_id.clone()      )},
-                    Ok(JoinRoom {room}) => {self.join_room  (socket_id.clone(), room)},
-                    Ok(TakeTurn {turn}) => {self.take_turn  (socket_id.clone(), turn)},
-                    Ok(DebugLog       ) => {print!("{self}"); vec![(socket_id.clone(), Err(InvalidJson))]},
-                    Err(_)              => {vec![(socket_id.clone(), Err(InvalidJson))]},
+                    Ok(Register {name}) => {self.register   (socket_id      )},
+                    Ok(Login    {auth}) => {self.login      (socket_id, auth)},
+                    Ok(CreateRoom     ) => {self.create_room(socket_id      )},
+                    Ok(JoinRoom {room}) => {self.join_room  (socket_id, room)},
+                    Ok(TakeTurn {turn}) => {self.take_turn  (socket_id, turn)},
+                    Ok(DebugLog       ) => {print!("{self}"); vec![(socket_id, Err(InvalidJson))]},
+                    Err(_)              => {vec![(socket_id, Err(InvalidJson))]},
                 }
             )
         }
@@ -82,10 +82,10 @@ impl Server {
             vec![(socket_id, Err(AlreadyLoggedIn))]
         } else {
             let mut account = Account::new();
-            let account_id = account.id.clone();
-            account.socket_ids.push(socket_id.clone());
-            self.accounts.insert(account_id.clone(), account);
-            socket.account_id = Some(account_id.clone());
+            let account_id = account.id;
+            account.socket_ids.push(socket_id);
+            self.accounts.insert(account_id, account);
+            socket.account_id = Some(account_id);
 
             vec![(socket_id, Ok(AccountRegistered {id: account_id}))]
         }
@@ -100,13 +100,13 @@ impl Server {
         }
 
         socket.account_id = Some(account_id);
-        account.socket_ids.push(socket_id.clone());
+        account.socket_ids.push(socket_id);
         vec![(socket_id, Ok(Okay))]
     }
 
     fn create_room(&mut self, socket_id: SocketId) -> ServerOk {
         let Some(socket)     = self.sockets.get_mut(&socket_id)   else {unreachable!()};
-        let Some(account_id) = socket.account_id.clone()          else {return vec![(socket_id, Err(NotLoggedIn))];};
+        let Some(account_id) = socket.account_id                  else {return vec![(socket_id, Err(NotLoggedIn))];};
         let Some(account)    = self.accounts.get_mut(&account_id) else {return vec![(socket_id, Err(AccountNotFound))];};
 
         if account.room_id != None {
@@ -114,19 +114,19 @@ impl Server {
         }
 
         let room = Room::new();
-        let room_id = room.id.clone();
-        self.rooms.insert(room_id.clone(), room);
-        account.room_id = Some(room_id.clone());
+        let room_id = room.id;
+        self.rooms.insert(room_id, room);
+        account.room_id = Some(room_id);
 
         account.socket_ids
                .iter()
-               .map(|socket_id| (socket_id.clone(), Ok(RoomCreated {id: room_id.clone()})))
+               .map(|socket_id| (*socket_id, Ok(RoomCreated {id: room_id})))
                .collect()
     }
 
     fn join_room(&mut self, socket_id: SocketId, room_id: RoomId) -> ServerOk {
         let Some(socket)     = self.sockets.get_mut(&socket_id)   else {unreachable!()};
-        let Some(account_id) = socket.account_id.clone()          else {return vec![(socket_id, Err(NotLoggedIn))];};
+        let Some(account_id) = socket.account_id                  else {return vec![(socket_id, Err(NotLoggedIn))];};
         let Some(account)    = self.accounts.get_mut(&account_id) else {return vec![(socket_id, Err(AccountNotFound))];};
         let Some(room)       = self.rooms.get_mut(&room_id)       else {return vec![(socket_id, Err(RoomNotFound))];};
 
@@ -148,9 +148,9 @@ impl Server {
 
     fn take_turn(&mut self, socket_id: SocketId, turn: Turn) -> ServerOk {
         let Some(socket)     = self.sockets.get_mut(&socket_id)   else {unreachable!()};
-        let Some(account_id) = socket.account_id.clone()          else {return vec![(socket_id, Err(NotLoggedIn))];};
+        let Some(account_id) = socket.account_id                  else {return vec![(socket_id, Err(NotLoggedIn))];};
         let Some(account)    = self.accounts.get_mut(&account_id) else {return vec![(socket_id, Err(AccountNotFound))];};
-        let Some(room_id)    = account.room_id.clone()            else {return vec![(socket_id, Err(AccountDoesntHaveRoom))];};
+        let Some(room_id)    = account.room_id                    else {return vec![(socket_id, Err(AccountDoesntHaveRoom))];};
         let Some(room)       = self.rooms.get_mut(&room_id)       else {return vec![(socket_id, Err(RoomNotFound))];};
 
         // Todo: make sure that account really is that player!
