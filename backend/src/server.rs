@@ -59,7 +59,7 @@ impl Server {
         } else {
             Ok(
                 match from_str(&json) {
-                    Ok(Register {name}) => {self.register   (socket_id      )},
+                    Ok(Register {name}) => {self.register   (socket_id, name)},
                     Ok(Login    {auth}) => {self.login      (socket_id, auth)},
                     Ok(CreateRoom     ) => {self.create_room(socket_id      )},
                     Ok(JoinRoom {room}) => {self.join_room  (socket_id, room)},
@@ -75,7 +75,7 @@ impl Server {
 // Private methods directly corresponding to API calls.
 
 impl Server {
-    fn register(&mut self, socket_id: SocketId) -> ServerOk {
+    fn register(&mut self, socket_id: SocketId, name: String) -> ServerOk {
         let Some(socket) = self.sockets.get_mut(&socket_id) else {unreachable!()};
 
         if socket.account_id != None {
@@ -84,6 +84,7 @@ impl Server {
             let mut account = Account::new();
             let account_id = account.id;
             account.socket_ids.push(socket_id);
+            account.name = name;
             self.accounts.insert(account_id, account);
             socket.account_id = Some(account_id);
 
@@ -180,7 +181,7 @@ impl Display for Room {
         writeln!(f, "{bold}Room ID:{reset} {}...", &self.id[0..4])?;
 
         for player_id in &self.account_ids {
-            writeln!(f, " ⮡ {bold}Player ID:{reset} {}...", &player_id[0..4])?;
+            writeln!(f, " ⮡ {bold}Account ID:{reset} {}...", &player_id[0..4])?;
         }
 
         for line in self.game.to_string().lines() {
