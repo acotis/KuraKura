@@ -3,6 +3,14 @@ use serde::{Serialize, Deserialize};
 use crate::server_types::*;
 use crate::{Turn, TurnError};
 
+// Note about types: I know it sucks that the API call methods have to start with
+// a redundant socket lookup which also must be unwrapped instead of .ok_or()'d.
+// But it is simply not appropriate for the API call methods to ever return a
+// SocketNotFound error, because control is not delegated to the methods until the
+// JSON in the request is parsed, and this parsing itself can yield an error, and
+// SocketNotFound should be checked for first because it is the more fundamental
+// error between the two.
+
 // User inputs and outputs (i.e., things the user sends us and receives in response).
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -17,16 +25,15 @@ pub enum UserRequest {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum UserOk {
+pub enum UserInfo {
     AccountRegistered   {id: AccountId},
     RoomCreated         {id: RoomId},
-    JoinedAsPlayer,
-    JoinedAsSpectator,
-    Okay,
+    JoinedAsPlayer      {id: RoomId},
+    JoinedAsSpectator   {id: RoomId},
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum UserErr {
+pub enum UserError {
     AccountNotFound,
     AlreadyLoggedIn,
     NotLoggedIn,
@@ -42,7 +49,20 @@ pub enum UserErr {
     InvalidJson,
 }
 
-pub type UserMessage = Result<UserOk, UserErr>;
+pub type UserMessage = enum {
+    Okay,
+    Error(UserError),
+    Info(UserInfo),
+}
+
+pub type UserBroadcast = enum {
+    Silent,
+    SocketBroadcast(SocketId, UserMessage),
+    AccountBroadcast(AccountId, UserMessage),
+    RoomBroadcast(RoomId, UserMessage),
+}
+
+pub type ApiResult = Result<UserBroadcast, UserError>;
 
 // Server outputs (i.e., possible return values of the server's .handle_request() method).
 

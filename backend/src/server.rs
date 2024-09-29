@@ -6,8 +6,9 @@ use crate::Game;
 use crate::Turn;
 use crate::TurnError;
 use crate::server::UserRequest::*;
-use crate::server::UserOk::*;
-use crate::server::UserErr::*;
+use crate::server::UserError::*;
+use crate::server::UserInfo::*;
+use crate::server::UserMessage::*;
 use crate::server::ServerError::*;
 use crate::server_types::*;
 use crate::Player::Black;
@@ -75,37 +76,37 @@ impl Server {
 // Private methods directly corresponding to API calls.
 
 impl Server {
-    fn register(&mut self, socket_id: SocketId, name: String) -> ServerOk {
-        let Some(socket) = self.sockets.get_mut(&socket_id) else {unreachable!()};
+    fn register(&mut self, socket_id: SocketId, name: String) -> ApiResult {
+        let socket = self.sockets.get_mut(&socket_id).expect("socket lookup in register()");
 
         if socket.account_id != None {
-            vec![(socket_id, Err(AlreadyLoggedIn))]
+            Err(AlreadyLoggedIn)
         } else {
             let mut account = Account::new();
             let account_id = account.id;
             account.socket_ids.push(socket_id);
             account.name = name;
-            self.accounts.insert(account_id, account);
             socket.account_id = Some(account_id);
+            self.accounts.insert(account_id, account);
 
-            vec![(socket_id, Ok(AccountRegistered {id: account_id}))]
+            SocketBroadcast(SocketId, AccountRegistered {id: account_id})
         }
     }
 
-    fn login(&mut self, socket_id: SocketId, account_id: AccountId) -> ServerOk {
-        let Some(socket)  = self.sockets.get_mut(&socket_id)   else {unreachable!()};
-        let Some(account) = self.accounts.get_mut(&account_id) else {return vec![(socket_id, Err(AccountNotFound))];};
+    fn login(&mut self, socket_id: SocketId, account_id: AccountId) -> ApiResult {
+        let socket = self.sockets.get_mut(&socket_id).expect("socket lookup in login()");
+        let account = self.accounts.get_mut(&account_id).ok_or(AccountNotFound)?;
 
         if socket.account_id != None {
-            return vec![(socket_id, Err(AlreadyLoggedIn))];
+            Err(AlreadyLoggedIn)
+        } else {
+            socket.account_id = Some(account_id);
+            account.socket_ids.push(socket_id);
+            Silent
         }
-
-        socket.account_id = Some(account_id);
-        account.socket_ids.push(socket_id);
-        vec![(socket_id, Ok(Okay))]
     }
 
-    fn create_room(&mut self, socket_id: SocketId) -> ServerOk {
+    fn create_room(&mut self, socket_id: SocketId) -> ApiResult {
         let Some(socket)     = self.sockets.get_mut(&socket_id)   else {unreachable!()};
         let Some(account_id) = socket.account_id                  else {return vec![(socket_id, Err(NotLoggedIn))];};
         let Some(account)    = self.accounts.get_mut(&account_id) else {return vec![(socket_id, Err(AccountNotFound))];};
@@ -125,7 +126,7 @@ impl Server {
                .collect()
     }
 
-    fn join_room(&mut self, socket_id: SocketId, room_id: RoomId) -> ServerOk {
+    fn join_room(&mut self, socket_id: SocketId, room_id: RoomId) -> ApiResult {
         let Some(socket)     = self.sockets.get_mut(&socket_id)   else {unreachable!()};
         let Some(account_id) = socket.account_id                  else {return vec![(socket_id, Err(NotLoggedIn))];};
         let Some(account)    = self.accounts.get_mut(&account_id) else {return vec![(socket_id, Err(AccountNotFound))];};
@@ -147,7 +148,7 @@ impl Server {
         }
     }
 
-    fn take_turn(&mut self, socket_id: SocketId, turn: Turn) -> ServerOk {
+    fn take_turn(&mut self, socket_id: SocketId, turn: Turn) -> ApiResult {
         let Some(socket)     = self.sockets.get_mut(&socket_id)   else {unreachable!()};
         let Some(account_id) = socket.account_id                  else {return vec![(socket_id, Err(NotLoggedIn))];};
         let Some(account)    = self.accounts.get_mut(&account_id) else {return vec![(socket_id, Err(AccountNotFound))];};

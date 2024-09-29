@@ -3,6 +3,9 @@
   (maybe [u8; 32]) instead of String. Non-copy types suck here.
 
 + Finish implementing the server.
+    + Implement an architecture where each API method returns either Err (which is
+      for the socket) or Broadcast (which has Socket, Account, and Room variants and
+      which is further parsed to a vec<Message> by a utility method).
     + TakeTurn should be implemented and (if successful) notify all participants
       of a room that the change occurred, *and what it was* (not just the new state).
     + The server should delete any socket that hasn't had activity in, say, an hour.
