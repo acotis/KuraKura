@@ -1,6 +1,7 @@
 
 use std::marker::PhantomData;
 use std::hash::{Hash, Hasher};
+use serde::{Serialize, Serializer};
 use std::ops::Deref;
 use uuid::Uuid;
 use crate::Game;
@@ -53,9 +54,15 @@ impl<T> Clone for Id<T> {
 }
 
 impl<T> Deref for Id<T> {
-    type Target: str;
+    type Target = str;
     fn deref(&self) -> &str {
         unsafe {&self.id}
+    }
+}
+
+impl<T> Serialize for Id<T> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
+        serializer.serializer_str(self.as_ref());
     }
 }
 
