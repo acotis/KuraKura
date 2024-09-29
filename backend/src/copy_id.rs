@@ -69,7 +69,7 @@ struct CopyIdVisitor<T> {
 impl<'de, T> Visitor<'de> for CopyIdVisitor<T> {
     type Value = CopyId<T>;
 
-    fn visit_string<E>(self, string: String) -> Result<Self::Value, E> where E: de::Error {
+    fn visit_str<E>(self, string: &str) -> Result<Self::Value, E> where E: de::Error {
         if string.as_bytes().len() != 36 {
             Err(E::custom(format!("IDs must be 36 characters long (actual length: {}): {}", string.len(), string)))
         } else {
