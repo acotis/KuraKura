@@ -11,25 +11,27 @@ use crate::{Turn, TurnError};
 // SocketNotFound should be checked for first because it is the more fundamental
 // error between the two.
 
-// User inputs and outputs (i.e., things the user sends us and receives in response).
+// USER REQUESTS: Things the user can send us.
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum UserRequest {
-    Register    {name: String},
-    Login       {auth: AccountId},
-    CreateRoom,
-    JoinRoom    {room: RoomId},
-    TakeTurn    {turn: Turn},
+    CreateRoom {name: String},
+    JoinRoom   {name: String, room: RoomId},
+    TakeTurn   {turn: Turn},
 
     DebugLog,   // Debugging only, turn this off in production.
 }
 
+// USER RESPONSES: Things we can reply to a user request (OKs and Errors).
+
+pub type UserResponse = Result<UserOk, UserError>;
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum UserInfo {
-    AccountRegistered   {id: AccountId},
-    RoomCreated         {id: RoomId},
-    JoinedAsPlayer      {id: RoomId},
-    JoinedAsSpectator   {id: RoomId},
+pub enum UserOk {
+    RoomCreated {id: RoomId},
+    JoinedAsPlayer,
+    JoinedAsSpectator,
+    TurnAccepted,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -49,20 +51,31 @@ pub enum UserError {
     InvalidJson,
 }
 
-pub type UserMessage = enum {
-    Okay,
-    Error(UserError),
-    Info(UserInfo),
+// USER INFOS: Things we can send the user autonomously.
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum UserInfo {
+    // nothing yet, will be used for turns being taken by the other player I guess
 }
+
+// User message: an enum for the two types of things we can send to a user.
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub type UserMessage = enum {
+    ResponseMessage(UserResponse),
+    InfoMessage(UserInfo),
+}
+
+// User broadcast: a broadcast into a paritcular room, or silence.
 
 pub type UserBroadcast = enum {
     Silent,
-    SocketBroadcast(SocketId, UserMessage),
-    AccountBroadcast(AccountId, UserMessage),
-    RoomBroadcast(RoomId, UserMessage),
+    RoomBroadcast(RoomId, UserInfo),
 }
 
-pub type ApiResult = Result<UserBroadcast, UserError>;
+// API Result: the outcome of calling an endpoint-specific server method.
+
+pub type ApiResult = Result<(UserOk, UserBroadcast), UserError>;
 
 // Server outputs (i.e., possible return values of the server's .handle_request() method).
 

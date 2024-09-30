@@ -28,7 +28,6 @@ pub use crate::server_message_types::*;
 
 pub struct Server {
     sockets:    HashMap<SocketId, Socket>,
-    accounts:   HashMap<AccountId, Account>,
     rooms:      HashMap<RoomId, Room>,
 }
 
@@ -38,7 +37,6 @@ impl Server {
     pub fn new() -> Self {
         Server {
             sockets: HashMap::new(),
-            accounts: HashMap::new(),
             rooms: HashMap::new(),
         }
     }
@@ -58,119 +56,99 @@ impl Server {
         if self.sockets.get(&socket_id).is_none() {
             Err(SocketNotFound)
         } else {
-            Ok(
-                match from_str(&json) {
-                    Ok(Register {name}) => {self.register   (socket_id, name)},
-                    Ok(Login    {auth}) => {self.login      (socket_id, auth)},
-                    Ok(CreateRoom     ) => {self.create_room(socket_id      )},
-                    Ok(JoinRoom {room}) => {self.join_room  (socket_id, room)},
-                    Ok(TakeTurn {turn}) => {self.take_turn  (socket_id, turn)},
-                    Ok(DebugLog       ) => {print!("{self}"); vec![(socket_id, Err(InvalidJson))]},
-                    Err(_)              => {vec![(socket_id, Err(InvalidJson))]},
-                }
-            )
+            let api_result = match from_str(&json) {
+                Ok(CreateRoom {name}      ) => {self.create_room (socket_id, name      )},
+                Ok(JoinRoom   {name, room}) => {self.join_room   (socket_id, name, room)},
+                Ok(TakeTurn   {turn}      ) => {self.take_turn   (socket_id, turn      )},
+                Ok(DebugLog               ) => {self.debug_log   (                     )},
+                Err(_)                      => {Err(InvalidJson)},
+            };
+
+            // Construct the actual Vec of messages to send out.
+
+            match api_result {
+                Err(error) => {vec![(socket_id, ResponseMessage(error))]},
+                Ok((okay, Silent)) => {vec![(socket_id, okay)]},
+                Ok((okay, RoomBroadcast(room_id, info))) => todo!(),
+            }
         }
     }
 }
 
+//vec![(socket_id, Err(InvalidJson))]},
+
+
 // Private methods directly corresponding to API calls.
 
 impl Server {
-    fn register(&mut self, socket_id: SocketId, name: String) -> ApiResult {
-        let socket = self.sockets.get_mut(&socket_id).expect("socket lookup in register()");
+    fn create_room(&mut self, socket_id: SocketId, name: String) -> ApiResult {
+        let socket = self.sockets.get_mut(&socket_id).expect("socket lookup in create_room()");
 
-        if socket.account_id != None {
-            Err(AlreadyLoggedIn)
-        } else {
-            let mut account = Account::new();
-            let account_id = account.id;
-            account.socket_ids.push(socket_id);
-            account.name = name;
-            socket.account_id = Some(account_id);
-            self.accounts.insert(account_id, account);
-
-            SocketBroadcast(SocketId, AccountRegistered {id: account_id})
-        }
-    }
-
-    fn login(&mut self, socket_id: SocketId, account_id: AccountId) -> ApiResult {
-        let socket = self.sockets.get_mut(&socket_id).expect("socket lookup in login()");
-        let account = self.accounts.get_mut(&account_id).ok_or(AccountNotFound)?;
-
-        if socket.account_id != None {
-            Err(AlreadyLoggedIn)
-        } else {
-            socket.account_id = Some(account_id);
-            account.socket_ids.push(socket_id);
-            Silent
-        }
-    }
-
-    fn create_room(&mut self, socket_id: SocketId) -> ApiResult {
-        let Some(socket)     = self.sockets.get_mut(&socket_id)   else {unreachable!()};
-        let Some(account_id) = socket.account_id                  else {return vec![(socket_id, Err(NotLoggedIn))];};
-        let Some(account)    = self.accounts.get_mut(&account_id) else {return vec![(socket_id, Err(AccountNotFound))];};
-
-        if account.room_id != None {
-            return vec![(socket_id, Err(AccountAlreadyHasRoom))];
+        if socket.room_id != None {
+            return Err(AlreadyInARoom);
         }
 
         let room = Room::new();
         let room_id = room.id;
         self.rooms.insert(room_id, room);
-        account.room_id = Some(room_id);
+        socket.room_id = Some(room_id);
 
-        account.socket_ids
-               .iter()
-               .map(|socket_id| (*socket_id, Ok(RoomCreated {id: room_id})))
-               .collect()
+        Ok((RoomCreated {id: roomId}, Silent))
     }
 
     fn join_room(&mut self, socket_id: SocketId, room_id: RoomId) -> ApiResult {
-        let Some(socket)     = self.sockets.get_mut(&socket_id)   else {unreachable!()};
-        let Some(account_id) = socket.account_id                  else {return vec![(socket_id, Err(NotLoggedIn))];};
-        let Some(account)    = self.accounts.get_mut(&account_id) else {return vec![(socket_id, Err(AccountNotFound))];};
-        let Some(room)       = self.rooms.get_mut(&room_id)       else {return vec![(socket_id, Err(RoomNotFound))];};
+        let socket = self.sockets.get_mut(&socket_id).expect("socket lookup in join_room()");
+        let room = self.rooms.get_mut(&room_id).ok_or(RoomNotFound)?;
 
-        if account.room_id != None {
-            return vec![(socket_id, Err(AccountAlreadyHasRoom))];
+        if socket.room_id != None {
+            return Err(AlreadyInARoom);
         }
 
-        account.room_id = Some(room_id);
-        room.account_ids.push(account_id);
+        socket.room_id = Some(room_id);
+        room.socket_ids.push(socket_id);
 
-        // todo: let the Game decide whether the new player is a player or a spectator.
+        // Todo: let the Game decide whether the new player is a player or
+        // a spectator.
+        // Todo: broadcast the fact that a player joined, as well as the new
+        // state of the room, to all connected sockets.
 
-        if room.account_ids.len() <= 2{
-            vec![(socket_id, Ok(JoinedAsPlayer))]
+        if room.account_ids.len() <= 2 {
+            Ok((JoinedAsPlayer, Silent));
         } else {
-            vec![(socket_id, Ok(JoinedAsSpectator))]
+            Ok((JoinedAsSpectator, Silent));
         }
     }
 
     fn take_turn(&mut self, socket_id: SocketId, turn: Turn) -> ApiResult {
-        let Some(socket)     = self.sockets.get_mut(&socket_id)   else {unreachable!()};
-        let Some(account_id) = socket.account_id                  else {return vec![(socket_id, Err(NotLoggedIn))];};
-        let Some(account)    = self.accounts.get_mut(&account_id) else {return vec![(socket_id, Err(AccountNotFound))];};
-        let Some(room_id)    = account.room_id                    else {return vec![(socket_id, Err(AccountDoesntHaveRoom))];};
-        let Some(room)       = self.rooms.get_mut(&room_id)       else {return vec![(socket_id, Err(RoomNotFound))];};
+        let socket = self.sockets.get_mut(&socket_id).expect("socket lookup in take_turn()");
+        let room_id = socket.room_id.ok_or(NotInARoom)?;
+        let room = self.rooms.get_mut(&room_id).ok_or(RoomNotFound)?;
 
-        // Todo: make sure that account really is that player!
+        // Todo: make it broadcast the turn that was taken, and the
+        // new room state, to all players.
 
         match room.game.turn(turn) {
-            Ok(_)           => vec![(socket_id, Ok(Okay))],
-            Err(turn_error) => vec![(socket_id, Err(InvalidTurn {error: turn_error}))],
+            Ok(_)           => Ok((TurnAccepted, Silent)),
+            Err(turn_error) => Err(InvalidTurn),
         }
+    }
+
+    fn debug_log(&mut self) -> ApiResult {
+        print!("{self}");
+
+        // Always return InvalidJson so as to not reveal that the API call
+        // did anything.
+        Err(InvalidJson)
     }
 }
 
 // Display stuff.
 
-impl Display for Account {
+impl Display for Socket {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         let bold = "\x1b[1m";
         let reset = "\x1b[0m";
-        write!(f, "{bold}Account ID:{reset} {}... {bold}Name:{reset} {}", &self.id[0..4], self.name)
+        write!(f, "{bold}Socket ID:{reset} {}... {bold}Name:{reset} {}", &self.id[0..4], self.name)
     }
 }
 
@@ -181,8 +159,8 @@ impl Display for Room {
 
         writeln!(f, "{bold}Room ID:{reset} {}...", &self.id[0..4])?;
 
-        for player_id in &self.account_ids {
-            writeln!(f, " ⮡ {bold}Account ID:{reset} {}...", &player_id[0..4])?;
+        for socket_id in &self.socket_ids {
+            writeln!(f, " ⮡ {bold}SocketId ID:{reset} {}...", &socket_id[0..4])?;
         }
 
         for line in self.game.to_string().lines() {
@@ -199,11 +177,11 @@ impl Display for Server {
         let reset = "\x1b[0m";
 
         writeln!(f)?;
-        writeln!(f, "{under}Accounts:{reset}")?;
+        writeln!(f, "{under}Sockets:{reset}")?;
         writeln!(f)?;
 
-        for account in self.accounts.keys() {
-            writeln!(f, "    {}", self.accounts.get(account).unwrap())?;
+        for socket_id in self.sockets.keys() {
+            writeln!(f, "    {}", self.sockets.get(socket_id).unwrap())?;
         }
 
         writeln!(f)?;
