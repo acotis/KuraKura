@@ -8,7 +8,6 @@ use serde::de::Visitor;
 use serde::de;
 use std::ops::Deref;
 use uuid::Uuid;
-use crate::game::Game;
 
 // The "ID" struct. Used to create the AccountId, RoomId, and SocketId types. These
 // three types are identical, but we want the compiler to recognize them as distinct
