@@ -13,13 +13,17 @@ use crate::game::types::Orientation::*;
 use crate::game::types::TurnError::*;
 use crate::game::types::GameOutcome::{self, *};
 use crate::game::types::SpinDirection::*;
+use crate::game::types::TurnError;
 use crate::game::types::TurnResult;
 use crate::game::cell::Cell;
 use crate::game::cell::spin_cell_grid;
 use crate::game::types::Turn;
 
+use crate::server::game::Game as GameTrait;
+
 // Game type.
 
+#[derive(Debug)]
 pub struct Game {
     win_len:    usize,                  // Line length needed to win.
     board:      Vec<Vec<Cell>>,         // State of the board.
@@ -28,8 +32,15 @@ pub struct Game {
     outcome:    Option<GameOutcome>,    // [Cache] Outcome (= None until the game is over).
 }
 
-impl Game {
-    pub fn new(size: usize, win_len: usize) -> Self {
+impl GameTrait for Game {
+    type Turn = Turn;
+    type GameOutcome = GameOutcome;
+    type TurnError = TurnError;
+
+    fn new() -> Self {
+        let size = 4;
+        let win_len = 2;
+
         let mut board = Game {
             win_len:    win_len,
             board:      vec![],
@@ -61,7 +72,7 @@ impl Game {
         board
     }
 
-    pub fn turn(&mut self, turn: Turn) -> TurnResult {
+    fn turn(&mut self, turn: Turn) -> TurnResult {
         let Turn {
             player:         player,
             play_row:       pr,
@@ -107,6 +118,9 @@ impl Game {
 
         Ok(self.outcome)
     }
+}
+
+impl Game {
 
     // Check for wins.
 
