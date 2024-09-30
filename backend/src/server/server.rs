@@ -1,24 +1,14 @@
 
-#![allow(unused)]
-
-use std::clone::Clone;
-use crate::game::types::Turn;
-use crate::game::types::TurnError;
 use crate::server::message_types::UserRequest::*;
 use crate::server::message_types::UserError::*;
 use crate::server::message_types::UserOk::*;
-use crate::server::message_types::UserInfo::*;
 use crate::server::message_types::UserMessage::*;
 use crate::server::message_types::ServerError::*;
 use crate::server::game::Game;
-use crate::game::types::Player::Black;
 //use std::time::{Instant};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Error};
-use serde::{Serialize, Deserialize};
 use serde_json::from_str;
-use axum::extract::ws::{WebSocket, Message::{self, Text}};
-use futures_util::{SinkExt, stream::SplitSink};
 use crate::server::types::{Socket, SocketId, Room, RoomId};
 use crate::server::message_types::{*, UserBroadcast::*};
 
@@ -68,7 +58,7 @@ impl<G: Game> Server<G> {
                 match api_result {
                     Err(error) => {vec![(socket_id, ResponseMessage(Err(error)))]},
                     Ok((okay, Silent)) => {vec![(socket_id, ResponseMessage(Ok(okay)))]},
-                    Ok((okay, RoomBroadcast(room_id, info))) => todo!(),
+                    Ok((_okay, RoomBroadcast(_room_id, _info))) => todo!(),
                 }
             )
         }

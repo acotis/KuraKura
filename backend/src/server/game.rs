@@ -7,13 +7,13 @@ use serde::de::DeserializeOwned;
 
 pub trait Game : Debug + Display {
     type Turn : DeserializeOwned;
-    type GameOutcome;
     type TurnError : Debug + Clone + PartialEq + Eq + Serialize + DeserializeOwned + Send;
+    type Outcome;
 
     // Todo: in .new(), add a parameter for Parameters.
 
     fn new() -> Self;
     fn turn(&mut self, turn: Self::Turn) ->
-        Result<Option<Self::GameOutcome>, Self::TurnError>;
+        Result<Option<Self::Outcome>, Self::TurnError>;
 }
 

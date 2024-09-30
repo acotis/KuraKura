@@ -15,7 +15,7 @@ use crate::server::message_types::UserMessage::{self, *};
 use crate::server::message_types::UserOk::*;
 use crate::server::message_types::UserError::*;
 use crate::server::game::Game;
-use crate::game::Game as KuraKura;
+use crate::game::KuraKura;
 
 type Receiver = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
 type Sender = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>;

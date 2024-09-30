@@ -1,7 +1,6 @@
 
 use serde::{Serialize, Deserialize};
 use crate::server::types::*;
-use crate::server::game::Game;
 
 // Note about types: I know it sucks that the API call methods have to start with
 // a redundant socket lookup which also must be unwrapped instead of .ok_or()'d.

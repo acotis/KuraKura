@@ -19,12 +19,12 @@ use crate::game::cell::Cell;
 use crate::game::cell::spin_cell_grid;
 use crate::game::types::Turn;
 
-use crate::server::game::Game as GameTrait;
+use crate::server::game::Game;
 
-// Game type.
+// KuraKura type.
 
 #[derive(Debug)]
-pub struct Game {
+pub struct KuraKura {
     win_len:    usize,                  // Line length needed to win.
     board:      Vec<Vec<Cell>>,         // State of the board.
     turn:       usize,                  // Number of the active turn's stone.
@@ -32,16 +32,16 @@ pub struct Game {
     outcome:    Option<GameOutcome>,    // [Cache] Outcome (= None until the game is over).
 }
 
-impl GameTrait for Game {
+impl Game for KuraKura {
     type Turn = Turn;
-    type GameOutcome = GameOutcome;
     type TurnError = TurnError;
+    type Outcome = GameOutcome;
 
     fn new() -> Self {
         let size = 4;
         let win_len = 2;
 
-        let mut board = Game {
+        let mut board = KuraKura {
             win_len:    win_len,
             board:      vec![],
             turn:       1,
@@ -120,7 +120,7 @@ impl GameTrait for Game {
     }
 }
 
-impl Game {
+impl KuraKura {
 
     // Check for wins.
 
@@ -202,7 +202,7 @@ impl Game {
     }
 }
 
-impl Display for Game {
+impl Display for KuraKura {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         let bold        = "\x1b[1m";
         let unbold      = "\x1b[22m";

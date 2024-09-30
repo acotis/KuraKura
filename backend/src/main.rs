@@ -15,7 +15,7 @@ use kurakura::server::server::Server;
 use kurakura::server::types::SocketId;
 use kurakura::server::test_client::run_test_clients;
 
-use kurakura::game::Game as KuraKura;
+use kurakura::game::KuraKura;
 
 type Sender   = SplitSink<WebSocket, Message>;
 type Senders  = HashMap<SocketId, Sender>;
