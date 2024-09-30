@@ -10,7 +10,7 @@ use futures_util::{SinkExt, StreamExt, stream::{SplitSink, SplitStream}};
 
 use crate::server::server_message_types::UserMessage;
 use crate::server::server_message_types::UserOk::*;
-use crate::server::server_message_types::UserErr::*;
+use crate::server::server_message_types::UserError::*;
 
 type Receiver = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
 type Sender = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>;
@@ -73,20 +73,12 @@ impl Client {
 
     // Unchecked server interactions.
 
-    async fn register_unchecked(&mut self, name: &str) -> UserMessage {
-        self.send(&format!(r#"{{"Register": {{"name": "{name}"}}}}"#)).await
+    async fn create_room_unchecked(&mut self, name: &str) -> UserMessage {
+        self.send(&format!(r#"{{"CreateRoom": {{"name": "{name}"}}}}"#)).await
     }
 
-    async fn login_unchecked(&mut self, account_id: &str) -> UserMessage {
-        self.send(&format!(r#"{{"Login": {{"auth": "{account_id}"}}}}"#)).await
-    }
-
-    async fn create_room_unchecked(&mut self) -> UserMessage {
-        self.send(&format!(r#""CreateRoom""#)).await
-    }
-
-    async fn join_room_unchecked(&mut self, room_id: &str) -> UserMessage {
-        self.send(&format!(r#"{{"JoinRoom": {{"room": "{room_id}"}}}}"#)).await
+    async fn join_room_unchecked(&mut self, name: &str, room_id: &str) -> UserMessage {
+        self.send(&format!(r#"{{"JoinRoom": {{"name": "{name}", "room": "{room_id}"}}}}"#)).await
     }
 
     async fn debug_log_unchecked(&mut self) -> UserMessage {
@@ -95,38 +87,21 @@ impl Client {
 
     // Checked server interactions.
 
-    async fn register(&mut self, name: &str) -> String {
-        let response = self.register_unchecked(name).await;
+    async fn create_room(&mut self, name: &str) -> String {
+        let response = self.create_room_unchecked(name).await;
 
-        if let Ok(AccountRegistered {id}) = response {
-            id.to_string()
-        } else {
-            panic!("When registering account, response was: {response:?}")
-        }
-    }
-
-    async fn login(&mut self, account_id: &str) {
-        let response = self.login_unchecked(account_id).await;
-
-        if response != Ok(Okay) {
-            panic!("When logging in, response was: {response:?}");
-        }
-    }
-
-    async fn create_room(&mut self) -> String {
-        let response = self.create_room_unchecked().await;
-
-        if let Ok(RoomCreated {id}) = response {
+        if let ResponseMessage(Ok(RoomCreated {id})) = response {
             id.to_string()
         } else {
             panic!("When creating room, response was: {response:?}")
         }
     }
 
-    async fn join_room(&mut self, room_id: &str) {
-        let response = self.join_room_unchecked(room_id).await;
+    async fn join_room(&mut self, name: &str, room_id: &str) {
+        let response = self.join_room_unchecked(name, room_id).await;
 
-        if response != Ok(JoinedAsPlayer) && response != Ok(JoinedAsSpectator) {
+        if response != ResponseMessage(Ok(JoinedAsPlayer)) &&
+           response != ResponseMessage(Ok(JoinedAsSpectator)) {
             panic!("When joining room, response was: {response:?}");
         }
     }
@@ -134,7 +109,7 @@ impl Client {
     async fn debug_log(&mut self) {
         let response = self.debug_log_unchecked().await;
 
-        if response != Err(InvalidJson) {
+        if response != ResponseMessage(Err(InvalidJson)) {
             panic!("When requesting debug log, response was: {response:?}");
         }
     }
@@ -173,16 +148,10 @@ pub async fn run_test_clients() {
     let mut evan  = Client::new("Evan").await;
     let mut lexi  = Client::new("Lexi").await;
 
-    let evan_acct = evan.register("Evan is my name").await;
-    let _         = lynn.register("Lynnnn").await;
-    let _         = lexi.register("The LEX").await;
-    let _         = evan.register_unchecked("second name").await;
+    let evan_rm   = evan.create_room("Evan is my name").await;
+    let _lynn_rm  = lynn.create_room("Lynnnn").await;
+    let _         = lexi.join_room(&evan_rm, "The LEX").await;
 
-    let mut evn2  = Client::new("Evan (second tab)").await;
-
-    let _         = evn2.login(&evan_acct).await;
-    let evan_room = evn2.create_room().await;
-    let _         = lynn.join_room(&evan_room).await;
     let _         = evan.debug_log().await;
 
     println!();
