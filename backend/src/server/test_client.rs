@@ -8,9 +8,9 @@ use tokio::sync::Mutex;
 use tokio_websockets::{ClientBuilder, Message, WebSocketStream, MaybeTlsStream};
 use futures_util::{SinkExt, StreamExt, stream::{SplitSink, SplitStream}};
 
-use crate::server::UserMessage;
-use crate::server::UserOk::*;
-use crate::server::UserErr::*;
+use crate::server::server_message_types::UserMessage;
+use crate::server::server_message_types::UserOk::*;
+use crate::server::server_message_types::UserErr::*;
 
 type Receiver = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
 type Sender = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>;

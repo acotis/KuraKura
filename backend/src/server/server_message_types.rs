@@ -61,14 +61,14 @@ pub enum UserInfo {
 // User message: an enum for the two types of things we can send to a user.
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub type UserMessage = enum {
+pub enum UserMessage {
     ResponseMessage(UserResponse),
     InfoMessage(UserInfo),
 }
 
 // User broadcast: a broadcast into a paritcular room, or silence.
 
-pub type UserBroadcast = enum {
+pub enum UserBroadcast {
     Silent,
     RoomBroadcast(RoomId, UserInfo),
 }
