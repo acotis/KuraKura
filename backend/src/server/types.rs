@@ -1,8 +1,8 @@
 
-use crate::game::Game;
 use crate::server::copy_id::CopyId;
+use crate::server::game::Game;
 
-pub type RoomId = CopyId<Room>;
+pub type RoomId = CopyId<Room<bool>>;
 pub type SocketId = CopyId<Socket>;
 
 // Socket type.
@@ -25,18 +25,18 @@ impl Socket {
 
 // Room type.
 
-pub struct Room {
+pub struct Room<G> {
     pub id:         RoomId,
     pub socket_ids: Vec<SocketId>, // must be a vec for multiplayer games (N > 2)
-    pub game:       Game,
+    pub game:       G,
 }
 
-impl Room {
+impl<G: Game> Room<G> {
     pub fn new() -> Self {
         Room {
             id:         RoomId::new(),
             socket_ids: vec![],
-            game:       Game::new(4, 2),
+            game:       G::new(),
         }
     }
 }

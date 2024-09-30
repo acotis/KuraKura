@@ -2,27 +2,32 @@
 use std::sync::Arc;
 use std::sync::LazyLock;
 
+use std::fmt::Debug;
+
 use http::Uri;
 use tokio::net::TcpStream;
 use tokio::sync::Mutex;
 use tokio_websockets::{ClientBuilder, Message, WebSocketStream, MaybeTlsStream};
 use futures_util::{SinkExt, StreamExt, stream::{SplitSink, SplitStream}};
+use serde::de::DeserializeOwned;
 
 use crate::server::message_types::UserMessage::{self, *};
 use crate::server::message_types::UserOk::*;
 use crate::server::message_types::UserError::*;
+use crate::server::game::Game;
+use crate::game::Game as KuraKura;
 
 type Receiver = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
 type Sender = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>;
 
-struct Client {
+struct Client<E> {
     ident: String,
     sender: Sender,
-    last_response: Arc<Mutex<Option<UserMessage>>>,
+    last_response: Arc<Mutex<Option<UserMessage<E>>>>,
     just_sent: Arc<Mutex<bool>>,
 }
 
-impl Client {
+impl<E: Debug + PartialEq + Send + DeserializeOwned + 'static> Client<E> {
     async fn new(ident: &str) -> Self {
         static NEXT_DELAY: LazyLock<Mutex<usize>> = LazyLock::new(|| Mutex::new(0));
 
@@ -38,7 +43,7 @@ impl Client {
         let last_response = Arc::new(Mutex::new(None));
         let just_sent = Arc::new(Mutex::new(false));
 
-        tokio::spawn(follow(ident.to_owned(), delay, just_sent.clone(), receiver, last_response.clone()));
+        tokio::spawn(follow::<E>(ident.to_owned(), delay, just_sent.clone(), receiver, last_response.clone()));
 
         println!();
         println!("*** {} connected", ident);
@@ -51,7 +56,7 @@ impl Client {
         }
     }
 
-    async fn send(&mut self, text: &str) -> UserMessage {
+    async fn send(&mut self, text: &str) -> UserMessage<E> {
         println!();
         println!("<—— {}: {}", self.ident, text);
 
@@ -73,15 +78,15 @@ impl Client {
 
     // Unchecked server interactions.
 
-    async fn create_room_unchecked(&mut self, name: &str) -> UserMessage {
+    async fn create_room_unchecked(&mut self, name: &str) -> UserMessage<E> {
         self.send(&format!(r#"{{"CreateRoom": {{"name": "{name}"}}}}"#)).await
     }
 
-    async fn join_room_unchecked(&mut self, name: &str, room_id: &str) -> UserMessage {
+    async fn join_room_unchecked(&mut self, name: &str, room_id: &str) -> UserMessage<E> {
         self.send(&format!(r#"{{"JoinRoom": {{"name": "{name}", "room": "{room_id}"}}}}"#)).await
     }
 
-    async fn debug_log_unchecked(&mut self) -> UserMessage {
+    async fn debug_log_unchecked(&mut self) -> UserMessage<E> {
         self.send(&format!(r#""DebugLog""#)).await
     }
 
@@ -115,7 +120,7 @@ impl Client {
     }
 }
 
-async fn follow(ident: String, delay: usize, just_sent: Arc<Mutex<bool>>, mut receiver: Receiver, last: Arc<Mutex<Option<UserMessage>>>) {
+async fn follow<E : DeserializeOwned>(ident: String, delay: usize, just_sent: Arc<Mutex<bool>>, mut receiver: Receiver, last: Arc<Mutex<Option<UserMessage<E>>>>) {
     while let Some(Ok(message)) = receiver.next().await {
         let text = message.as_text().unwrap();
 
@@ -144,15 +149,15 @@ async fn pause(millis: usize) {
 pub async fn run_test_clients() {
     pause(1000).await;
 
-    let mut lynn  = Client::new("Lynn").await;
-    let mut evan  = Client::new("Evan").await;
-    let mut lexi  = Client::new("Lexi").await;
+    //let mut lynn  = Client::<KuraKura>::new("Lynn").await;
+    //let mut evan  = Client::<KuraKura>::new("Evan").await;
+    //let mut lexi  = Client::<KuraKura>::new("Lexi").await;
 
-    let evan_rm   = evan.create_room("Evan is my name").await;
-    let _lynn_rm  = lynn.create_room("Lynnnn").await;
-    let _         = lexi.join_room("The LEX", &evan_rm).await;
+    //let evan_rm   = evan.create_room("Evan is my name").await;
+    //let _lynn_rm  = lynn.create_room("Lynnnn").await;
+    //let _         = lexi.join_room("The LEX", &evan_rm).await;
 
-    let _         = evan.debug_log().await;
+    //let _         = evan.debug_log().await;
 
     println!();
 }

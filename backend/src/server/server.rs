@@ -2,7 +2,6 @@
 #![allow(unused)]
 
 use std::clone::Clone;
-use crate::game::Game;
 use crate::game::types::Turn;
 use crate::game::types::TurnError;
 use crate::server::message_types::UserRequest::*;
@@ -11,6 +10,7 @@ use crate::server::message_types::UserOk::*;
 use crate::server::message_types::UserInfo::*;
 use crate::server::message_types::UserMessage::*;
 use crate::server::message_types::ServerError::*;
+use crate::server::game::Game;
 use crate::game::types::Player::Black;
 //use std::time::{Instant};
 use std::collections::HashMap;
@@ -24,14 +24,14 @@ use crate::server::message_types::{*, UserBroadcast::*};
 
 // Server struct.
 
-pub struct Server {
+pub struct Server<G> {
     sockets:    HashMap<SocketId, Socket>,
-    rooms:      HashMap<RoomId, Room>,
+    rooms:      HashMap<RoomId, Room<G>>,
 }
 
 // Constructor.
 
-impl Server {
+impl<G: Game> Server<G> {
     pub fn new() -> Self {
         Server {
             sockets: HashMap::new(),
@@ -42,7 +42,7 @@ impl Server {
 
 // Public methods of Server.
 
-impl Server {
+impl<G: Game> Server<G> {
     pub fn register_socket(&mut self) -> SocketId {
         let socket = Socket::new();
         let socket_id = socket.id;
@@ -50,11 +50,11 @@ impl Server {
         socket_id
     }
 
-    pub fn handle_request(&mut self, socket_id: SocketId, json: &str) -> ServerResult {
+    pub fn handle_request(&mut self, socket_id: SocketId, json: &str) -> ServerResult<G::TurnError> {
         if self.sockets.get(&socket_id).is_none() {
             Err(SocketNotFound)
         } else {
-            let api_result = match from_str(&json) {
+            let api_result = match from_str::<UserRequest<G::Turn>>(&json) {
                 Ok(CreateRoom {name}      ) => {self.create_room (socket_id, name      )},
                 Ok(JoinRoom   {name, room}) => {self.join_room   (socket_id, name, room)},
                 Ok(TakeTurn   {turn}      ) => {self.take_turn   (socket_id, turn      )},
@@ -80,8 +80,8 @@ impl Server {
 
 // Private methods directly corresponding to API calls.
 
-impl Server {
-    fn create_room(&mut self, socket_id: SocketId, name: String) -> ApiResult {
+impl<G: Game> Server<G> {
+    fn create_room(&mut self, socket_id: SocketId, name: String) -> ApiResult<G::TurnError> {
         let socket = self.sockets.get_mut(&socket_id).expect("socket lookup in create_room()");
 
         if socket.room_id != None {
@@ -100,7 +100,7 @@ impl Server {
         Ok((RoomCreated {id: room_id}, Silent))
     }
 
-    fn join_room(&mut self, socket_id: SocketId, name: String, room_id: RoomId) -> ApiResult {
+    fn join_room(&mut self, socket_id: SocketId, name: String, room_id: RoomId) -> ApiResult<G::TurnError> {
         let socket = self.sockets.get_mut(&socket_id).expect("socket lookup in join_room()");
         let room = self.rooms.get_mut(&room_id).ok_or(RoomNotFound)?;
 
@@ -126,7 +126,7 @@ impl Server {
         }
     }
 
-    fn take_turn(&mut self, socket_id: SocketId, turn: Turn) -> ApiResult {
+    fn take_turn(&mut self, socket_id: SocketId, turn: G::Turn) -> ApiResult<G::TurnError> {
         let socket = self.sockets.get_mut(&socket_id).expect("socket lookup in take_turn()");
         let room_id = socket.room_id.ok_or(NotInARoom)?;
         let room = self.rooms.get_mut(&room_id).ok_or(RoomNotFound)?;
@@ -140,7 +140,7 @@ impl Server {
         }
     }
 
-    fn debug_log(&mut self) -> ApiResult {
+    fn debug_log(&mut self) -> ApiResult<G::TurnError> {
         print!("{self}");
 
         // Always return InvalidJson so as to not reveal that the API call
@@ -159,7 +159,7 @@ impl Display for Socket {
     }
 }
 
-impl Display for Room {
+impl<G: Game> Display for Room<G> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         let bold = "\x1b[1m";
         let reset = "\x1b[0m";
@@ -178,7 +178,7 @@ impl Display for Room {
     }
 }
 
-impl Display for Server {
+impl<G: Game> Display for Server<G> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         let under = "\x1b[4m";
         let reset = "\x1b[0m";

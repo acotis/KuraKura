@@ -1,7 +1,7 @@
 
 use serde::{Serialize, Deserialize};
 use crate::server::types::*;
-use crate::game::types::{Turn, TurnError};
+use crate::server::game::Game;
 
 // Note about types: I know it sucks that the API call methods have to start with
 // a redundant socket lookup which also must be unwrapped instead of .ok_or()'d.
@@ -14,17 +14,17 @@ use crate::game::types::{Turn, TurnError};
 // USER REQUESTS: Things the user can send us.
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum UserRequest {
+pub enum UserRequest<T> {
     CreateRoom {name: String},
     JoinRoom   {name: String, room: RoomId},
-    TakeTurn   {turn: Turn},
+    TakeTurn   {turn: T},
 
     DebugLog,   // Debugging only, turn this off in production.
 }
 
 // USER RESPONSES: Things we can reply to a user request (OKs and Errors).
 
-pub type UserResponse = Result<UserOk, UserError>;
+pub type UserResponse<E> = Result<UserOk, UserError<E>>;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum UserOk {
@@ -35,7 +35,7 @@ pub enum UserOk {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum UserError {
+pub enum UserError<E> {
     AccountNotFound,
     AlreadyLoggedIn,
     AlreadyInARoom,
@@ -48,7 +48,7 @@ pub enum UserError {
     AccountDoesntHaveRoom,
     RoomDoesntHaveGuest,
     AccountPlayedWrongColor,
-    InvalidTurn(TurnError),
+    InvalidTurn(E),
     NotImplemented,
     InvalidJson,
 }
@@ -63,8 +63,8 @@ pub enum UserInfo {
 // User message: an enum for the two types of things we can send to a user.
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum UserMessage {
-    ResponseMessage(UserResponse),
+pub enum UserMessage<E> {
+    ResponseMessage(UserResponse<E>),
     InfoMessage(UserInfo),
 }
 
@@ -77,12 +77,12 @@ pub enum UserBroadcast {
 
 // API Result: the outcome of calling an endpoint-specific server method.
 
-pub type ApiResult = Result<(UserOk, UserBroadcast), UserError>;
+pub type ApiResult<E> = Result<(UserOk, UserBroadcast), UserError<E>>;
 
 // Server outputs (i.e., possible return values of the server's .handle_request() method).
 
 #[derive(Debug)]
 pub enum ServerError {SocketNotFound}
-pub type ServerOk = Vec<(SocketId, UserMessage)>;
-pub type ServerResult = Result<ServerOk, ServerError>;
+pub type ServerOk<E> = Vec<(SocketId, UserMessage<E>)>;
+pub type ServerResult<E> = Result<ServerOk<E>, ServerError>;
 
