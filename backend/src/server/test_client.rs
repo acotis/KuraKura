@@ -149,15 +149,15 @@ async fn pause(millis: usize) {
 pub async fn run_test_clients() {
     pause(1000).await;
 
-    //let mut lynn  = Client::<KuraKura>::new("Lynn").await;
-    //let mut evan  = Client::<KuraKura>::new("Evan").await;
-    //let mut lexi  = Client::<KuraKura>::new("Lexi").await;
+    let mut lynn  = Client::<<KuraKura as Game>::TurnError>::new("Lynn").await;
+    let mut evan  = Client::<<KuraKura as Game>::TurnError>::new("Evan").await;
+    let mut lexi  = Client::<<KuraKura as Game>::TurnError>::new("Lexi").await;
 
-    //let evan_rm   = evan.create_room("Evan is my name").await;
-    //let _lynn_rm  = lynn.create_room("Lynnnn").await;
-    //let _         = lexi.join_room("The LEX", &evan_rm).await;
+    let evan_rm   = evan.create_room("Evan is my name").await;
+    let _lynn_rm  = lynn.create_room("Lynnnn").await;
+    let _         = lexi.join_room("The LEX", &evan_rm).await;
 
-    //let _         = evan.debug_log().await;
+    let _         = evan.debug_log().await;
 
     println!();
 }
