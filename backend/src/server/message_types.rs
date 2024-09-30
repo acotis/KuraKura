@@ -63,8 +63,8 @@ pub enum UserInfo {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum UserMessage<E> {
-    ResponseMessage(UserResponse<E>),
-    InfoMessage(UserInfo),
+    Info(UserInfo),
+    #[serde(untagged)] ResponseMessage(UserResponse<E>),
 }
 
 // User broadcast: a broadcast into a paritcular room, or silence.
