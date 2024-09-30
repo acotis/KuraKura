@@ -1,19 +1,22 @@
 
 #![allow(non_shorthand_field_patterns)] // I like these sometimes.
 
+pub mod types;
+pub mod cell;
+
 use std::fmt::Formatter;
 use std::fmt::Display;
 use std::fmt::Error;
 
-use crate::types::Player::{self, *};
-use crate::types::Orientation::*;
-use crate::types::TurnError::*;
-use crate::types::GameOutcome::{self, *};
-use crate::types::SpinDirection::*;
-use crate::types::TurnResult;
-use crate::cell::Cell;
-use crate::cell::spin_cell_grid;
-use crate::Turn;
+use crate::game::types::Player::{self, *};
+use crate::game::types::Orientation::*;
+use crate::game::types::TurnError::*;
+use crate::game::types::GameOutcome::{self, *};
+use crate::game::types::SpinDirection::*;
+use crate::game::types::TurnResult;
+use crate::game::cell::Cell;
+use crate::game::cell::spin_cell_grid;
+use crate::game::types::Turn;
 
 // Game type.
 

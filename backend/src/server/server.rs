@@ -2,17 +2,16 @@
 #![allow(unused)]
 
 use std::clone::Clone;
-use crate::Game;
-use crate::Turn;
-use crate::TurnError;
-use crate::server::UserRequest::*;
-use crate::server::UserError::*;
-use crate::server::UserInfo::*;
-use crate::server::UserMessage::*;
-use crate::server::ServerError::*;
-use crate::server_types::*;
-use crate::Player::Black;
-use uuid::Uuid;
+use crate::game::Game;
+use crate::game::types::Turn;
+use crate::game::types::TurnError;
+use crate::server::message_types::UserRequest::*;
+use crate::server::message_types::UserError::*;
+use crate::server::message_types::UserOk::*;
+use crate::server::message_types::UserInfo::*;
+use crate::server::message_types::UserMessage::*;
+use crate::server::message_types::ServerError::*;
+use crate::game::types::Player::Black;
 //use std::time::{Instant};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Error};
@@ -20,9 +19,8 @@ use serde::{Serialize, Deserialize};
 use serde_json::from_str;
 use axum::extract::ws::{WebSocket, Message::{self, Text}};
 use futures_util::{SinkExt, stream::SplitSink};
-
-pub use crate::server_types::SocketId;
-pub use crate::server_message_types::*;
+use crate::server::types::{Socket, SocketId, Room, RoomId};
+use crate::server::message_types::{*, UserBroadcast::*};
 
 // Server struct.
 
@@ -66,11 +64,13 @@ impl Server {
 
             // Construct the actual Vec of messages to send out.
 
-            match api_result {
-                Err(error) => {vec![(socket_id, ResponseMessage(error))]},
-                Ok((okay, Silent)) => {vec![(socket_id, okay)]},
-                Ok((okay, RoomBroadcast(room_id, info))) => todo!(),
-            }
+            Ok(
+                match api_result {
+                    Err(error) => {vec![(socket_id, ResponseMessage(Err(error)))]},
+                    Ok((okay, Silent)) => {vec![(socket_id, ResponseMessage(Ok(okay)))]},
+                    Ok((okay, RoomBroadcast(room_id, info))) => todo!(),
+                }
+            )
         }
     }
 }
@@ -88,17 +88,22 @@ impl Server {
             return Err(AlreadyInARoom);
         }
 
+        /* todo: validate name*/
+
         let room = Room::new();
         let room_id = room.id;
         self.rooms.insert(room_id, room);
         socket.room_id = Some(room_id);
+        socket.name = name;
 
-        Ok((RoomCreated {id: roomId}, Silent))
+        Ok((RoomCreated {id: room_id}, Silent))
     }
 
-    fn join_room(&mut self, socket_id: SocketId, room_id: RoomId) -> ApiResult {
+    fn join_room(&mut self, socket_id: SocketId, name: String, room_id: RoomId) -> ApiResult {
         let socket = self.sockets.get_mut(&socket_id).expect("socket lookup in join_room()");
         let room = self.rooms.get_mut(&room_id).ok_or(RoomNotFound)?;
+
+        /* todo: validate name */
 
         if socket.room_id != None {
             return Err(AlreadyInARoom);
@@ -106,16 +111,17 @@ impl Server {
 
         socket.room_id = Some(room_id);
         room.socket_ids.push(socket_id);
+        socket.name = name;
 
         // Todo: let the Game decide whether the new player is a player or
         // a spectator.
         // Todo: broadcast the fact that a player joined, as well as the new
         // state of the room, to all connected sockets.
 
-        if room.account_ids.len() <= 2 {
-            Ok((JoinedAsPlayer, Silent));
+        if room.socket_ids.len() <= 2 {
+            Ok((JoinedAsPlayer, Silent))
         } else {
-            Ok((JoinedAsSpectator, Silent));
+            Ok((JoinedAsSpectator, Silent))
         }
     }
 
@@ -129,7 +135,7 @@ impl Server {
 
         match room.game.turn(turn) {
             Ok(_)           => Ok((TurnAccepted, Silent)),
-            Err(turn_error) => Err(InvalidTurn),
+            Err(turn_error) => Err(InvalidTurn(turn_error)),
         }
     }
 

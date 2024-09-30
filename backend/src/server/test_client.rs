@@ -8,9 +8,9 @@ use tokio::sync::Mutex;
 use tokio_websockets::{ClientBuilder, Message, WebSocketStream, MaybeTlsStream};
 use futures_util::{SinkExt, StreamExt, stream::{SplitSink, SplitStream}};
 
-use crate::server::server_message_types::UserMessage;
-use crate::server::server_message_types::UserOk::*;
-use crate::server::server_message_types::UserError::*;
+use crate::server::message_types::UserMessage::{self, *};
+use crate::server::message_types::UserOk::*;
+use crate::server::message_types::UserError::*;
 
 type Receiver = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
 type Sender = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>;
@@ -150,7 +150,7 @@ pub async fn run_test_clients() {
 
     let evan_rm   = evan.create_room("Evan is my name").await;
     let _lynn_rm  = lynn.create_room("Lynnnn").await;
-    let _         = lexi.join_room(&evan_rm, "The LEX").await;
+    let _         = lexi.join_room("The LEX", &evan_rm).await;
 
     let _         = evan.debug_log().await;
 

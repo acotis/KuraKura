@@ -11,9 +11,9 @@ use axum::{
     Router
 };
 
-use kurakura::server::Server;
-use kurakura::server::SocketId;
-use kurakura::test_client::run_test_clients;
+use kurakura::server::server::Server;
+use kurakura::server::types::SocketId;
+use kurakura::server::test_client::run_test_clients;
 
 type Sender   = SplitSink<WebSocket, Message>;
 type Senders  = HashMap<SocketId, Sender>;

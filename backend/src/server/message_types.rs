@@ -1,7 +1,7 @@
 
 use serde::{Serialize, Deserialize};
-use crate::server_types::*;
-use crate::{Turn, TurnError};
+use crate::server::types::*;
+use crate::game::types::{Turn, TurnError};
 
 // Note about types: I know it sucks that the API call methods have to start with
 // a redundant socket lookup which also must be unwrapped instead of .ok_or()'d.
@@ -38,6 +38,8 @@ pub enum UserOk {
 pub enum UserError {
     AccountNotFound,
     AlreadyLoggedIn,
+    AlreadyInARoom,
+    NotInARoom,
     NotLoggedIn,
     RoomNotFound,
     AccountAlreadyHasRoom,     // Todo: add a paramater giving the room ID?
@@ -46,7 +48,7 @@ pub enum UserError {
     AccountDoesntHaveRoom,
     RoomDoesntHaveGuest,
     AccountPlayedWrongColor,
-    InvalidTurn {error: TurnError},
+    InvalidTurn(TurnError),
     NotImplemented,
     InvalidJson,
 }

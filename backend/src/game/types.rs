@@ -5,8 +5,8 @@ use std::fmt::Formatter;
 use std::fmt::Error;
 use serde::{Serialize, Deserialize};
 
-use crate::types::Player::*;
-use crate::types::Orientation::*;
+use crate::game::types::Player::*;
+use crate::game::types::Orientation::*;
 
 // Elementary types for the game Kura Kura.
 

@@ -1,6 +1,6 @@
 
-use crate::Game;
-use crate::copy_id::CopyId;
+use crate::game::Game;
+use crate::server::copy_id::CopyId;
 
 pub type RoomId = CopyId<Room>;
 pub type SocketId = CopyId<Socket>;
@@ -27,7 +27,7 @@ impl Socket {
 
 pub struct Room {
     pub id:         RoomId,
-    pub socket_ids: Vec<Socket_id>, // must be a vec for multiplayer games (N > 2)
+    pub socket_ids: Vec<SocketId>, // must be a vec for multiplayer games (N > 2)
     pub game:       Game,
 }
 

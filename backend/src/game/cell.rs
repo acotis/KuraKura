@@ -1,6 +1,6 @@
 
-use crate::types::Orientation;
-use crate::types::Player::{self, *};
+use crate::game::types::Orientation;
+use crate::game::types::Player::{self, *};
 
 // Cell type for game Kura Kura. Each cell has two properties:
 //
