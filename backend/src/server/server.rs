@@ -90,8 +90,9 @@ impl Server {
 
         /* todo: validate name*/
 
-        let room = Room::new();
+        let mut room = Room::new();
         let room_id = room.id;
+        room.socket_ids.push(socket_id);
         self.rooms.insert(room_id, room);
         socket.room_id = Some(room_id);
         socket.name = name;
