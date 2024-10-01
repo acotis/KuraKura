@@ -10,6 +10,7 @@ use tokio::sync::Mutex;
 use tokio_websockets::{ClientBuilder, Message, WebSocketStream, MaybeTlsStream};
 use futures_util::{SinkExt, StreamExt, stream::{SplitSink, SplitStream}};
 use serde::de::DeserializeOwned;
+use serde::Serialize;
 
 use crate::server::message_types::UserMessage::{self, *};
 use crate::server::message_types::UserOk::*;
@@ -20,14 +21,14 @@ use crate::game::KuraKura;
 type Receiver = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
 type Sender = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>;
 
-struct Client<G: Game> {
+struct Client<G: Game> where G::Turn : Serialize, G::TurnError : DeserializeOwned {
     ident: String,
     sender: Sender,
     last_response: Arc<Mutex<Option<UserMessage<G::TurnError>>>>,
     just_sent: Arc<Mutex<bool>>,
 }
 
-impl<G: Game> Client<G> {
+impl<G: Game> Client<G> where G::Turn : Serialize, G::TurnError : DeserializeOwned {
     async fn new(ident: &str) -> Self where <G as Game>::TurnError: 'static {
         static NEXT_DELAY: LazyLock<Mutex<usize>> = LazyLock::new(|| Mutex::new(0));
 
