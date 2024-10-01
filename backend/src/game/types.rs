@@ -25,6 +25,10 @@ pub enum GameOutcome {
     WhiteWin,
     Stalemate,
     DoubleWin,
+
+    // Todo: distinguish between a regular win and a "Kura Kura"
+    // (when you win because your opponent spun your line into
+    // existence).
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]

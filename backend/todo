@@ -8,6 +8,7 @@
       which is further parsed to a vec<Message> by a utility method).
     + TakeTurn should be implemented and (if successful) notify all participants
       of a room that the change occurred, *and what it was* (not just the new state).
+    + The Game trait should accept an integer as part of the .turn() method.
     + The server should delete any socket that hasn't had activity in, say, an hour.
 
 + Generalize the server.
