@@ -21,14 +21,14 @@ use crate::game::KuraKura;
 type Receiver = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
 type Sender = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>;
 
-struct Client<G: Game> where G::Turn : Serialize, G::TurnError : DeserializeOwned {
+struct Client<G: Game> where G::Turn: Serialize, G::TurnError: DeserializeOwned + Debug {
     ident: String,
     sender: Sender,
     last_response: Arc<Mutex<Option<UserMessage<G::TurnError>>>>,
     just_sent: Arc<Mutex<bool>>,
 }
 
-impl<G: Game> Client<G> where G::Turn : Serialize, G::TurnError : DeserializeOwned {
+impl<G: Game> Client<G> where G::Turn: Serialize, G::TurnError: DeserializeOwned + Debug {
     async fn new(ident: &str) -> Self where <G as Game>::TurnError: 'static {
         static NEXT_DELAY: LazyLock<Mutex<usize>> = LazyLock::new(|| Mutex::new(0));
 

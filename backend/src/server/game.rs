@@ -7,7 +7,7 @@ use serde::de::DeserializeOwned;
 
 pub trait Game : Debug + Display {
     type Turn : DeserializeOwned;
-    type TurnError : Debug + Clone + PartialEq + Eq + Serialize + Send;
+    type TurnError : Clone + PartialEq + Eq + Serialize + Send;
     type Outcome;
 
     // Todo: in .new(), add a parameter for Parameters.
