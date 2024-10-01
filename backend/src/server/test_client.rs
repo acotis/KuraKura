@@ -122,6 +122,14 @@ impl<G: Game> Client<G> {
             panic!("When requesting debug log, response was: {response:?}");
         }
     }
+
+    async fn take_turn(&mut self, turn: G::Turn) {
+        let response = self.take_turn_unchecked(turn).await;
+
+        if response != ResponseMessage(Ok(TurnAccepted)) {
+            panic!("When taking turn, response was: {response:?}");
+        }
+    }
 }
 
 async fn follow<E: DeserializeOwned>(ident: String, delay: usize, just_sent: Arc<Mutex<bool>>, mut receiver: Receiver, last: Arc<Mutex<Option<UserMessage<E>>>>) {
