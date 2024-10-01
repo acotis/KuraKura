@@ -90,6 +90,10 @@ impl<G: Game> Client<G> {
         self.send(&format!(r#""DebugLog""#)).await
     }
 
+    async fn take_turn_unchecked(&mut self, turn: G::Turn) -> UserMessage<G::TurnError> {
+        self.send(&format!(r#"{{"TakeTurn": {}}}"#, serde_json::to_string(&turn).unwrap())).await
+    }
+
     // Checked server interactions.
 
     async fn create_room(&mut self, name: &str) -> String {

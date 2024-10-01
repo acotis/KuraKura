@@ -6,7 +6,7 @@ use serde::de::DeserializeOwned;
 // Todo: remove as many trait bounds as possible.
 
 pub trait Game : Debug + Display {
-    type Turn : DeserializeOwned;
+    type Turn : DeserializeOwned + Serialize;
     type TurnError : Debug + Clone + PartialEq + Eq + Serialize + DeserializeOwned + Send;
     type Outcome;
 
