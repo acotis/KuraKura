@@ -3,6 +3,7 @@ import Board from "./Board";
 import { applyMove } from "./logic";
 import { Grid, boardLinesFor } from "./types";
 import { WebSocketContext } from "./WebSocketContext";
+import { useDarkMode } from "usehooks-ts";
 
 const grid = `......
 7.....
@@ -18,7 +19,7 @@ const example1: Grid = grid.map((row, y) =>
         ? undefined
         : { color: +c % 2 ? "black" : "white", rotation: 0, label: "" },
     lines: boardLinesFor(x, y, 6),
-  }))
+  })),
 );
 
 const example2 = applyMove(
@@ -31,7 +32,7 @@ const example2 = applyMove(
     spinSize: 1,
   },
   "black",
-  ""
+  "",
 );
 
 const example3 = applyMove(
@@ -44,15 +45,22 @@ const example3 = applyMove(
     spinSize: 3,
   },
   "black",
-  ""
+  "",
 );
 
 export default function Home() {
-  const { send } = useContext(WebSocketContext)!;
+  const ctx = useContext(WebSocketContext);
+  if (!ctx) throw new Error("Need websocket context");
+  const { send } = ctx;
+  const { isDarkMode, toggle } = useDarkMode();
 
   return (
-    <main className="flex flex-col items-center gap-12 p-8">
+    <main
+      className="flex flex-col items-center gap-12 p-8"
+      data-theme={isDarkMode ? "night" : "bumblebee"}
+    >
       <h1 className="font-bold text-5xl flex items-center tracking-tight">
+        {/* biome-ignore lint/a11y/noSvgWithoutTitle: <explanation> */}
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
@@ -70,8 +78,17 @@ export default function Home() {
         <span className="text-secondary">kurakura</span>
       </h1>
 
+      <button
+        type="button"
+        className="btn btn-ghost absolute left-4 top-4"
+        onClick={() => toggle()}
+      >
+        Theme
+      </button>
+
       <div className="fc gap-4">
         <label className="input input-bordered flex items-center gap-2">
+          {/* biome-ignore lint/a11y/noSvgWithoutTitle: <explanation> */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -89,6 +106,7 @@ export default function Home() {
           <input type="text" className="grow" placeholder="Name" />
         </label>
         <button
+          type="button"
           onClick={() => {
             send({ CreateUser: {} });
           }}
@@ -101,8 +119,8 @@ export default function Home() {
         <h2 className="text-2xl font-bold">Rules</h2>
         <p>
           Kurakura is a two-player game. It's{" "}
-          <a href="https://en.wikipedia.org/wiki/Gomoku">Gomoku</a> with a
-          twist.
+          <a href="https://en.wikipedia.org/wiki/Gomoku">five-in-a-row</a> with a
+          twist:
         </p>
         <div className="grid md:grid-cols-2 gap-4">
           <div className="fcc">
@@ -112,7 +130,7 @@ export default function Home() {
                 tileSize={40}
                 active={undefined}
                 moveNumber={0}
-                onMove={() => {}}
+                onMove={() => { }}
               />
               <div className="outline-dashed outline-white absolute left-[48px] w-[40px] top-[88px] h-[40px] rounded-full shadow-xl"></div>
             </div>
@@ -127,7 +145,7 @@ export default function Home() {
                 tileSize={40}
                 active={undefined}
                 moveNumber={0}
-                onMove={() => {}}
+                onMove={() => { }}
               />
               <div className="outline-dashed outline-white absolute left-[88px] w-[120px] top-[128px] h-[120px] shadow-xl"></div>
             </div>

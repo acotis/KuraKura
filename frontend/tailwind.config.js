@@ -22,6 +22,7 @@ export default {
   },
   plugins: [typography, daisyui],
   daisyui: {
-    themes: ["bumblebee"],
+    themes: ["bumblebee", "night"],
   },
+  darkMode: ['selector', '[data-theme="night"]'],
 };
