@@ -1,7 +1,4 @@
 
-+ For all the ID types, start using [str; 32] or the closest approximation
-  (maybe [u8; 32]) instead of String. Non-copy types suck here.
-
 + Finish implementing the server.
     + Implement an architecture where each API method returns either Err (which is
       for the socket) or Broadcast (which has Socket, Account, and Room variants and
