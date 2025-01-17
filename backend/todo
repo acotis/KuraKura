@@ -1,16 +1,11 @@
 
 + Finish implementing the server.
-    + Implement an architecture where each API method returns either Err (which is
-      for the socket) or Broadcast (which has Socket, Account, and Room variants and
-      which is further parsed to a vec<Message> by a utility method).
     + TakeTurn should be implemented and (if successful) notify all participants
       of a room that the change occurred, *and what it was* (not just the new state).
     + The Game trait should accept an integer as part of the .turn() method.
     + The server should delete any socket that hasn't had activity in, say, an hour.
 
 + Generalize the server.
-    + Parameterize Server over Game and Turn types.
-    + Create the Game trait.
     + Separate Server out into its own crate.
 
 + Finish implementing the game.
