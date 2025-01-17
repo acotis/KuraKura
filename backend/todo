@@ -1,16 +1,19 @@
 
-+ Finish implementing the server.
-    + TakeTurn should be implemented and (if successful) notify all participants
-      of a room that the change occurred, *and what it was* (not just the new state).
-    + The Game trait should accept an integer as part of the .turn() method.
-    + The server should delete any socket that hasn't had activity in, say, an hour.
++ Finish implementing the server:
+    + Make Server.take_turn() broadcast the new room state *and the delta*.
+    + Make Game.turn() accept an integer saying who is taking the turn.
 
-+ Generalize the server.
-    + Separate Server out into its own crate.
-
-+ Finish implementing the game.
++ Finish implementing the game:
     + In cell.rs, make a Stone type instead of having it be a tuple in Cell.
     + Implement the "who plays black" thing as a game setting.
+
++ Make the server awesome:
+    + Separate Server out into its own crate.
+    + Make the server delete any socket that hasn't had activity in, say, an hour.
+
++ Make the game awesome:
+    + Make there be a 1/100 chance that a stone is textured with the stare emoji (not in the first ~5 moves so as not to be confusing).
+    + Add a GameHistory class.
 
 + Write tests for the web app?
     - Host can't play until player arrives.
@@ -19,7 +22,6 @@
       (by providing the API-given credential), and maybe other things? But ultimately
       they are the things that the server deals with.
     - Same user can have multiple clients and they all work.
-+ Make there be a 1/100 chance that a stone is textured with the stare emoji (not in the first ~5 moves so as not to be confusing).
 
 + Write a bunch of insta tests.
     - Wins.
@@ -30,5 +32,4 @@
     - Stalemate.
     - Win averted if the spin ruins it.
     - Every error condition under the sun.
-+ Add a GameHistory class.
 
