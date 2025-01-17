@@ -32,6 +32,7 @@ export default function BoardCell(props: BoardCellProps) {
 	let cellClass = "bg-board w-full h-full flex";
 	if (clickable) cellClass += " group cursor-pointer";
 	return (
+		// biome-ignore lint/a11y/useKeyWithClickEvents: TODO keyboard controls?
 		<div className={cellClass} onClick={onClick}>
 			{cell.lines.map((x) => (
 				<Line key={x} line={x} />

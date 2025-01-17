@@ -6,7 +6,6 @@ import Rules from "./Rules";
 export default function Home() {
 	const ctx = useContext(WebSocketContext);
 	if (!ctx) throw new Error("Need websocket context");
-	const { send } = ctx;
 	const { isDarkMode, toggle } = useDarkMode();
 
 	return (
@@ -60,13 +59,7 @@ export default function Home() {
 					</svg>
 					<input type="text" className="grow" placeholder="Name" />
 				</label>
-				<button
-					type="button"
-					onClick={() => {
-						send({ CreateUser: {} });
-					}}
-					className="btn btn-primary"
-				>
+				<button type="button" onClick={() => {}} className="btn btn-primary">
 					Start a game
 				</button>
 			</div>

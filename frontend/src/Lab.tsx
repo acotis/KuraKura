@@ -1,11 +1,8 @@
 import { useDarkMode } from "usehooks-ts";
 import Game from "./Game";
-import { useContext } from "react";
-import { WebSocketContext } from "./WebSocketContext";
 
 export default function Lab() {
 	const { isDarkMode, toggle } = useDarkMode();
-	const webSocketContext = useContext(WebSocketContext);
 
 	return (
 		<main
@@ -17,7 +14,9 @@ export default function Lab() {
 				Theme
 			</button>
 
-			{webSocketContext ? <Game ctx={webSocketContext} /> : "Loading..."}
+			<hr className="border w-full" />
+
+			<Game playerName="Laqme" room="create" />
 		</main>
 	);
 }

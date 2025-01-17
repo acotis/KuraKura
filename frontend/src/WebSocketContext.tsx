@@ -3,7 +3,7 @@ import useWebSocket, { type ReadyState } from "react-use-websocket";
 
 type UserId = string;
 type RoomId = string;
-type Unit = Record<string, never>;
+type Unit = [];
 
 export interface TurnDetails {
 	play_row: number;
@@ -15,35 +15,49 @@ export interface TurnDetails {
 }
 
 export type KuraRequest =
-	| { CreateUser: Unit }
-	| { SetName: { auth: UserId; name: string } }
-	| { CreateRoom: { auth: UserId } }
-	| { JoinRoom: { auth: UserId; room: RoomId } }
-	| { TakeTurn: { auth: UserId; details: TurnDetails } };
+	| { CreateRoom: { name: string } }
+	| { JoinRoom: { name: string; room: RoomId } }
+	| { TakeTurn: { turn: TurnDetails } };
 
-export type KuraResponse =
-	| { UserCreated: { id: UserId } }
-	| { NameSet: Unit }
+export type KuraResponse = { Ok: KuraOk } | { Err: KuraErr };
+
+export type KuraOk =
 	| { RoomCreated: { id: RoomId } }
-	| { RoomJoined: Unit }
-	| { TurnTaken: Unit };
+	| { JoinedAsPlayer: Unit }
+	| { JoinedAsSpectator: Unit }
+	| { TurnAccepted: Unit };
+
+export type KuraErr =
+	| "AccountNotFound"
+	| "AlreadyLoggedIn"
+	| "AlreadyInARoom"
+	| "NotInARoom"
+	| "NotLoggedIn"
+	| "RoomNotFound"
+	| "AccountAlreadyHasRoom" // Todo: add a paramater giving the room ID?
+	| "RoomAlreadyHasGuest" // (probably don't add such a parameter here for the player ID) (definitely not, that would reveal someone else's API key)
+	| "NameTooLong"
+	| "AccountDoesntHaveRoom"
+	| "RoomDoesntHaveGuest"
+	| "AccountPlayedWrongColor"
+	| { InvalidTurn: unknown }
+	| "NotImplemented"
+	| "InvalidJson";
 
 function parseResponse(json: unknown): KuraResponse | undefined {
+	if (!json) return undefined;
+
 	if (json && typeof json === "object") {
-		if (
-			"UserCreated" in json &&
-			json.UserCreated &&
-			typeof json.UserCreated === "object" &&
-			"id" in json.UserCreated &&
-			typeof json.UserCreated.id === "string"
-		) {
-			return { UserCreated: { id: json.UserCreated.id } };
+		if ("Ok" in json && typeof json.Ok === "object" && json.Ok) {
+			return json as KuraResponse;
 		}
-	} else {
-		console.warn("Unexpected KuraResponse:", json);
-		// But, ah, what the heck:
-		return json as KuraResponse;
+		if ("Err" in json && typeof json.Err === "object" && json.Err) {
+			console.warn("Parsed Err:", json.Err);
+			return json as KuraResponse;
+		}
 	}
+	console.warn("Unexpected KuraResponse:", json);
+	return undefined;
 }
 
 export interface WebSocketContextType {
@@ -63,8 +77,13 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
 	const { sendJsonMessage, lastJsonMessage, readyState } =
 		useWebSocket(socketUrl);
 
+	console.log({ lastJsonMessage, readyState });
+
 	const value = {
-		send: (msg: KuraRequest) => sendJsonMessage(msg),
+		send: (msg: KuraRequest) => {
+			console.debug("Sending", msg);
+			sendJsonMessage(msg);
+		},
 		last: parseResponse(lastJsonMessage),
 		readyState,
 	};
