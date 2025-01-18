@@ -1,6 +1,6 @@
 
 + Finish implementing the server:
-    + Make Server.handle_request() handle broadcasts.
+    + Make Server.handle_request() handle broadcasts more elegantly.
     + Make Server.join_room() validate names.
     + Make Server.create_room() validate names.
     + Make Server.take_turn() broadcast the new room state *and the delta*.

@@ -58,7 +58,18 @@ impl<G: Game> Server<G> {
                 match api_result {
                     Err(error) => {vec![(socket_id, ResponseMessage(Err(error)))]},
                     Ok((okay, Silent)) => {vec![(socket_id, ResponseMessage(Ok(okay)))]},
-                    Ok((_okay, RoomBroadcast(_room_id, _info))) => todo!(),
+                    Ok((okay, RoomBroadcast(room_id, info))) => {
+                        let mut ret = vec![(socket_id, ResponseMessage(Ok(okay)))];
+                        let Some(room) = self.rooms.get(&room_id) else {
+                            return Ok(vec![(socket_id, ResponseMessage(Err(InternalFailure)))]);
+                        };
+
+                        for id in &room.socket_ids {
+                            ret.push((*id, Info(info.clone())));
+                        }
+
+                        ret
+                    }
                 }
             )
         }

@@ -50,6 +50,7 @@ pub enum UserError<E> {
     InvalidTurn(E),
     NotImplemented,
     InvalidJson(String),
+    InternalFailure,
 }
 
 // USER INFOS: Things we can send the user autonomously.
