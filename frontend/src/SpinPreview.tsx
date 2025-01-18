@@ -21,10 +21,10 @@ export default function SpinPreview(props: SpinPreviewProps) {
 	const height = Math.abs(spinRect.y1 - spinRect.y2) + 1;
 	const rectClass =
 		width !== height
-			? " outline-dashed outline-error bg-error/20"
+			? " outline outline-error bg-white/30"
 			: spin.phase === "preview"
 				? ""
-				: " outline-dashed outline-info bg-info/20";
+				: " outline outline-info bg-white/30";
 
 	return (
 		<>
@@ -38,28 +38,31 @@ export default function SpinPreview(props: SpinPreviewProps) {
 				}}
 			/>
 			{spin.phase === "preview" && (
-				<table
-					className={`outline-dashed outline-info absolute${width === height ? " animate-cw" : ""}`}
+				<div
+					className={`absolute ${width === height ? "animate-cw" : ""}`}
 					style={{ left: left * tileSize, top: top * tileSize }}
 				>
-					<tbody>
-						{props.grid.slice(top, top + width).map((row, y) => (
-							// biome-ignore lint/suspicious/noArrayIndexKey: Board coordinate
-							<tr key={y}>
-								{row.slice(left, left + width).map((cell, x) => (
-									<td
-										// biome-ignore lint/suspicious/noArrayIndexKey: Board coordinate
-										key={x}
-										className="relative p-0 m-0"
-										style={{ width: tileSize, height: tileSize }}
-									>
-										<BoardCell cell={cell} />
-									</td>
-								))}
-							</tr>
-						))}
-					</tbody>
-				</table>
+					<div className="absolute inset-0 z-10 pointer-events-none w-full h-full bg-white/30" />
+					<table className={"outline outline-info"}>
+						<tbody>
+							{props.grid.slice(top, top + width).map((row, y) => (
+								// biome-ignore lint/suspicious/noArrayIndexKey: Board coordinate
+								<tr key={y}>
+									{row.slice(left, left + width).map((cell, x) => (
+										<td
+											// biome-ignore lint/suspicious/noArrayIndexKey: Board coordinate
+											key={x}
+											className="relative p-0 m-0"
+											style={{ width: tileSize, height: tileSize }}
+										>
+											<BoardCell cell={cell} />
+										</td>
+									))}
+								</tr>
+							))}
+						</tbody>
+					</table>
+				</div>
 			)}
 		</>
 	);

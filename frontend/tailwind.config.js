@@ -16,7 +16,7 @@ export default {
         },
       },
       animation: {
-        cw: "cw 0.5s ease forwards",
+        cw: "cw 0.3s ease forwards",
       },
     },
   },

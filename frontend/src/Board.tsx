@@ -123,7 +123,7 @@ export default function Board(props: BoardProps) {
 							{String.fromCharCode(97 + x)}
 						</div>
 					))}
-					<table style={{ opacity: spin.phase === "preview" ? 0.7 : 1 }}>
+					<table>
 						<tbody>
 							{newGrid.map((row, y) => (
 								// biome-ignore lint/suspicious/noArrayIndexKey: Board coordinate
