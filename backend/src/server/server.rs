@@ -100,9 +100,6 @@ impl<G: Game> Server<G> {
         room.socket_ids.push(socket_id);
         socket.name = name;
 
-        // Todo: let the Game decide whether the new player is a player or
-        // a spectator.
-
         if room.socket_ids.len() <= 2 {
             Ok((JoinedAsPlayer, Silent))
         } else {

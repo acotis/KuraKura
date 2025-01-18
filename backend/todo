@@ -5,7 +5,11 @@
     + Make Server.create_room() validate names.
     + Make Server.take_turn() broadcast the new room state *and the delta*.
     + Make Server.join_room() broadcast the new room state *and the delta*.
-    + Move responsibility for admitting/denying a new player from Server.join_room() to a method Game.admit_player().
+    + Move responsibility for classifying a new player as player or spectator from Server.join_room() to a method Game.admit_player().
+        - The classifications on offer are up to the Game implementor and should be an enum type housed in Game.
+        - For Kura Kura, the classifications are Black, White, and Spectator.
+        - *Rejecting* the player should probably (?) not be an option (?).
+        - Let's make it not an option for now.
     + Make Game.turn() accept an integer saying who is taking the turn.
         - Note: I finalized my theory of turns on 2024 Sep 15.
 
