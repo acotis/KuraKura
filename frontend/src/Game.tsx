@@ -1,9 +1,9 @@
 // import { useState } from "react";
-import { useCallback, useContext, useEffect, useState } from "react";
-import Board from "./Board";
+import { useContext, useEffect, useState } from "react";
 import { type Color, type Grid, boardLinesFor, boardSize } from "./types";
 import { applyMove } from "./logic";
-import { KuraResponse, WebSocketContext } from "./WebSocketContext";
+import { type KuraResponse, WebSocketContext } from "./WebSocketContext";
+import GameView from "./GameView";
 
 interface GameProps {
 	playerName: string;
@@ -46,6 +46,7 @@ export default function Game({ playerName, room }: GameProps) {
 			})),
 		),
 	);
+
 	const [active, setActive] = useState<Color>("black");
 	const [moveNumber, setMoveNumber] = useState(1);
 
@@ -54,22 +55,18 @@ export default function Game({ playerName, room }: GameProps) {
 	}
 
 	return (
-		<div>
-			{messages.map((m, i) => (
-				// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-				<pre key={i}>{JSON.stringify(m)}</pre>
-			))}
-			<Board
-				grid={grid}
-				tileSize={40}
-				active={active}
-				moveNumber={moveNumber}
-				onMove={(move) => {
-					setGrid(applyMove(grid, move, active, moveNumber.toString()));
-					setActive(active === "black" ? "white" : "black");
-					setMoveNumber(moveNumber + 1);
-				}}
-			/>
-		</div>
+		<GameView
+			messages={messages}
+			grid={grid}
+			active={active}
+			moveNumber={moveNumber}
+			onMove={(move) => {
+				setGrid(applyMove(grid, move, active, moveNumber.toString()));
+				setActive(active === "black" ? "white" : "black");
+				setMoveNumber(moveNumber + 1);
+			}}
+      black={{name: "Rain"}}
+      white={{name: "Fire"}}
+		/>
 	);
 }

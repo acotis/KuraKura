@@ -17,7 +17,7 @@ export interface BoardProps {
 	/**
 	 * Called when the player locks in their move.
 	 */
-	onMove: (move: Move) => undefined;
+	onMove: (move: Move) => void;
 }
 
 type SpinRect = {
