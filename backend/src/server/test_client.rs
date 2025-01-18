@@ -28,7 +28,7 @@ struct Client<Game: GameTrait> where Game::Turn: Serialize, Game::TurnError: Des
     just_sent: Arc<Mutex<bool>>,
 }
 
-impl<Game: GameTrait> Client<Game> where Game::Turn: Serialize, Game::TurnError: DeserializeOwned + Debug {
+impl<Game: GameTrait> Client<Game> where Game: DeserializeOwned, Game::Turn: Serialize, Game::TurnError: DeserializeOwned + Debug {
     async fn new(ident: &str) -> Self where <Game as GameTrait>::TurnError: 'static {
         static NEXT_DELAY: LazyLock<Mutex<usize>> = LazyLock::new(|| Mutex::new(0));
 
@@ -134,7 +134,9 @@ impl<Game: GameTrait> Client<Game> where Game::Turn: Serialize, Game::TurnError:
     }
 }
 
-async fn follow<Game: GameTrait>(ident: String, delay: usize, just_sent: Arc<Mutex<bool>>, mut receiver: Receiver, last: Arc<Mutex<Option<UserMessage<Game>>>>) {
+async fn follow<Game: GameTrait>(ident: String, delay: usize, just_sent: Arc<Mutex<bool>>, mut receiver: Receiver, last: Arc<Mutex<Option<UserMessage<Game>>>>) 
+where Game: DeserializeOwned
+{
     while let Some(Ok(message)) = receiver.next().await {
         let text = message.as_text().unwrap();
 
