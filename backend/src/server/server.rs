@@ -78,8 +78,6 @@ impl<G: Game> Server<G> {
             return Err(AlreadyInARoom);
         }
 
-        /* todo: validate name*/
-
         let mut room = Room::new();
         let room_id = room.id;
         room.socket_ids.push(socket_id);
@@ -94,8 +92,6 @@ impl<G: Game> Server<G> {
         let socket = self.sockets.get_mut(&socket_id).expect("socket lookup in join_room()");
         let room = self.rooms.get_mut(&room_id).ok_or(RoomNotFound)?;
 
-        /* todo: validate name */
-
         if socket.room_id != None {
             return Err(AlreadyInARoom);
         }
@@ -106,8 +102,6 @@ impl<G: Game> Server<G> {
 
         // Todo: let the Game decide whether the new player is a player or
         // a spectator.
-        // Todo: broadcast the fact that a player joined, as well as the new
-        // state of the room, to all connected sockets.
 
         if room.socket_ids.len() <= 2 {
             Ok((JoinedAsPlayer, Silent))
@@ -120,9 +114,6 @@ impl<G: Game> Server<G> {
         let socket = self.sockets.get_mut(&socket_id).expect("socket lookup in take_turn()");
         let room_id = socket.room_id.ok_or(NotInARoom)?;
         let room = self.rooms.get_mut(&room_id).ok_or(RoomNotFound)?;
-
-        // Todo: make it broadcast the turn that was taken, and the
-        // new room state, to all players.
 
         match room.game.turn(turn) {
             Ok(_)           => Ok((TurnAccepted, Silent)),

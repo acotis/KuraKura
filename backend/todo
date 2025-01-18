@@ -1,14 +1,24 @@
 
 + Finish implementing the server:
+    + Make Server.handle_request() handle broadcasts.
+    + Make Server.join_room() validate names.
+    + Make Server.create_room() validate names.
     + Make Server.take_turn() broadcast the new room state *and the delta*.
+    + Make Server.join_room() broadcast the new room state *and the delta*.
+    + Move responsibility for admitting/denying a new player from Server.join_room() to a method Game.admit_player().
     + Make Game.turn() accept an integer saying who is taking the turn.
         - Note: I finalized my theory of turns on 2024 Sep 15.
 
 + Finish implementing the game:
     + In cell.rs, make a Stone type instead of having it be a tuple in Cell.
-    + Implement the "who plays black" thing as a game setting.
+    + Add the concept of Parameters to the Game trait.
+        - Example: which player goes first.
+            + Really do this one.
+        - Example: grid size.
+        - Example: line length needed to win.
 
 + Make the server awesome:
+    + Remove as many trait bounds as possible from the Game trait.
     + Separate Server out into its own crate.
     + Make the server delete any socket that hasn't had activity in, say, an hour.
 

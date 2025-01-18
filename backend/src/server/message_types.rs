@@ -41,8 +41,8 @@ pub enum UserError<E> {
     NotInARoom,
     NotLoggedIn,
     RoomNotFound,
-    AccountAlreadyHasRoom,     // Todo: add a paramater giving the room ID?
-    RoomAlreadyHasGuest,    // (probably don't add such a parameter here for the player ID) (definitely not, that would reveal someone else's API key)
+    AccountAlreadyHasRoom,
+    RoomAlreadyHasGuest,    // (don't add a parameter giving the player ID, that would reveal someone else's API key)
     NameTooLong,
     AccountDoesntHaveRoom,
     RoomDoesntHaveGuest,
