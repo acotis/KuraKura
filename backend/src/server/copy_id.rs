@@ -112,8 +112,6 @@ impl<T> Display for CopyId<T> {
 }
 
 // Method to create a new CopyId.
-// 
-// TODO: make it not be all zeros.
 
 impl<T> CopyId<T> {
     pub fn new() -> Self {

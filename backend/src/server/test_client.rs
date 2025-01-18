@@ -119,7 +119,7 @@ impl<G: Game> Client<G> where G::Turn: Serialize, G::TurnError: DeserializeOwned
     async fn debug_log(&mut self) {
         let response = self.debug_log_unchecked().await;
 
-        if response != ResponseMessage(Err(InvalidJson)) {
+        if response != ResponseMessage(Err(InvalidJson(String::from("")))) {
             panic!("When requesting debug log, response was: {response:?}");
         }
     }
