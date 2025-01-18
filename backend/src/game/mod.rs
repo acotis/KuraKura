@@ -23,7 +23,7 @@ use crate::server::game::Game;
 
 // KuraKura type.
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct KuraKura {
     win_len:    usize,                  // Line length needed to win.
     board:      Vec<Vec<Cell>>,         // State of the board.

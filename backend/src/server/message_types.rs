@@ -1,6 +1,7 @@
 
 use serde::{Serialize, Deserialize};
 use crate::server::types::*;
+use crate::server::game::Game as GameTrait;
 
 // Note about types: I know it sucks that the API call methods have to start with
 // a redundant socket lookup which also must be unwrapped instead of .ok_or()'d.
@@ -10,20 +11,42 @@ use crate::server::types::*;
 // SocketNotFound should be checked for first because it is the more fundamental
 // error between the two.
 
-// USER REQUESTS: Things the user can send us.
+// Below are the two top-level container types for server-internal message-passing.
+// ServerResult is the return type of Server.handle_request(), which interfaces
+// with the threads that handle WebSockets. ApiResult is used inside the Server
+// class as the type returned by its API call handling methods.
 
-#[derive(Debug, Serialize, Deserialize)]
-pub enum UserRequest<T> {
-    CreateRoom {name: String},
-    JoinRoom   {name: String, room: RoomId},
-    TakeTurn   {turn: T},
+pub type ServerResult<Game: GameTrait> = Result<ServerOk<Game>, ServerError>;
+pub type ApiResult<Game: GameTrait> = Result<(UserOk, UserBroadcast<Game>), UserError<Game::TurnError>>;
 
-    DebugLog,   // Debugging only, turn this off in production.
+// ServerResult can be our one type of error, or it can be a Vec of socket ID's
+// and UserMessages, which is an instruction to the WebSocket thread to send
+// all the messages to those socket ID's.
+
+#[derive(Debug)]
+pub enum ServerError {SocketNotFound}
+pub type ServerOk<Game: GameTrait> = Vec<(SocketId, UserMessage<Game>)>;
+
+// UserMessage is the umbrella type for any message we might send to the user.
+// It has variants "Info" (for things we might send them autonomously) and
+// "ResponseMessage" (for things we send in response to API calls).
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum UserMessage<Game: GameTrait> {
+    Info(UserInfo<Game, Game::Turn>),
+    #[serde(untagged)] ResponseMessage(UserResponse<Game::TurnError>),
 }
 
-// USER RESPONSES: Things we can reply to a user request (OKs and Errors).
+// Here is the content of the Info variant:
 
-pub type UserResponse<E> = Result<UserOk, UserError<E>>;
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum UserInfo<Game, Turn> {
+    TurnTaken {new_state: Game, delta: Turn}
+}
+
+// Here is the content of the UserResponse variant:
+
+pub type UserResponse<TurnError> = Result<UserOk, UserError<TurnError>>;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum UserOk {
@@ -34,7 +57,7 @@ pub enum UserOk {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum UserError<E> {
+pub enum UserError<TurnError> {
     AccountNotFound,
     AlreadyLoggedIn,
     AlreadyInARoom,
@@ -47,42 +70,28 @@ pub enum UserError<E> {
     AccountDoesntHaveRoom,
     RoomDoesntHaveGuest,
     AccountPlayedWrongColor,
-    InvalidTurn(E),
+    InvalidTurn(TurnError),
     NotImplemented,
     InvalidJson(String),
     InternalFailure,
 }
 
-// USER INFOS: Things we can send the user autonomously.
+// We also have a type UserBroadcast which is used only internally
+// as part of the API call delegation architecture.
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum UserInfo {
-    // nothing yet, will be used for turns being taken by the other player I guess
-}
-
-// User message: an enum for the two types of things we can send to a user.
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum UserMessage<E> {
-    Info(UserInfo),
-    #[serde(untagged)] ResponseMessage(UserResponse<E>),
-}
-
-// User broadcast: a broadcast into a paritcular room, or silence.
-
-pub enum UserBroadcast {
+pub enum UserBroadcast<Game: GameTrait> {
     Silent,
-    RoomBroadcast(RoomId, UserInfo),
+    RoomBroadcast(RoomId, UserInfo<Game, Game::Turn>),
 }
 
-// API Result: the outcome of calling an endpoint-specific server method.
+// Finally, there is the top-level type of a User Request.
 
-pub type ApiResult<E> = Result<(UserOk, UserBroadcast), UserError<E>>;
+#[derive(Debug, Serialize, Deserialize)]
+pub enum UserRequest<Turn> {
+    CreateRoom {name: String},
+    JoinRoom   {name: String, room: RoomId},
+    TakeTurn   {turn: Turn},
 
-// Server outputs (i.e., possible return values of the server's .handle_request() method).
-
-#[derive(Debug)]
-pub enum ServerError {SocketNotFound}
-pub type ServerOk<E> = Vec<(SocketId, UserMessage<E>)>;
-pub type ServerResult<E> = Result<ServerOk<E>, ServerError>;
+    DebugLog,   // Debugging only, turn this off in production.
+}
 

@@ -1,6 +1,15 @@
 
+- ServerResult:
+  - ServerError.
+  - ServerOk:
+    - SocketId.
+    - UserMessage:
+      - UserResponse:
+        - UserOk (JoinedAs).
+        - UserError (TurnError).
+      - Info (Game, Turn).
+
 + Finish implementing the server:
-    + Make Server.handle_request() handle broadcasts more elegantly.
     + Make Server.take_turn() broadcast the new room state *and the delta*.
     + Make Server.join_room() broadcast the new room state *and the delta*.
     + Move responsibility for classifying a new player as player or spectator from Server.join_room() to a method Game.admit_player().

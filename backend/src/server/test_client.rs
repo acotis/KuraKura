@@ -15,21 +15,21 @@ use serde::Serialize;
 use crate::server::message_types::UserMessage::{self, *};
 use crate::server::message_types::UserOk::*;
 use crate::server::message_types::UserError::*;
-use crate::server::game::Game;
+use crate::server::game::Game as GameTrait;
 use crate::game::KuraKura;
 
 type Receiver = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
 type Sender = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>;
 
-struct Client<G: Game> where G::Turn: Serialize, G::TurnError: DeserializeOwned + Debug {
+struct Client<Game: GameTrait> where Game::Turn: Serialize, Game::TurnError: DeserializeOwned + Debug {
     ident: String,
     sender: Sender,
-    last_response: Arc<Mutex<Option<UserMessage<G::TurnError>>>>,
+    last_response: Arc<Mutex<Option<UserMessage<Game>>>>,
     just_sent: Arc<Mutex<bool>>,
 }
 
-impl<G: Game> Client<G> where G::Turn: Serialize, G::TurnError: DeserializeOwned + Debug {
-    async fn new(ident: &str) -> Self where <G as Game>::TurnError: 'static {
+impl<Game: GameTrait> Client<Game> where Game::Turn: Serialize, Game::TurnError: DeserializeOwned + Debug {
+    async fn new(ident: &str) -> Self where <Game as GameTrait>::TurnError: 'static {
         static NEXT_DELAY: LazyLock<Mutex<usize>> = LazyLock::new(|| Mutex::new(0));
 
         let delay = {
@@ -44,7 +44,7 @@ impl<G: Game> Client<G> where G::Turn: Serialize, G::TurnError: DeserializeOwned
         let last_response = Arc::new(Mutex::new(None));
         let just_sent = Arc::new(Mutex::new(false));
 
-        tokio::spawn(follow::<G::TurnError>(ident.to_owned(), delay, just_sent.clone(), receiver, last_response.clone()));
+        tokio::spawn(follow::<Game>(ident.to_owned(), delay, just_sent.clone(), receiver, last_response.clone()));
 
         println!();
         println!("*** {} connected", ident);
@@ -57,7 +57,7 @@ impl<G: Game> Client<G> where G::Turn: Serialize, G::TurnError: DeserializeOwned
         }
     }
 
-    async fn send(&mut self, text: &str) -> UserMessage<G::TurnError> {
+    async fn send(&mut self, text: &str) -> UserMessage<Game> {
         println!();
         println!("<—— {}: {}", self.ident, text);
 
@@ -79,25 +79,25 @@ impl<G: Game> Client<G> where G::Turn: Serialize, G::TurnError: DeserializeOwned
 
     // Unchecked server interactions.
 
-    async fn create_room_unchecked(&mut self, name: &str) -> UserMessage<G::TurnError> {
+    async fn create_room_unchecked(&mut self, name: &str) -> UserMessage<Game> {
         self.send(&format!(r#"{{"CreateRoom": {{"name": "{name}"}}}}"#)).await
     }
 
-    async fn join_room_unchecked(&mut self, name: &str, room_id: &str) -> UserMessage<G::TurnError> {
+    async fn join_room_unchecked(&mut self, name: &str, room_id: &str) -> UserMessage<Game> {
         self.send(&format!(r#"{{"JoinRoom": {{"name": "{name}", "room": "{room_id}"}}}}"#)).await
     }
 
-    async fn debug_log_unchecked(&mut self) -> UserMessage<G::TurnError> {
+    async fn debug_log_unchecked(&mut self) -> UserMessage<Game> {
         self.send(&format!(r#""DebugLog""#)).await
     }
 
-    async fn take_turn_unchecked(&mut self, turn: G::Turn) -> UserMessage<G::TurnError> {
+    async fn take_turn_unchecked(&mut self, turn: Game::Turn) -> UserMessage<Game> {
         self.send(&format!(r#"{{"TakeTurn": {}}}"#, serde_json::to_string(&turn).unwrap())).await
     }
 
     // Checked server interactions.
 
-    async fn create_room(&mut self, name: &str) -> String {
+    async fn create_room(&mut self, name: &str) -> String where Game::Turn : Debug {
         let response = self.create_room_unchecked(name).await;
 
         if let ResponseMessage(Ok(RoomCreated {id})) = response {
@@ -107,33 +107,34 @@ impl<G: Game> Client<G> where G::Turn: Serialize, G::TurnError: DeserializeOwned
         }
     }
 
-    async fn join_room(&mut self, name: &str, room_id: &str) {
+    async fn join_room(&mut self, name: &str, room_id: &str) where Game::Turn : Debug {
         let response = self.join_room_unchecked(name, room_id).await;
 
-        if response != ResponseMessage(Ok(JoinedAsPlayer)) &&
-           response != ResponseMessage(Ok(JoinedAsSpectator)) {
+        if !matches!(response, ResponseMessage(Ok(JoinedAsPlayer)))
+        && !matches!(response, ResponseMessage(Ok(JoinedAsSpectator)))
+        {
             panic!("When joining room, response was: {response:?}");
         }
     }
 
-    async fn debug_log(&mut self) {
+    async fn debug_log(&mut self) where Game::Turn : Debug {
         let response = self.debug_log_unchecked().await;
 
-        if response != ResponseMessage(Err(InvalidJson(String::from("")))) {
+        if !matches!(response, ResponseMessage(Err(InvalidJson(_)))) {
             panic!("When requesting debug log, response was: {response:?}");
         }
     }
 
-    async fn take_turn(&mut self, turn: G::Turn) {
+    async fn take_turn(&mut self, turn: Game::Turn) where Game::Turn : Debug {
         let response = self.take_turn_unchecked(turn).await;
 
-        if response != ResponseMessage(Ok(TurnAccepted)) {
+        if !matches!(response, ResponseMessage(Ok(TurnAccepted))) {
             panic!("When taking turn, response was: {response:?}");
         }
     }
 }
 
-async fn follow<E: DeserializeOwned>(ident: String, delay: usize, just_sent: Arc<Mutex<bool>>, mut receiver: Receiver, last: Arc<Mutex<Option<UserMessage<E>>>>) {
+async fn follow<Game: GameTrait>(ident: String, delay: usize, just_sent: Arc<Mutex<bool>>, mut receiver: Receiver, last: Arc<Mutex<Option<UserMessage<Game>>>>) {
     while let Some(Ok(message)) = receiver.next().await {
         let text = message.as_text().unwrap();
 

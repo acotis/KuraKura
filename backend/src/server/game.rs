@@ -3,8 +3,8 @@ use std::fmt::{Debug, Display};
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 
-pub trait Game : Debug + Display {
-    type Turn : DeserializeOwned;
+pub trait Game : Debug + Display + Clone {
+    type Turn : Serialize + DeserializeOwned + Clone;
     type TurnError : Clone + PartialEq + Eq + Serialize + Send;
     type Outcome;
 
