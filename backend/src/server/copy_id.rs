@@ -17,7 +17,7 @@ use uuid::Uuid;
 // requires us to implement the trais of this type automatically, because of this
 // bug (!) in the #[derive] macro: https://github.com/rust-lang/rust/issues/26925
 //
-// The Id simply holds an array of thirt-six u8's which is guaranteed to comprise
+// The Id simply holds an array of thirty-six u8's which is guaranteed to comprise
 // a valid str (i.e., a valid UTF-8 string). When an Id is created, it fills out
 // its str using a UUID generator that generates 36-character ascii-hexadecimal
 // strings (32 meaningful chars and 4 hyphens). We hold the data in a field instead

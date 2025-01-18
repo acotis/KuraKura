@@ -2,25 +2,16 @@
 use crate::game::types::Orientation;
 use crate::game::types::Player::{self, *};
 
-// Cell type for game Kura Kura. Each cell has two properties:
+// Cell type for game Kura Kura. Each cell contains:
 //
-//     1. The background.
-//         - May have a line pointing up.
-//         - May have a line pointing right.
-//         - May have a line pointing down.
-//         - May have a line pointing left.
-//     2. The stone (optional).
+//     1. A stone (optional).
 //         - Has an ID number. Lowest ID is 1.
 //         - Has an orientation: up, right, down, or left.
 //         - Is part of a win, or not.
 //
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)] pub struct Cell {
-    pub stone:      Option<(usize, Orientation, bool)>,
-    pub line_up:    bool,
-    pub line_right: bool,
-    pub line_down:  bool,
-    pub line_left:  bool,
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)] pub struct Cell {
+    pub stone: Option<(usize, Orientation, bool)>,
 }
 
 impl Cell {
@@ -30,10 +21,6 @@ impl Cell {
                 None => None,
                 Some((num, or, win)) => Some((num, or.spun(), win)),
             },
-            line_right: self.line_up,
-            line_down:  self.line_right,
-            line_left:  self.line_down,
-            line_up:    self.line_left,
         }
     }
 

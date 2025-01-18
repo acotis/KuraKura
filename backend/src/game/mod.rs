@@ -41,35 +41,12 @@ impl Game for KuraKura {
         let size = 4;
         let win_len = 2;
 
-        let mut board = KuraKura {
+        KuraKura {
             win_len:    win_len,
-            board:      vec![],
+            board:      vec![vec![Default::default(); size]; size],
             turn:       1,
             outcome:    None,
-        };
-
-        for r in 0..size {
-            board.board.push(vec![]);
-
-            for c in 0..size {
-                board.board[r].push(
-                    Cell {
-                        stone:      None,
-                        line_up:    false,
-                        line_right: false,
-                        line_down:  false,
-                        line_left:  false,
-                    }
-                );
-
-                if r > 0        {board.board[r][c].line_up    = true;}
-                if c > 0        {board.board[r][c].line_left  = true;}
-                if r < size - 1 {board.board[r][c].line_down  = true;}
-                if c < size - 1 {board.board[r][c].line_right = true;}
-            }
         }
-        
-        board
     }
 
     fn turn(&mut self, turn: Turn) -> TurnResult {
@@ -82,7 +59,7 @@ impl Game for KuraKura {
             spin_size:      sz,
             spin_dir:       sd,
         } = turn;
-        
+
         // Validate the turn.
 
         if self.outcome           != None   {return Err(GameAlreadyOver);}
@@ -92,7 +69,7 @@ impl Game for KuraKura {
         if self.size() <= su + sz - 1       {return Err(InvalidLocation);}
         if self.size() <= sl + sz - 1       {return Err(InvalidLocation);}
         if self.board[pr][pc].stone != None {return Err(PieceAlreadyThere);}
-        
+
         // Place the stone.
 
         self.board[pr][pc].stone = Some((self.turn, Up, false));
@@ -133,9 +110,9 @@ impl KuraKura {
                     let line = (0..self.win_len).map(|x| (r + dir.0 * x, c + dir.1 * x));
 
                     for player in vec![Black, White] {
-                        if line.clone().all(|(r, c)| 
+                        if line.clone().all(|(r, c)|
                                     r < self.size() &&
-                                    c < self.size() && 
+                                    c < self.size() &&
                                     self.board[r][c].who() == Some(player)) {
                             winning_tiles.extend(line);
                             break;
@@ -229,7 +206,7 @@ impl Display for KuraKura {
 
                 // On-column.
 
-                let wing_up = self.board[r][c].line_up;
+                let wing_up = r > 0;
 
                 match wing_up {
                     false => {write!(f, "     ")?;},
@@ -245,9 +222,9 @@ impl Display for KuraKura {
 
                 // Off-column before.
 
-                let left_connect  = (c > 0)             && self.board[r][c-1].line_right;
-                let left_wing     = (c < self.size())   && self.board[r][c  ].line_left;
-                let right_wing    = (c < self.size())   && self.board[r][c  ].line_right;
+                let left_connect  = 0 < c && c < self.size();
+                let left_wing     = 0 < c && c < self.size();
+                let right_wing    = c + 1 < self.size();
 
                 match (left_connect, left_wing) {
                     (false, false) => {write!(f, " ")?;},
@@ -278,8 +255,8 @@ impl Display for KuraKura {
                     },
 
                     None => {
-                        let up_wing   = self.board[r][c].line_up;
-                        let down_wing = self.board[r][c].line_down;
+                        let up_wing   = r > 0;
+                        let down_wing = r + 1 < self.size();
 
                         match left_wing {
                             false => {write!(f, " ")?;},
@@ -313,7 +290,7 @@ impl Display for KuraKura {
             }
 
             write!(f, "\n")?;
-    
+
             // Off-row below.
 
             for c in 0..self.size()+1 {
@@ -328,7 +305,7 @@ impl Display for KuraKura {
 
                 // On-column.
 
-                let wing_down = self.board[r][c].line_down;
+                let wing_down = r + 1 < self.size();
 
                 match wing_down {
                     false => {write!(f, "     ")?;},
