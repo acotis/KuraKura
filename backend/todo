@@ -14,7 +14,6 @@
         - Note: I finalized my theory of turns on 2024 Sep 15.
 
 + Finish implementing the game:
-    + In cell.rs, make a Stone type instead of having it be a tuple in Cell.
     + Add the concept of Parameters to the Game trait.
         - Example: which player goes first.
             + Really do this one.

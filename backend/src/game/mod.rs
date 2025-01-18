@@ -8,8 +8,9 @@ use std::fmt::Formatter;
 use std::fmt::Display;
 use std::fmt::Error;
 
+use cell::Stone;
+
 use crate::game::types::Player::{self, *};
-use crate::game::types::Orientation::*;
 use crate::game::types::TurnError::*;
 use crate::game::types::GameOutcome::{self, *};
 use crate::game::types::SpinDirection::*;
@@ -72,7 +73,7 @@ impl Game for KuraKura {
 
         // Place the stone.
 
-        self.board[pr][pc].stone = Some((self.turn, Up, false));
+        self.board[pr][pc].stone = Some(Stone::place(self.turn));
 
         // Spin the section.
 
@@ -126,10 +127,7 @@ impl KuraKura {
 
         if winning_tiles.len() > 0 {
             for &(r, c) in &winning_tiles {
-                self.board[r][c].stone = match self.board[r][c].stone {
-                    Some((id, or, _win)) => Some((id, or, true)),
-                    _ => {panic!();},
-                }
+                self.board[r][c].stone.as_mut().expect("empty cell is winning?").winning = true;
             }
 
             if winning_tiles.iter().all(|&(r, c)| self.board[r][c].who() == Some(Black)) {self.outcome = Some(BlackWin); return;}
@@ -245,8 +243,10 @@ impl Display for KuraKura {
                 }
 
                 match self.board[r][c].stone {
-                    Some((num, spin, win)) => {
-                        match (self.board[r][c].who().unwrap(), win) {
+                    Some(stone) => {
+                        let num = stone.number;
+                        let spin = stone.orientation;
+                        match (self.board[r][c].who().unwrap(), stone.winning) {
                             (Black, false) => {write!(f, "{bold}{cyan     }{spin}{unbold}{num:02}{uncolor}")?;}
                             (Black, true ) => {write!(f, "{bold}{cyan_bg  }{spin}{unbold}{num:02}{uncolor}")?;}
                             (White, false) => {write!(f, "{bold}{yellow   }{spin}{unbold}{num:02}{uncolor}")?;}
