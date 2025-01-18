@@ -49,7 +49,7 @@ pub enum UserError<E> {
     AccountPlayedWrongColor,
     InvalidTurn(E),
     NotImplemented,
-    InvalidJson,
+    InvalidJson(String),
 }
 
 // USER INFOS: Things we can send the user autonomously.

@@ -49,7 +49,7 @@ impl<G: Game> Server<G> {
                 Ok(JoinRoom   {name, room}) => {self.join_room   (socket_id, name, room)},
                 Ok(TakeTurn   {turn}      ) => {self.take_turn   (socket_id, turn      )},
                 Ok(DebugLog               ) => {self.debug_log   (                     )},
-                Err(_)                      => {Err(InvalidJson)},
+                Err(error)                  => {Err(InvalidJson(error.to_string()))},
             };
 
             // Construct the actual Vec of messages to send out.
@@ -126,7 +126,7 @@ impl<G: Game> Server<G> {
 
         // Always return InvalidJson so as to not reveal that the API call
         // did anything.
-        Err(InvalidJson)
+        Err(InvalidJson(String::from("")))
     }
 }
 
