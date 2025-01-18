@@ -2,7 +2,11 @@
 import { useContext, useEffect, useState } from "react";
 import { type Color, type Grid, boardLinesFor, boardSize } from "./types";
 import { applyMove } from "./logic";
-import { type KuraResponse, WebSocketContext } from "./WebSocketContext";
+import {
+	type KuraResponse,
+	type TurnDetails,
+	WebSocketContext,
+} from "./WebSocketContext";
 import GameView from "./GameView";
 
 interface GameProps {
@@ -47,7 +51,7 @@ export default function Game({ playerName, room }: GameProps) {
 		),
 	);
 
-	const [active, setActive] = useState<Color>("black");
+	const [active, setActive] = useState<Color>("Black");
 	const [moveNumber, setMoveNumber] = useState(1);
 
 	if (readyState !== WebSocket.OPEN) {
@@ -62,11 +66,21 @@ export default function Game({ playerName, room }: GameProps) {
 			moveNumber={moveNumber}
 			onMove={(move) => {
 				setGrid(applyMove(grid, move, active, moveNumber.toString()));
-				setActive(active === "black" ? "white" : "black");
+				setActive(active === "Black" ? "White" : "Black");
 				setMoveNumber(moveNumber + 1);
+				const turnDetails: TurnDetails = {
+					player: active,
+					play_row: move.placeY,
+					play_col: move.placeX,
+					spin_ul_row: move.spinY,
+					spin_ul_col: move.spinX,
+					spin_size: move.spinSize,
+					spin_dir: "CW",
+				};
+				send({ TakeTurn: { turn: turnDetails } });
 			}}
-      black={{name: "Rain"}}
-      white={{name: "Fire"}}
+			black={{ name: "Rain" }}
+			white={{ name: "Fire" }}
 		/>
 	);
 }

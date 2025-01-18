@@ -8,8 +8,8 @@ export interface BoardStoneProps {
 export default function BoardStone({ stone, preview }: BoardStoneProps) {
   let className =
     "pointer-events-none absolute rounded-full w-full h-full flex items-center justify-center text-2xl";
-  if (stone.color === "black") className += " bg-gray-700 text-gray-200";
-  if (stone.color === "white") className += " bg-gray-200 text-gray-700";
+  if (stone.color === "Black") className += " bg-gray-700 text-gray-200";
+  if (stone.color === "White") className += " bg-gray-200 text-gray-700";
   if (preview) className += " opacity-0 group-hover:opacity-50";
   return (
     <div

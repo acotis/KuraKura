@@ -1,6 +1,6 @@
 export const boardSize = 6;
 
-export type Color = "black" | "white";
+export type Color = "Black" | "White";
 
 export type Stone = {
   color: Color;

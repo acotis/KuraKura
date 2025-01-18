@@ -1,11 +1,13 @@
 import { createContext, type ReactNode } from "react";
 import useWebSocket, { type ReadyState } from "react-use-websocket";
+import type { Color } from "./types";
 
 type UserId = string;
 type RoomId = string;
 type Unit = [];
 
 export interface TurnDetails {
+	player: Color;
 	play_row: number;
 	play_col: number;
 	spin_ul_row: number;
@@ -15,8 +17,8 @@ export interface TurnDetails {
 }
 
 export type KuraRequest =
-	| { CreateRoom: { name: string } }
-	| { JoinRoom: { name: string; room: RoomId } }
+	| { CreateRoom: { name: UserId } }
+	| { JoinRoom: { name: UserId; room: RoomId } }
 	| { TakeTurn: { turn: TurnDetails } };
 
 export type KuraResponse = { Ok: KuraOk } | { Err: KuraErr };
@@ -83,6 +85,7 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
 		send: (msg: KuraRequest) => {
 			console.debug("Sending", msg);
 			sendJsonMessage(msg);
+			sendJsonMessage("DebugLog");
 		},
 		last: parseResponse(lastJsonMessage),
 		readyState,

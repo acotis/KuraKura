@@ -17,7 +17,7 @@ const example1: Grid = grid.map((row, y) =>
 		stone:
 			c === "."
 				? undefined
-				: { color: +c % 2 ? "black" : "white", rotation: 0, label: "" },
+				: { color: +c % 2 ? "Black" : "White", rotation: 0, label: "" },
 		lines: boardLinesFor(x, y, 6),
 	})),
 );
@@ -31,7 +31,7 @@ const example2 = applyMove(
 		spinY: 3,
 		spinSize: 1,
 	},
-	"black",
+	"Black",
 	"",
 );
 
@@ -44,7 +44,7 @@ const example3 = applyMove(
 		spinY: 3,
 		spinSize: 3,
 	},
-	"black",
+	"Black",
 	"",
 );
 

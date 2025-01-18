@@ -60,14 +60,14 @@ export default function GameView({
 				/>
 				<div className="flex flex-col gap-2">
 					<PlayerCard
-						color="black"
+						color="Black"
 						name={black?.name}
-						active={active === "black"}
+						active={active === "Black"}
 					/>
 					<PlayerCard
-						color="white"
+						color="White"
 						name={white?.name}
-						active={active === "white"}
+						active={active === "White"}
 					/>
 				</div>
 			</div>
