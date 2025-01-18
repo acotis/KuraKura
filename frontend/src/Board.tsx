@@ -93,8 +93,36 @@ export default function Board(props: BoardProps) {
 
 	return (
 		<div className="fcc gap-4">
-			<div className="shadow-lg p-[8px] bg-board rounded-lg">
+			<div className="shadow-lg pt-[32px] pl-[32px] pb-[8px] pr-[8px] bg-board rounded-lg">
 				<div className="relative bg-base-100">
+					{[...Array(props.grid.length).keys()].map((y) => (
+						<div
+							className="absolute z-9 flex items-center justify-center"
+							style={{
+								left: -32,
+								top: tileSize * y,
+								height: tileSize,
+								width: 32,
+							}}
+							key={y}
+						>
+							{y + 1}
+						</div>
+					))}
+					{[...Array(props.grid[0].length).keys()].map((x) => (
+						<div
+							className="absolute z-9 flex items-center justify-center"
+							style={{
+								top: -32,
+								left: tileSize * x,
+								height: 32,
+								width: tileSize,
+							}}
+							key={x}
+						>
+							{String.fromCharCode(97 + x)}
+						</div>
+					))}
 					<table style={{ opacity: spin.phase === "preview" ? 0.7 : 1 }}>
 						<tbody>
 							{newGrid.map((row, y) => (
