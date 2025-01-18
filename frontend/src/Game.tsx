@@ -54,8 +54,12 @@ export default function Game({ playerName, room }: GameProps) {
 	const [active, setActive] = useState<Color>("Black");
 	const [moveNumber, setMoveNumber] = useState(1);
 
-	if (readyState !== WebSocket.OPEN) {
+	if (readyState === WebSocket.CONNECTING) {
 		return "Connecting...";
+	}
+
+	if (readyState === WebSocket.CLOSED || readyState === WebSocket.CLOSING) {
+		return "Connection lost.";
 	}
 
 	return (
