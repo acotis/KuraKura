@@ -1,4 +1,6 @@
 
+Originally, the message_types file had "flat" type parameter inheritance. The top-level structs, ServerResult<E> and ApiResult<E>, had a single type parameter which was expected to be set to the TurnError type and which was passed unchanged from parent type to child type. In the new architecture, ServerResult and ApiResult are parameterized by G, which is expected to be set to the Game type (KuraKura, for example), and a ServerResult<G> contains a ServerOk<G> which contains a UserMessage<G> which tonains a UserResponse<G::TurnError>, and this last step in the hierarchy is the problem. Rust's #derive macro can derive Deserialize for A<T> only when T implements derive, but it cannot derive Deserialize for A<T> only when T::Foo implements derive. Instead, it is insisting that T::Foo must be unconditionally bound to implement Derive no matter what, before it considers this code to compile at all. SOLUTION (h/t Lynn): serde's derive(Deserialize) macro is a little dumb about trait bounds. You can help it with the serde(bound(...)) macro.
+
 - ServerResult:
   - ServerError.
   - ServerOk:

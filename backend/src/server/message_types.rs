@@ -32,6 +32,9 @@ pub type ServerOk<Game: GameTrait> = Vec<(SocketId, UserMessage<Game>)>;
 // "ResponseMessage" (for things we send in response to API calls).
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(bound(
+        deserialize = "Game::TurnError: Deserialize<'de>, Game: Deserialize<'de>"
+))]
 pub enum UserMessage<Game: GameTrait> {
     Info(UserInfo<Game, Game::Turn>),
     #[serde(untagged)] ResponseMessage(UserResponse<Game::TurnError>),
