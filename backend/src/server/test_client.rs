@@ -21,6 +21,42 @@ use crate::game::KuraKura;
 type Receiver = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
 type Sender = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>;
 
+/*
+
+async fn follow<Game: GameTrait>(ident: String, delay: usize, just_sent: Arc<Mutex<bool>>, mut receiver: Receiver, last: Arc<Mutex<Option<UserMessage<Game>>>>) 
+where Game: DeserializeOwned
+{
+    while let Some(Ok(message)) = receiver.next().await {
+        let text = message.as_text().unwrap();
+
+        last.lock()
+            .await
+            .replace(serde_json::from_str(&text)
+                                .expect(&format!("server's message was not valid JSON: {}", text)));
+
+        let mut sent_lock = just_sent.lock().await;
+        let del = if *sent_lock {
+            *sent_lock = false; 0
+        } else {
+            delay
+        };
+
+        pause(del).await;
+
+        println!("——> {ident}: {text}");
+    }
+}
+
+async fn pause(millis: usize) {
+    tokio::time::sleep(std::time::Duration::from_millis(millis as u64)).await;
+}
+
+*/
+
+
+
+/*
+
 struct Client<Game: GameTrait> where Game::Turn: Serialize, Game::TurnError: DeserializeOwned + Debug {
     ident: String,
     sender: Sender,
@@ -134,33 +170,6 @@ impl<Game: GameTrait> Client<Game> where Game: DeserializeOwned, Game::Turn: Ser
     }
 }
 
-async fn follow<Game: GameTrait>(ident: String, delay: usize, just_sent: Arc<Mutex<bool>>, mut receiver: Receiver, last: Arc<Mutex<Option<UserMessage<Game>>>>) 
-where Game: DeserializeOwned
-{
-    while let Some(Ok(message)) = receiver.next().await {
-        let text = message.as_text().unwrap();
-
-        last.lock()
-            .await
-            .replace(serde_json::from_str(&text)
-                                .expect(&format!("server's message was not valid JSON: {}", text)));
-
-        let mut sent_lock = just_sent.lock().await;
-        let del = if *sent_lock {
-            *sent_lock = false; 0
-        } else {
-            delay
-        };
-
-        pause(del).await;
-
-        println!("——> {ident}: {text}");
-    }
-}
-
-async fn pause(millis: usize) {
-    tokio::time::sleep(std::time::Duration::from_millis(millis as u64)).await;
-}
 
 pub async fn run_test_clients() {
     pause(1000).await;
@@ -177,6 +186,8 @@ pub async fn run_test_clients() {
 
     println!();
 }
+
+*/
 
 
 /*
