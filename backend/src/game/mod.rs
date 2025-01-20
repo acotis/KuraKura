@@ -8,6 +8,8 @@ use std::fmt::Formatter;
 use std::fmt::Display;
 use std::fmt::Error;
 
+use serde::Serialize;
+
 use crate::game::types::Player::{self, *};
 use crate::game::types::Orientation::*;
 use crate::game::types::TurnError::*;
@@ -23,7 +25,7 @@ use crate::server::game::Game;
 
 // KuraKura type.
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 pub struct KuraKura {
     win_len:    usize,                  // Line length needed to win.
     board:      Vec<Vec<Cell>>,         // State of the board.

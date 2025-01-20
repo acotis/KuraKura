@@ -16,8 +16,8 @@ use crate::server::game::Game as GameTrait;
 // with the threads that handle WebSockets. ApiResult is used inside the Server
 // class as the type returned by its API call handling methods.
 
-pub type ServerResult<Game: GameTrait> = Result<ServerOk<Game>, ServerError>;
-pub type ApiResult<Game: GameTrait> = Result<(UserOk, UserBroadcast<Game>), UserError<Game::TurnError>>;
+pub type ServerResult<Game> = Result<ServerOk<Game>, ServerError>;
+pub type ApiResult<Game> = Result<(UserOk, UserBroadcast<Game>), UserError<<Game as GameTrait>::TurnError>>;
 
 // ServerResult can be our one type of error, or it can be a Vec of socket ID's
 // and UserMessages, which is an instruction to the WebSocket thread to send
@@ -25,7 +25,7 @@ pub type ApiResult<Game: GameTrait> = Result<(UserOk, UserBroadcast<Game>), User
 
 #[derive(Debug)]
 pub enum ServerError {SocketNotFound}
-pub type ServerOk<Game: GameTrait> = Vec<(SocketId, UserMessage<Game>)>;
+pub type ServerOk<Game> = Vec<(SocketId, UserMessage<Game>)>;
 
 // UserMessage is the umbrella type for any message we might send to the user.
 // It has variants "Info" (for things we might send them autonomously) and
