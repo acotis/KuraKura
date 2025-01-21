@@ -15,6 +15,7 @@ Originally, the message_types file had "flat" type parameter inheritance. The to
 
 + Finish implementing the server:
     + Make Game.turn() accept an integer saying who is taking the turn.
+        - Remove the field of Turn that declares the color of the turn.
         - Note: I finalized my theory of turns on 2024 Sep 15.
 
 + Finish implementing the game:
