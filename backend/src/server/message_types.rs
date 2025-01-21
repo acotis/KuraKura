@@ -44,7 +44,8 @@ pub enum UserMessage<Game: GameTrait> {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum UserInfo<Game, Turn> {
-    TurnTaken {new_game_state: Game, turn: Turn}
+    TurnTaken {new_game_state: Game, turn: Turn},
+    PlayerJoined {new_game_state: Game, player_name: String},
 }
 
 // Here is the content of the UserResponse variant:

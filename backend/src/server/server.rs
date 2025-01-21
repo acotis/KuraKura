@@ -112,12 +112,20 @@ impl<Game: GameTrait> Server<Game> {
 
         socket.room_id = Some(room_id);
         room.socket_ids.push(socket_id);
-        socket.name = name;
+        socket.name = name.clone();
+
+        let broadcast = RoomBroadcast(
+            room_id,
+            PlayerJoined {
+                new_game_state: room.game.clone(),
+                player_name: name
+            }
+        );
 
         if room.socket_ids.len() <= 2 {
-            Ok((JoinedAsPlayer, Silent))
+            Ok((JoinedAsPlayer, broadcast))
         } else {
-            Ok((JoinedAsSpectator, Silent))
+            Ok((JoinedAsSpectator, broadcast))
         }
     }
 
