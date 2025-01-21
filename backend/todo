@@ -14,7 +14,6 @@ Originally, the message_types file had "flat" type parameter inheritance. The to
       - Info (Game, Turn).
 
 + Finish implementing the server:
-    + Update test client to handle take_turn() broadcast correctly.
     + Make Server.join_room() broadcast the new room state *and the delta*.
     + Move responsibility for classifying a new player as player or spectator from Server.join_room() to a method Game.admit_player().
         - The classifications on offer are up to the Game implementor and should be an enum type housed in Game.

@@ -37,11 +37,15 @@ where Game: GameTrait + DeserializeOwned + Send,
 {
     while let Some(Ok(message)) = receiver.next().await {
         let text = message.as_text().unwrap();
+        let response =
+            serde_json::from_str(&text)
+                .expect(&format!("server's message was not valid JSON: {}", text));
 
-        last.lock()
-            .await
-            .replace(serde_json::from_str(&text)
-                                .expect(&format!("server's message was not valid JSON: {}", text)));
+        if matches!(response, ResponseMessage(_)) {
+            last.lock()
+                .await
+                .replace(response);
+        }
 
         let mut sent_lock = just_sent.lock().await;
         let del = if *sent_lock {
