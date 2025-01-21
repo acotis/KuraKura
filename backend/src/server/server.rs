@@ -2,6 +2,7 @@
 use crate::server::message_types::UserRequest::*;
 use crate::server::message_types::UserError::*;
 use crate::server::message_types::UserOk::*;
+use crate::server::message_types::UserInfo::*;
 use crate::server::message_types::UserMessage::*;
 use crate::server::message_types::ServerError::*;
 use crate::server::game::Game as GameTrait;
@@ -69,8 +70,7 @@ impl<Game: GameTrait> Server<Game> {
                                     .map(|&id| (id, Info(info.clone())))
                                     .collect()
                         };
-                        // todo: put this first
-                        ret.push((socket_id, ResponseMessage(Ok(okay))));
+                        ret.insert(0, (socket_id, ResponseMessage(Ok(okay))));
                         ret
                     }
                 }
@@ -126,8 +126,14 @@ impl<Game: GameTrait> Server<Game> {
         let room_id = socket.room_id.ok_or(NotInARoom)?;
         let room = self.rooms.get_mut(&room_id).ok_or(RoomNotFound)?;
 
-        match room.game.turn(turn) {
-            Ok(_)           => Ok((TurnAccepted, Silent)),
+        match room.game.turn(turn.clone()) {
+            Ok(_)           => Ok((
+                TurnAccepted,
+                RoomBroadcast(room_id, TurnTaken {
+                    turn: turn,
+                    new_game_state: room.game.clone(),
+                })
+            )),
             Err(turn_error) => Err(InvalidTurn(turn_error)),
         }
     }

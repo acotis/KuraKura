@@ -17,6 +17,9 @@ use crate::server::message_types::UserOk::*;
 use crate::server::message_types::UserError::*;
 use crate::server::game::Game as GameTrait;
 use crate::game::KuraKura;
+use crate::game::types::*;
+use crate::game::types::Player::*;
+use crate::game::types::SpinDirection::*;
 
 type Receiver = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
 type Sender = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>;
@@ -128,7 +131,7 @@ impl<Game: GameTrait + Send> Client<Game> where Game: DeserializeOwned, Game::Tu
     }
 
     async fn take_turn_unchecked(&mut self, turn: Game::Turn) -> UserMessage<Game> {
-        self.send(&format!(r#"{{"TakeTurn": {}}}"#, serde_json::to_string(&turn).unwrap())).await
+        self.send(&format!(r#"{{"TakeTurn": {{"turn": {}}}}}"#, serde_json::to_string(&turn).unwrap())).await
     }
 
     // Checked server interactions.
@@ -182,6 +185,16 @@ pub async fn run_test_clients() {
     let _         = lexi.join_room("The LEX", &evan_rm).await;
 
     let _         = evan.debug_log().await;
+
+    let _         = evan.take_turn(Turn {
+        player:         Black,
+        play_row:       0,
+        play_col:       0,
+        spin_ul_row:    0,
+        spin_ul_col:    0,
+        spin_size:      3,
+        spin_dir:       CW,
+    }).await;
 
     println!();
 }
