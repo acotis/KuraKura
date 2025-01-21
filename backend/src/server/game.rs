@@ -10,6 +10,7 @@ pub trait Game : Debug + Display + Clone {
     type Outcome;
 
     fn new() -> Self;
+    fn add_player(&mut self) -> Self::PlayerRole;
     fn turn(&mut self, turn: Self::Turn) ->
         Result<Option<Self::Outcome>, Self::TurnError>;
 }

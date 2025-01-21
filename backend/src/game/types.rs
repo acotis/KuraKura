@@ -54,8 +54,8 @@ pub type TurnResult = Result<Option<GameOutcome>, TurnError>;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum PlayerRole {
-    Black,
-    White,
+    BlackPlayer,
+    WhitePlayer,
     Spectator,
 }
 

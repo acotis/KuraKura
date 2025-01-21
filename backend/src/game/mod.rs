@@ -20,7 +20,7 @@ use crate::game::types::TurnResult;
 use crate::game::cell::Cell;
 use crate::game::cell::spin_cell_grid;
 use crate::game::types::Turn;
-use crate::game::types::PlayerRole;
+use crate::game::types::PlayerRole::{self, *};
 
 use crate::server::game::Game;
 
@@ -28,6 +28,8 @@ use crate::server::game::Game;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct KuraKura {
+    players_present: usize,
+
     win_len:    usize,                  // Line length needed to win.
     board:      Vec<Vec<Cell>>,         // State of the board.
     turn:       usize,                  // Number of the active turn's stone.
@@ -46,6 +48,7 @@ impl Game for KuraKura {
         let win_len = 2;
 
         let mut board = KuraKura {
+            players_present: 0,
             win_len:    win_len,
             board:      vec![],
             turn:       1,
@@ -74,6 +77,16 @@ impl Game for KuraKura {
         }
         
         board
+    }
+
+    fn add_player(&mut self) -> PlayerRole {
+        self.players_present += 1;
+        match self.players_present {
+            0 => panic!(),
+            1 => BlackPlayer,
+            2 => WhitePlayer,
+            3.. => Spectator,
+        }
     }
 
     fn turn(&mut self, turn: Turn) -> TurnResult {

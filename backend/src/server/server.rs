@@ -114,7 +114,9 @@ impl<Game: GameTrait> Server<Game> {
         room.socket_ids.push(socket_id);
         socket.name = name.clone();
 
-        Ok((RoomJoined {player_role: todo!()}, RoomBroadcast(
+        let role = room.game.add_player();
+
+        Ok((RoomJoined {player_role: role}, RoomBroadcast(
             room_id,
             PlayerJoined {
                 new_game_state: room.game.clone(),
