@@ -17,7 +17,7 @@ use crate::server::game::Game as GameTrait;
 // class as the type returned by its API call handling methods.
 
 pub type ServerResult<Game> = Result<ServerOk<Game>, ServerError>;
-pub type ApiResult<Game> = Result<(UserOk, UserBroadcast<Game>), UserError<<Game as GameTrait>::TurnError>>;
+pub type ApiResult<Game> = Result<(UserOk<<Game as GameTrait>::PlayerRole>, UserBroadcast<Game>), UserError<<Game as GameTrait>::TurnError>>;
 
 // ServerResult can be our one type of error, or it can be a Vec of socket ID's
 // and UserMessages, which is an instruction to the WebSocket thread to send
@@ -33,11 +33,11 @@ pub type ServerOk<Game> = Vec<(SocketId, UserMessage<Game>)>;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(bound(
-        deserialize = "Game::TurnError: Deserialize<'de>, Game: Deserialize<'de>"
+        deserialize = "Game::TurnError: Deserialize<'de>, Game: Deserialize<'de>, Game::PlayerRole: Deserialize<'de>"
 ))]
 pub enum UserMessage<Game: GameTrait> {
     Info(UserInfo<Game, Game::Turn>),
-    #[serde(untagged)] ResponseMessage(UserResponse<Game::TurnError>),
+    #[serde(untagged)] ResponseMessage(UserResponse<Game::PlayerRole, Game::TurnError>),
 }
 
 // Here is the content of the Info variant:
@@ -50,13 +50,12 @@ pub enum UserInfo<Game, Turn> {
 
 // Here is the content of the UserResponse variant:
 
-pub type UserResponse<TurnError> = Result<UserOk, UserError<TurnError>>;
+pub type UserResponse<PlayerRole, TurnError> = Result<UserOk<PlayerRole>, UserError<TurnError>>;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum UserOk {
+pub enum UserOk<PlayerRole> {
     RoomCreated {id: RoomId},
-    JoinedAsPlayer,
-    JoinedAsSpectator,
+    RoomJoined {player_role: PlayerRole},
     TurnAccepted,
 }
 

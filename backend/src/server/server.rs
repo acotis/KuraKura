@@ -114,19 +114,13 @@ impl<Game: GameTrait> Server<Game> {
         room.socket_ids.push(socket_id);
         socket.name = name.clone();
 
-        let broadcast = RoomBroadcast(
+        Ok((RoomJoined {player_role: todo!()}, RoomBroadcast(
             room_id,
             PlayerJoined {
                 new_game_state: room.game.clone(),
                 player_name: name
             }
-        );
-
-        if room.socket_ids.len() <= 2 {
-            Ok((JoinedAsPlayer, broadcast))
-        } else {
-            Ok((JoinedAsSpectator, broadcast))
-        }
+        )))
     }
 
     fn take_turn(&mut self, socket_id: SocketId, turn: Game::Turn) -> ApiResult<Game> {

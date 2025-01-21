@@ -20,6 +20,7 @@ use crate::game::types::TurnResult;
 use crate::game::cell::Cell;
 use crate::game::cell::spin_cell_grid;
 use crate::game::types::Turn;
+use crate::game::types::PlayerRole;
 
 use crate::server::game::Game;
 
@@ -38,6 +39,7 @@ impl Game for KuraKura {
     type Turn = Turn;
     type TurnError = TurnError;
     type Outcome = GameOutcome;
+    type PlayerRole = PlayerRole;
 
     fn new() -> Self {
         let size = 4;

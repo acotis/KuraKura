@@ -33,7 +33,8 @@ async fn follow<Game>(
 ) 
 where Game: GameTrait + DeserializeOwned + Send,
       Game::TurnError: DeserializeOwned,
-      Game::Turn: Send
+      Game::Turn: Send,
+      Game::PlayerRole: Send + DeserializeOwned,
 {
     while let Some(Ok(message)) = receiver.next().await {
         let text = message.as_text().unwrap();
@@ -71,7 +72,12 @@ struct Client<Game: GameTrait> where Game::Turn: Serialize, Game::TurnError: Des
     just_sent: Arc<Mutex<bool>>,
 }
 
-impl<Game: GameTrait + Send> Client<Game> where Game: DeserializeOwned, Game::Turn: Serialize + Send, Game::TurnError: DeserializeOwned + Debug {
+impl<Game: GameTrait + Send> Client<Game>
+where Game: DeserializeOwned,
+      Game::Turn: Serialize + Send,
+      Game::TurnError: DeserializeOwned + Debug,
+      Game::PlayerRole: Send + Debug + DeserializeOwned,
+{
     async fn new(ident: &str) -> Self where <Game as GameTrait>::TurnError: 'static, Game: 'static {
         static NEXT_DELAY: LazyLock<Mutex<usize>> = LazyLock::new(|| Mutex::new(0));
 
@@ -153,9 +159,7 @@ impl<Game: GameTrait + Send> Client<Game> where Game: DeserializeOwned, Game::Tu
     async fn join_room(&mut self, name: &str, room_id: &str) where Game::Turn : Debug {
         let response = self.join_room_unchecked(name, room_id).await;
 
-        if !matches!(response, ResponseMessage(Ok(JoinedAsPlayer)))
-        && !matches!(response, ResponseMessage(Ok(JoinedAsSpectator)))
-        {
+        if !matches!(response, ResponseMessage(Ok(RoomJoined {..}))) {
             panic!("When joining room, response was: {response:?}");
         }
     }
