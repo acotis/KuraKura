@@ -57,7 +57,14 @@ where Game: GameTrait + DeserializeOwned + Send,
 
         pause(del).await;
 
-        println!("——> {ident}: {text}");
+        let max_len = 68;
+        let shortened_text = if text.len() < max_len {
+            String::from(text)
+        } else {
+            String::from(&text[..max_len-3]) + "..."
+        };
+
+        println!("——> {ident}: {shortened_text}");
     }
 }
 
