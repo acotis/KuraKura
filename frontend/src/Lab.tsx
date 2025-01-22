@@ -1,8 +1,16 @@
 import { useDarkMode } from "usehooks-ts";
 import Game from "./Game";
+import Board from "./Board";
+import { type Grid, Move } from "./types";
+import { useEffect, useState } from "react";
+import { generatePuzzle } from "./puzzle";
 
 export default function Lab() {
 	const { isDarkMode, toggle } = useDarkMode();
+	const [puzzleGrid, setPuzzleGrid] = useState<Grid>([[]]);
+	useEffect(() => {
+		setPuzzleGrid(generatePuzzle());
+	}, []);
 
 	return (
 		<main
@@ -15,6 +23,14 @@ export default function Lab() {
 			</button>
 
 			<hr className="border w-full" />
+
+			<Board
+				tileSize={40}
+				grid={puzzleGrid}
+				active={"Black"}
+				moveNumber={0}
+				onMove={() => {}}
+			/>
 
 			<Game playerName="Laqme" room="create" />
 		</main>
