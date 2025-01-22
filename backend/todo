@@ -14,9 +14,8 @@ Originally, the message_types file had "flat" type parameter inheritance. The to
       - Info (Game, Turn).
 
 + Finish implementing the server:
-    + Create the actual Parameters type for Kura Kura.
-        + Update the test client to use it.
     + Make Game.turn() accept an integer saying who is taking the turn.
+        + Update KuraKura to respect the host_plays_black parameter.
         - Remove the field of Turn that declares the color of the turn.
         - Note: I finalized my theory of turns on 2024 Sep 15.
 
@@ -30,6 +29,8 @@ Originally, the message_types file had "flat" type parameter inheritance. The to
 + Make the server awesome:
     + Make Server.join_room() validate names.
     + Make Server.create_room() validate names.
+    + Make Server.create_room() validate board sizes.
+        - Otherwise it's vulnerable to an attack where you just request a huge board that would use up all of RAM.
     + Remove as many trait bounds as possible from the Game trait.
     + Separate Server out into its own crate.
     + Make the server delete any socket that hasn't had activity in, say, an hour.
