@@ -1,4 +1,12 @@
-import type { Color, Grid, Move, MoveState, SpinState, Stone } from "./types";
+import {
+	boardLinesFor,
+	type Color,
+	type Grid,
+	type Move,
+	type MoveState,
+	type SpinState,
+	type Stone,
+} from "./types";
 import { useCallback, useState } from "react";
 import BoardCell from "./BoardCell";
 import SpinPreview from "./SpinPreview";
@@ -143,6 +151,7 @@ export default function Board(props: BoardProps) {
 											y <= Math.max(spinRect.y1, spinRect.y2) ? undefined : (
 												<BoardCell
 													cell={cell}
+													lines={boardLinesFor(x, y, props.grid.length)}
 													stonePreview={newStone}
 													onClick={() => {
 														if (

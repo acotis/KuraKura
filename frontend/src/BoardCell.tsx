@@ -3,6 +3,7 @@ import BoardStone from "./BoardStone";
 
 export interface BoardCellProps {
 	cell: Cell;
+	lines: BoardLine[];
 	stonePreview?: Stone | undefined;
 	onClick?: () => undefined;
 }
@@ -34,7 +35,7 @@ export default function BoardCell(props: BoardCellProps) {
 	return (
 		// biome-ignore lint/a11y/useKeyWithClickEvents: TODO keyboard controls?
 		<div className={cellClass} onClick={onClick}>
-			{cell.lines.map((x) => (
+			{props.lines.map((x) => (
 				<Line key={x} line={x} />
 			))}
 			{cell.stone ? (

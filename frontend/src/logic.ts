@@ -1,5 +1,4 @@
 import {
-	boardLinesFor,
 	type BoardLine,
 	type Cell,
 	type Color,
@@ -18,12 +17,11 @@ function rotateLine(line: BoardLine): BoardLine {
 				: "top";
 }
 
-function rotateCell(cell: Cell, lines: BoardLine[]): Cell {
+function rotateCell(cell: Cell): Cell {
 	return {
 		stone: cell.stone
 			? { ...cell.stone, rotation: (cell.stone.rotation + 90) % 360 }
 			: undefined,
-		lines,
 	};
 }
 
@@ -31,10 +29,7 @@ export function applySpin(grid: Grid, sx: number, sy: number, n: number): Grid {
 	return grid.map((row, y) =>
 		row.map((cell, x) =>
 			x >= sx && x < sx + n && y >= sy && y < sy + n
-				? rotateCell(
-						grid[sy + n - 1 - (x - sx)][sx + (y - sy)],
-						boardLinesFor(x, y, grid.length),
-					)
+				? rotateCell(grid[sy + n - 1 - (x - sx)][sx + (y - sy)])
 				: cell,
 		),
 	);

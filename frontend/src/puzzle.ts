@@ -1,5 +1,5 @@
 import { applyMove, applySpin } from "./logic";
-import { boardLinesFor, type Color, type Grid } from "./types";
+import type { Color, Grid } from "./types";
 
 const boardSize = 6;
 const winSize = 5;
@@ -39,10 +39,9 @@ function winner(grid: Grid, n = 5): Color | undefined {
 }
 
 function emptyGrid(size: number): Grid {
-	return new Array(size).fill(undefined).map((_, y) =>
-		new Array(size).fill(undefined).map((_, x) => ({
+	return new Array(size).fill(undefined).map((_) =>
+		new Array(size).fill(undefined).map((_) => ({
 			stone: undefined,
-			lines: boardLinesFor(x, y, size),
 		})),
 	);
 }
@@ -125,19 +124,19 @@ export function generatePuzzle(): Grid {
 	let n: number;
 	let px: number;
 	let py: number;
-		do {
-			n = (Math.random() * 4 + 2) | 0;
-			sx = (Math.random() * (boardSize - n + 1)) | 0;
-			sy = (Math.random() * (boardSize - n + 1)) | 0;
-		} while (winner(unspin(grid, sx, sy, n)) === "Black");
-		grid = unspin(grid, sx, sy, n);
-		const iota = [...Array(boardSize).keys()];
-		const locations = iota.flatMap((y) =>
-			iota.map((x) => [x, y]).filter(([x, y]) => grid[y][x].stone),
-		);
-		[px, py] = locations[(Math.random() * locations.length) | 0];
-		grid[py][px].stone = undefined;
-    const ss = solutions(grid);
+	do {
+		n = (Math.random() * 4 + 2) | 0;
+		sx = (Math.random() * (boardSize - n + 1)) | 0;
+		sy = (Math.random() * (boardSize - n + 1)) | 0;
+	} while (winner(unspin(grid, sx, sy, n)) === "Black");
+	grid = unspin(grid, sx, sy, n);
+	const iota = [...Array(boardSize).keys()];
+	const locations = iota.flatMap((y) =>
+		iota.map((x) => [x, y]).filter(([x, y]) => grid[y][x].stone),
+	);
+	[px, py] = locations[(Math.random() * locations.length) | 0];
+	grid[py][px].stone = undefined;
+	const ss = solutions(grid);
 	let failures = 0;
 	for (let i = 0; i < 20; i++) {
 		const rx = (Math.random() * boardSize) | 0;
@@ -146,7 +145,7 @@ export function generatePuzzle(): Grid {
 		if (grid[ry][rx].stone) continue;
 		grid[ry][rx].stone = {
 			color: Math.random() > 0.5 ? "Black" : "White",
-			label: "",
+			label: "/",
 			rotation: 0,
 		};
 		if (solutions(grid) > ss) {

@@ -1,6 +1,6 @@
 // import { useState } from "react";
 import { useContext, useEffect, useState } from "react";
-import { type Color, type Grid, boardLinesFor, boardSize } from "./types";
+import { type Color, type Grid, boardSize } from "./types";
 import { applyMove } from "./logic";
 import {
 	type KuraResponse,
@@ -46,7 +46,6 @@ export default function Game({ playerName, room }: GameProps) {
 		new Array(boardSize).fill(undefined).map((_, y) =>
 			new Array(boardSize).fill(undefined).map((_, x) => ({
 				stone: undefined,
-				lines: boardLinesFor(x, y, boardSize),
 			})),
 		),
 	);

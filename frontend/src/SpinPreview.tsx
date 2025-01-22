@@ -1,5 +1,5 @@
 import BoardCell from "./BoardCell";
-import type { Grid, SpinState } from "./types";
+import { boardLinesFor, type Grid, type SpinState } from "./types";
 
 export interface SpinPreviewProps {
 	grid: Grid;
@@ -55,7 +55,10 @@ export default function SpinPreview(props: SpinPreviewProps) {
 											className="relative p-0 m-0"
 											style={{ width: tileSize, height: tileSize }}
 										>
-											<BoardCell cell={cell} />
+											<BoardCell
+												cell={cell}
+												lines={boardLinesFor(x, y, props.grid.length)}
+											/>
 										</td>
 									))}
 								</tr>

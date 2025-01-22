@@ -1,6 +1,6 @@
 import Board from "./Board";
 import { applyMove } from "./logic";
-import { boardLinesFor, type Grid } from "./types";
+import type { Grid } from "./types";
 
 const grid = [
 	// This comment prevents Biome from wrapping the array.
@@ -18,7 +18,6 @@ const example1: Grid = grid.map((row, y) =>
 			c === "."
 				? undefined
 				: { color: +c % 2 ? "Black" : "White", rotation: 0, label: "" },
-		lines: boardLinesFor(x, y, 6),
 	})),
 );
 
