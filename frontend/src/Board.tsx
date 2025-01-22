@@ -11,6 +11,7 @@ import { useCallback, useState } from "react";
 import BoardCell from "./BoardCell";
 import SpinPreview from "./SpinPreview";
 import update from "immutability-helper";
+import Coordinate from "./Coordinate";
 
 export interface BoardProps {
 	tileSize: number;
@@ -104,32 +105,10 @@ export default function Board(props: BoardProps) {
 			<div className="shadow-lg pt-[32px] pl-[32px] pb-[8px] pr-[8px] bg-board rounded-lg">
 				<div className="relative bg-base-100">
 					{[...Array(props.grid.length).keys()].map((y) => (
-						<div
-							className="absolute z-9 flex items-center justify-center"
-							style={{
-								left: -32,
-								top: tileSize * y,
-								height: tileSize,
-								width: 32,
-							}}
-							key={y}
-						>
-							{y + 1}
-						</div>
+						<Coordinate row={y} key={y} tileSize={tileSize} />
 					))}
 					{[...Array(props.grid[0].length).keys()].map((x) => (
-						<div
-							className="absolute z-9 flex items-center justify-center"
-							style={{
-								top: -32,
-								left: tileSize * x,
-								height: 32,
-								width: tileSize,
-							}}
-							key={x}
-						>
-							{String.fromCharCode(97 + x)}
-						</div>
+						<Coordinate column={x} key={x} tileSize={tileSize} />
 					))}
 					<table>
 						<tbody>
