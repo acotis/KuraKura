@@ -1,4 +1,6 @@
 
+use serde::{Serialize, Deserialize};
+
 use crate::game::types::Orientation;
 use crate::game::types::Player::{self, *};
 
@@ -15,7 +17,7 @@ use crate::game::types::Player::{self, *};
 //         - Is part of a win, or not.
 //
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)] pub struct Cell {
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)] pub struct Cell {
     pub stone:      Option<(usize, Orientation, bool)>,
     pub line_up:    bool,
     pub line_right: bool,

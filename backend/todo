@@ -1,16 +1,21 @@
 
+Originally, the message_types file had "flat" type parameter inheritance. The top-level structs, ServerResult<E> and ApiResult<E>, had a single type parameter which was expected to be set to the TurnError type and which was passed unchanged from parent type to child type. In the new architecture, ServerResult and ApiResult are parameterized by G, which is expected to be set to the Game type (KuraKura, for example), and a ServerResult<G> contains a ServerOk<G> which contains a UserMessage<G> which tonains a UserResponse<G::TurnError>, and this last step in the hierarchy is the problem. Rust's #derive macro can derive Deserialize for A<T> only when T implements derive, but it cannot derive Deserialize for A<T> only when T::Foo implements derive. Instead, it is insisting that T::Foo must be unconditionally bound to implement Derive no matter what, before it considers this code to compile at all. SOLUTION (h/t Lynn): serde's derive(Deserialize) macro is a little dumb about trait bounds. You can help it with the serde(bound(...)) macro.
+
+    - LESSON LEARNED: Each thing that can be #[derive(...)]'d is a separate macro and may come with separate idiosyncracies. They are not compositional combinations of some universal #[derive] directive and any arbitrary trait. #[derive(Deserialize)] comes from serde and might suck even if Rust is good.
+
+- ServerResult:
+  - ServerError.
+  - ServerOk:
+    - SocketId.
+    - UserMessage:
+      - UserResponse:
+        - UserOk (JoinedAs).
+        - UserError (TurnError).
+      - Info (Game, Turn).
+
 + Finish implementing the server:
-    + Make Server.handle_request() handle broadcasts.
-    + Make Server.join_room() validate names.
-    + Make Server.create_room() validate names.
-    + Make Server.take_turn() broadcast the new room state *and the delta*.
-    + Make Server.join_room() broadcast the new room state *and the delta*.
-    + Move responsibility for classifying a new player as player or spectator from Server.join_room() to a method Game.admit_player().
-        - The classifications on offer are up to the Game implementor and should be an enum type housed in Game.
-        - For Kura Kura, the classifications are Black, White, and Spectator.
-        - *Rejecting* the player should probably (?) not be an option (?).
-        - Let's make it not an option for now.
     + Make Game.turn() accept an integer saying who is taking the turn.
+        - Remove the field of Turn that declares the color of the turn.
         - Note: I finalized my theory of turns on 2024 Sep 15.
 
 + Finish implementing the game:
@@ -22,9 +27,12 @@
         - Example: line length needed to win.
 
 + Make the server awesome:
+    + Make Server.join_room() validate names.
+    + Make Server.create_room() validate names.
     + Remove as many trait bounds as possible from the Game trait.
     + Separate Server out into its own crate.
     + Make the server delete any socket that hasn't had activity in, say, an hour.
+    + Make the PlayerJoined info message announce the role of the new player.
 
 + Make the game awesome:
     + Make there be a 1/100 chance that a stone is textured with the stare emoji (not in the first ~5 moves so as not to be confusing).

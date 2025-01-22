@@ -52,6 +52,13 @@ pub struct Turn {
 
 pub type TurnResult = Result<Option<GameOutcome>, TurnError>;
 
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+pub enum PlayerRole {
+    BlackPlayer,
+    WhitePlayer,
+    Spectator,
+}
+
 // Implementations of elementary methods.
 
 impl Not for Player {
