@@ -45,12 +45,12 @@ impl<Game: GameTrait> Server<Game> {
         if self.sockets.get(&socket_id).is_none() {
             Err(SocketNotFound)
         } else {
-            let api_result = match from_str::<UserRequest<Game::Turn>>(&json) {
-                Ok(CreateRoom {name}      ) => {self.create_room (socket_id, name      )},
-                Ok(JoinRoom   {name, room}) => {self.join_room   (socket_id, name, room)},
-                Ok(TakeTurn   {turn}      ) => {self.take_turn   (socket_id, turn      )},
-                Ok(DebugLog               ) => {self.debug_log   (                     )},
-                Err(error)                  => {Err(InvalidJson(error.to_string()))},
+            let api_result = match from_str::<UserRequest<Game::Parameters, Game::Turn>>(&json) {
+                Ok(CreateRoom {name, parameters}) => {self.create_room (socket_id, name, parameters)},
+                Ok(JoinRoom   {name, room}      ) => {self.join_room   (socket_id, name, room      )},
+                Ok(TakeTurn   {turn}            ) => {self.take_turn   (socket_id, turn            )},
+                Ok(DebugLog                     ) => {self.debug_log   (                           )},
+                Err(error)                        => {Err(InvalidJson(error.to_string()))},
             };
 
             // Construct the actual Vec of messages to send out.
@@ -85,14 +85,14 @@ impl<Game: GameTrait> Server<Game> {
 // Private methods directly corresponding to API calls.
 
 impl<Game: GameTrait> Server<Game> {
-    fn create_room(&mut self, socket_id: SocketId, name: String) -> ApiResult<Game> {
+    fn create_room(&mut self, socket_id: SocketId, name: String, parameters: Game::Parameters) -> ApiResult<Game> {
         let socket = self.sockets.get_mut(&socket_id).expect("socket lookup in create_room()");
 
         if socket.room_id != None {
             return Err(AlreadyInARoom);
         }
 
-        let mut room = Room::new();
+        let mut room = Room::new(parameters);
         let room_id = room.id;
         room.socket_ids.push(socket_id);
         self.rooms.insert(room_id, room);

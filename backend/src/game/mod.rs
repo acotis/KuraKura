@@ -38,12 +38,13 @@ pub struct KuraKura {
 }
 
 impl Game for KuraKura {
+    type Parameters = ();
     type Turn = Turn;
     type TurnError = TurnError;
     type Outcome = GameOutcome;
     type PlayerRole = PlayerRole;
 
-    fn new() -> Self {
+    fn new(parameters: ()) -> Self {
         let size = 4;
         let win_len = 2;
 

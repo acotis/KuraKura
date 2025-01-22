@@ -32,11 +32,11 @@ pub struct Room<G> {
 }
 
 impl<G: Game> Room<G> {
-    pub fn new() -> Self {
+    pub fn new(parameters: G::Parameters) -> Self {
         Room {
             id:         RoomId::new(),
             socket_ids: vec![],
-            game:       G::new(),
+            game:       G::new(parameters),
         }
     }
 }

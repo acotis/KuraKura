@@ -136,7 +136,7 @@ where Game: DeserializeOwned,
     // Unchecked server interactions.
 
     async fn create_room_unchecked(&mut self, name: &str) -> UserMessage<Game> {
-        self.send(&format!(r#"{{"CreateRoom": {{"name": "{name}"}}}}"#)).await
+        self.send(&format!(r#"{{"CreateRoom": {{"name": "{name}", "parameters": null}}}}"#)).await
     }
 
     async fn join_room_unchecked(&mut self, name: &str, room_id: &str) -> UserMessage<Game> {
