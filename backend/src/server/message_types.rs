@@ -90,8 +90,8 @@ pub enum UserBroadcast<Game: GameTrait> {
 // Finally, there is the top-level type of a User Request.
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum UserRequest<Turn> {
-    CreateRoom {name: String},
+pub enum UserRequest<Parameters, Turn> {
+    CreateRoom {name: String, parameters: Parameters},
     JoinRoom   {name: String, room: RoomId},
     TakeTurn   {turn: Turn},
 

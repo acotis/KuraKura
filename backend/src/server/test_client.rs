@@ -57,7 +57,14 @@ where Game: GameTrait + DeserializeOwned + Send,
 
         pause(del).await;
 
-        println!("——> {ident}: {text}");
+        let max_len = 68;
+        let shortened_text = if text.len() < max_len {
+            String::from(text)
+        } else {
+            String::from(&text[..max_len-3]) + "..."
+        };
+
+        println!("——> {ident}: {shortened_text}");
     }
 }
 
@@ -129,7 +136,7 @@ where Game: DeserializeOwned,
     // Unchecked server interactions.
 
     async fn create_room_unchecked(&mut self, name: &str) -> UserMessage<Game> {
-        self.send(&format!(r#"{{"CreateRoom": {{"name": "{name}"}}}}"#)).await
+        self.send(&format!(r#"{{"CreateRoom": {{"name": "{name}", "parameters": null}}}}"#)).await
     }
 
     async fn join_room_unchecked(&mut self, name: &str, room_id: &str) -> UserMessage<Game> {

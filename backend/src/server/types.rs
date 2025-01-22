@@ -1,3 +1,4 @@
+use std::time::{Duration, Instant};
 
 use crate::server::copy_id::CopyId;
 use crate::server::game::Game;
@@ -11,6 +12,7 @@ pub struct Socket {
     pub id:      SocketId,
     pub room_id: Option<RoomId>,
     pub name:    String,
+    pub last_active: Instant,
 }
 
 impl Socket {
@@ -19,7 +21,12 @@ impl Socket {
             id:      SocketId::new(),
             room_id: None,
             name:    String::from("Guest"),
+            last_active: Instant::now(),
         }
+    }
+
+    pub fn stale(&self) -> bool {
+        Instant::now() - self.last_active > Duration::from_secs(3600)
     }
 }
 
@@ -32,11 +39,11 @@ pub struct Room<G> {
 }
 
 impl<G: Game> Room<G> {
-    pub fn new() -> Self {
+    pub fn new(parameters: G::Parameters) -> Self {
         Room {
             id:         RoomId::new(),
             socket_ids: vec![],
-            game:       G::new(),
+            game:       G::new(parameters),
         }
     }
 }

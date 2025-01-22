@@ -14,12 +14,13 @@ Originally, the message_types file had "flat" type parameter inheritance. The to
       - Info (Game, Turn).
 
 + Finish implementing the server:
+    + Create the actual Parameters type for Kura Kura.
+        + Update the test client to use it.
     + Make Game.turn() accept an integer saying who is taking the turn.
         - Remove the field of Turn that declares the color of the turn.
         - Note: I finalized my theory of turns on 2024 Sep 15.
 
 + Finish implementing the game:
-    + In cell.rs, make a Stone type instead of having it be a tuple in Cell.
     + Add the concept of Parameters to the Game trait.
         - Example: which player goes first.
             + Really do this one.
