@@ -57,7 +57,7 @@ export default function SpinPreview(props: SpinPreviewProps) {
 										>
 											<BoardCell
 												cell={cell}
-												lines={boardLinesFor(x, y, props.grid.length)}
+												lines={boardLinesFor(x + left, y + top, props.grid.length)}
 											/>
 										</td>
 									))}
