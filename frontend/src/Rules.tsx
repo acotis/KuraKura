@@ -62,6 +62,7 @@ export default function Rules() {
 						<Board
 							grid={example2}
 							tileSize={40}
+							whoseTurn={"Black"}
 							active={undefined}
 							moveNumber={0}
 							onMove={() => {}}
@@ -77,6 +78,7 @@ export default function Rules() {
 						<Board
 							grid={example3}
 							tileSize={40}
+							whoseTurn={"Black"}
 							active={undefined}
 							moveNumber={0}
 							onMove={() => {}}

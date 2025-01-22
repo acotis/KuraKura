@@ -23,14 +23,15 @@ export default function Lab() {
 			</button>
 
 			<hr className="border w-full" />
-
+			{/*
 			<Board
 				tileSize={40}
 				grid={puzzleGrid}
+				whoseTurn={"Black"}
 				active={"Black"}
 				moveNumber={0}
 				onMove={() => {}}
-			/>
+			/> */}
 
 			<Game playerName="Laqme" room="create" />
 		</main>

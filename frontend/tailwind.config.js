@@ -3,26 +3,31 @@ import daisyui from "daisyui";
 
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: ["./src/**/*.{js,jsx,ts,tsx}"],
-  theme: {
-    extend: {
-      colors: {
-        board: "#CAA489",
-      },
-      keyframes: {
-        cw: {
-          "0%": { transform: "rotate(0deg)" },
-          "100%": { transform: "rotate(90deg)" },
-        },
-      },
-      animation: {
-        cw: "cw 0.3s ease forwards",
-      },
-    },
-  },
-  plugins: [typography, daisyui],
-  daisyui: {
-    themes: ["bumblebee", "night"],
-  },
-  darkMode: ['selector', '[data-theme="night"]'],
+	content: ["./src/**/*.{js,jsx,ts,tsx}"],
+	theme: {
+		extend: {
+			colors: {
+				board: "#DAB499",
+			},
+			keyframes: {
+				cw: {
+					"0%": { transform: "rotate(0deg)" },
+					"100%": { transform: "rotate(90deg)" },
+				},
+				fadein: {
+					from: { opacity: 0, transform: "translateY(-20%)" },
+					to: { opacity: 1, transform: "translateY(0%)" },
+				},
+			},
+			animation: {
+				cw: "cw 0.3s ease forwards",
+				fadein: "fadein .3s ease forwards",
+			},
+		},
+	},
+	plugins: [typography, daisyui],
+	daisyui: {
+		themes: ["bumblebee", "night"],
+	},
+	darkMode: ["selector", '[data-theme="night"]'],
 };

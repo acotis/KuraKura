@@ -1,21 +1,5 @@
-import {
-	type BoardLine,
-	type Cell,
-	type Color,
-	type Grid,
-	type Move,
-} from "./types";
+import type { Cell, Color, Grid, Move } from "./types";
 import update from "immutability-helper";
-
-function rotateLine(line: BoardLine): BoardLine {
-	return line === "top"
-		? "right"
-		: line === "right"
-			? "bottom"
-			: line === "bottom"
-				? "left"
-				: "top";
-}
 
 function rotateCell(cell: Cell): Cell {
 	return {

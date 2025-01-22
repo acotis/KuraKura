@@ -54,6 +54,7 @@ export default function GameView({
 				<Board
 					grid={grid}
 					tileSize={40}
+					whoseTurn={active}
 					active={active}
 					moveNumber={moveNumber}
 					onMove={onMove}
@@ -70,6 +71,9 @@ export default function GameView({
 						active={active === "White"}
 					/>
 				</div>
+			</div>
+			<div className="text-center">
+				asdf
 			</div>
 			<div className="text-xs">
 				{messages.map((m, i) => (
