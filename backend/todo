@@ -3,6 +3,7 @@
     + Make the API assign each joining player a player index.
     + When the API announces a turn, make it announce the player index of who took the turn.
     + Make the API broadcast the whole room state, including players' names.
+    + Make the API broadcast the outcome of the game as soon as a move yields an outcome.
 
 + Make the server awesome:
     + Make Server.join_room() validate names.
