@@ -69,9 +69,8 @@ impl Game for KuraKura {
         }
     }
 
-    fn turn(&mut self, turn: Turn) -> TurnResult {
+    fn turn(&mut self, player: usize, turn: Turn) -> TurnResult {
         let Turn {
-            player:         player,
             play_row:       pr,
             play_col:       pc,
             spin_ul_row:    su,
@@ -80,15 +79,21 @@ impl Game for KuraKura {
             spin_dir:       sd,
         } = turn;
 
+        let player_color = match player {
+            0 => if self.host_plays_black {Black} else {White},
+            1 => if self.host_plays_black {White} else {Black},
+            2.. => {return Err(YoureNotPlaying);}
+        };
+
         // Validate the turn.
 
-        if self.outcome           != None   {return Err(GameAlreadyOver);}
-        if self.whose_turn()      != player {return Err(NotYourTurn);}
-        if self.size() <= pr                {return Err(InvalidLocation);}
-        if self.size() <= pc                {return Err(InvalidLocation);}
-        if self.size() <= su + sz - 1       {return Err(InvalidLocation);}
-        if self.size() <= sl + sz - 1       {return Err(InvalidLocation);}
-        if self.board[pr][pc].stone != None {return Err(PieceAlreadyThere);}
+        if self.outcome != None              {return Err(GameAlreadyOver);}
+        if self.whose_turn() != player_color {return Err(NotYourTurn);}
+        if self.size() <= pr                 {return Err(InvalidLocation);}
+        if self.size() <= pc                 {return Err(InvalidLocation);}
+        if self.size() <= su + sz - 1        {return Err(InvalidLocation);}
+        if self.size() <= sl + sz - 1        {return Err(InvalidLocation);}
+        if self.board[pr][pc].stone != None  {return Err(PieceAlreadyThere);}
 
         // Place the stone.
 

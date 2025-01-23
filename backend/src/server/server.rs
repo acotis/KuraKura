@@ -129,8 +129,9 @@ impl<Game: GameTrait> Server<Game> {
         let socket = self.sockets.get_mut(&socket_id).expect("socket lookup in take_turn()");
         let room_id = socket.room_id.ok_or(NotInARoom)?;
         let room = self.rooms.get_mut(&room_id).ok_or(RoomNotFound)?;
+        let player = room.socket_ids.iter().position(|x| *x == socket_id).expect("socket not in its own room?");
 
-        match room.game.turn(turn.clone()) {
+        match room.game.turn(player, turn.clone()) {
             Ok(_)           => Ok((
                 TurnAccepted,
                 RoomBroadcast(room_id, TurnTaken {

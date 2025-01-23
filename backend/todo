@@ -1,10 +1,4 @@
 
-+ Finish implementing the server:
-    + Make Game.turn() accept an integer saying who is taking the turn.
-        + Update KuraKura to respect the host_plays_black parameter.
-        - Remove the field of Turn that declares the color of the turn.
-        - Note: I finalized my theory of turns on 2024 Sep 15.
-
 + Finish implementing the game:
     + Add the concept of Parameters to the Game trait.
         - Example: which player goes first.

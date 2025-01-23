@@ -12,7 +12,7 @@ pub trait Game : Debug + Display + Clone {
 
     fn new(parameters: Self::Parameters) -> Self;
     fn add_player(&mut self) -> Self::PlayerRole;
-    fn turn(&mut self, turn: Self::Turn) ->
+    fn turn(&mut self, player: usize, turn: Self::Turn) ->
         Result<Option<Self::Outcome>, Self::TurnError>;
 }
 

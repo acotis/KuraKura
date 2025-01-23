@@ -202,7 +202,6 @@ pub async fn run_test_clients() {
     let _         = evan.debug_log().await;
 
     let _         = evan.take_turn(Turn {
-        player:         Black,
         play_row:       0,
         play_col:       0,
         spin_ul_row:    0,

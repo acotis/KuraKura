@@ -37,11 +37,11 @@ pub enum TurnError {
     NotYourTurn,
     InvalidLocation,
     PieceAlreadyThere,
+    YoureNotPlaying,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct Turn {
-    pub player:         Player,
     pub play_row:       usize,
     pub play_col:       usize,
     pub spin_ul_row:    usize,
