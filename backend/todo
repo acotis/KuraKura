@@ -1,11 +1,4 @@
 
-+ Finish implementing the game:
-    + Add the concept of Parameters to the Game trait.
-        - Example: which player goes first.
-            + Really do this one.
-        - Example: grid size.
-        - Example: line length needed to win.
-
 + Make the server awesome:
     + Make Server.join_room() validate names.
     + Make Server.create_room() validate names.
