@@ -79,6 +79,15 @@ pub enum UserError<TurnError> {
     InternalFailure,
 }
 
+// Many types above include a RoomState field.
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RoomState<Game> {
+    room_id: RoomId,
+    player_names: Vec<String>,
+    game_state: Game,
+}
+
 // We also have a type UserBroadcast which is used only internally
 // as part of the API call delegation architecture.
 
