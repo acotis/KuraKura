@@ -57,7 +57,7 @@ where Game: GameTrait + DeserializeOwned + Send,
 
         pause(del).await;
 
-        let max_len = 68;
+        let max_len = 9999;
         let shortened_text = if text.len() < max_len {
             String::from(text)
         } else {
@@ -195,8 +195,8 @@ pub async fn run_test_clients() {
     let mut evan  = Client::<KuraKura>::new("Evan").await;
     let mut lexi  = Client::<KuraKura>::new("Lexi").await;
 
-    let evan_rm   = evan.create_room("Evan is my name", true, 4, 2).await;
-    let _lynn_rm  = lynn.create_room("Lynnnn", true, 4, 2).await;
+    let evan_rm   = evan.create_room("Evan is my name", true, 2, 2).await;
+    let _lynn_rm  = lynn.create_room("Lynnnn", true, 2, 2).await;
     let _         = lexi.join_room("The LEX", &evan_rm).await;
 
     let _         = evan.debug_log().await;
@@ -206,9 +206,11 @@ pub async fn run_test_clients() {
         play_col:       0,
         spin_ul_row:    0,
         spin_ul_col:    0,
-        spin_size:      3,
+        spin_size:      1,
         spin_dir:       CW,
     }).await;
+
+    let _         = evan.debug_log().await;
 
     println!();
 }
