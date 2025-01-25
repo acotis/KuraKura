@@ -67,7 +67,7 @@ impl<Game: GameTrait> Server<Game> {
                                     .unwrap()
                                     .socket_ids
                                     .iter()
-                                    .map(|&id| (id, Info(info.clone())))
+                                    .filter_map(|&id| if id == socket_id {None} else {Some((id, Info(info.clone())))})
                                     .collect()
                         };
                         ret.insert(0, (socket_id, ResponseMessage(Ok(okay))));
