@@ -17,11 +17,11 @@
     - [Brackets] mean the information is redundant but convenient.
 
 + Finish the server:
-    + Make RoomBroadcast mean it broadcasts to everyone *but* the user who made the API call.
-    + Figure out exactly what needs to be announced, to whom, after each API call.
-    + Make the API assign each joining player a player index.
-    + When the API announces a turn, make it announce the player index of who took the turn.
-    + Make the API broadcast the whole room state, including players' names.
+    + Bring the API into line with the description above.
+        + Create a RoomState struct.
+        + Incorporate the RoomState struct into other structs.
+        + Add player_id to RoomCreated.
+        + Check your work by comparing the test client output to the list above.
     + Make the API broadcast the outcome of the game as soon as a move yields an outcome.
 
 + Make the server awesome:
