@@ -18,7 +18,7 @@
 
 + Finish the server:
     + Bring the API into line with the description above.
-        + Create a RoomState struct.
+        + Change type parameter of UserOk to Game.
         + Incorporate the RoomState struct into other structs.
         + Add player_id to RoomCreated.
         + Check your work by comparing the test client output to the list above.
