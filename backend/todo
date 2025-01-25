@@ -1,5 +1,24 @@
 
+- API information:
+    - CreateRoom:
+        User -> Room state, [Player ID which is always 0].
+        Others -> N/A.
+    - JoinRoom:
+        User -> Room state, [Player ID].
+        Others -> Room state, [Player ID], [Player name].
+    - TakeTurn:
+        User -> Room state.
+        Others -> Player ID, Turn, Room state.
+
+    - "Room state" means:
+        - Room ID.
+        - List of player names.
+        - Game state.
+    - [Brackets] mean the information is redundant but convenient.
+
 + Finish the server:
+    + Make RoomBroadcast mean it broadcasts to everyone *but* the user who made the API call.
+    + Figure out exactly what needs to be announced, to whom, after each API call.
     + Make the API assign each joining player a player index.
     + When the API announces a turn, make it announce the player index of who took the turn.
     + Make the API broadcast the whole room state, including players' names.
