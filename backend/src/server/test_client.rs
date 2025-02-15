@@ -18,7 +18,6 @@ use crate::server::message_types::UserError::*;
 use crate::server::game::Game as GameTrait;
 use crate::game::KuraKura;
 use crate::game::types::*;
-use crate::game::types::Player::*;
 use crate::game::types::SpinDirection::*;
 
 type Receiver = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
