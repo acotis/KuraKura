@@ -32,9 +32,10 @@ async fn follow<Game>(
     last: Arc<Mutex<Option<UserMessage<Game>>>>
 ) 
 where Game: GameTrait + DeserializeOwned + Send,
-      Game::TurnError: DeserializeOwned,
+      Game::TurnError: DeserializeOwned + Send,
       Game::Turn: Send,
       Game::PlayerRole: Send + DeserializeOwned,
+
 {
     while let Some(Ok(message)) = receiver.next().await {
         let text = message.as_text().unwrap();
@@ -82,8 +83,9 @@ struct Client<Game: GameTrait> where Game::Turn: Serialize, Game::TurnError: Des
 impl<Game: GameTrait + Send> Client<Game>
 where Game: DeserializeOwned,
       Game::Turn: Serialize + Send,
-      Game::TurnError: DeserializeOwned + Debug,
+      Game::TurnError: DeserializeOwned + Debug + Send,
       Game::PlayerRole: Send + Debug + DeserializeOwned,
+      Game: Debug,
 {
     async fn new(ident: &str) -> Self where <Game as GameTrait>::TurnError: 'static, Game: 'static {
         static NEXT_DELAY: LazyLock<Mutex<usize>> = LazyLock::new(|| Mutex::new(0));
