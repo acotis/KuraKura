@@ -1,14 +1,14 @@
 
 - API information:
     - CreateRoom:
-        User -> Room state, [Player ID which is always 0].
-        Others -> N/A.
+        - User -> Room state, Player role, [Player ID which is always 0].
+        - Others -> N/A.
     - JoinRoom:
-        User -> Room state, [Player ID].
-        Others -> Room state, [Player ID], [Player name].
+        - User -> Room state, Player role, [Player ID].
+        - Others -> Room state, Player role, [Player ID], [Player name].
     - TakeTurn:
-        User -> Room state.
-        Others -> Player ID, Turn, Room state.
+        - User -> Room state.
+        - Others -> Player ID, Turn, Room state.
 
     - "Room state" means:
         - Room ID.
