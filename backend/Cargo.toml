@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 axum = { version = "0.7.5", features = ["macros", "ws"] }
+derivative = "2.2.0"
 futures-util = "0.3.30"
 http = "1.1.0"
 serde = { version = "1.0.203", features = ["derive"] }

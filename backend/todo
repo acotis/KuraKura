@@ -19,6 +19,8 @@
 + Finish the server:
     + Bring the API into line with the description above.
         + Change type parameter of UserOk to Game.
+            - Actually changing type parameters of all structs.
+            - And also cleaning up the trait bounds declared on the Game trait itself.
         + Incorporate the RoomState struct into other structs.
         + Add player_id to RoomCreated.
         + Check your work by comparing the test client output to the list above.
