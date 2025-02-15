@@ -5,7 +5,7 @@ use crate::server::message_types::UserOk::*;
 use crate::server::message_types::UserInfo::*;
 use crate::server::message_types::UserMessage::*;
 use crate::server::message_types::ServerError::*;
-use crate::server::game::Game as GameTrait;
+use crate::server::game::Game;
 //use std::time::{Instant};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Error};
@@ -15,14 +15,14 @@ use crate::server::message_types::{*, UserBroadcast::*};
 
 // Server struct.
 
-pub struct Server<Game> {
+pub struct Server<G> {
     sockets:    HashMap<SocketId, Socket>,
-    rooms:      HashMap<RoomId, Room<Game>>,
+    rooms:      HashMap<RoomId, Room<G>>,
 }
 
 // Constructor.
 
-impl<Game: GameTrait> Server<Game> {
+impl<G: Game> Server<G> {
     pub fn new() -> Self {
         Server {
             sockets: HashMap::new(),
@@ -33,7 +33,7 @@ impl<Game: GameTrait> Server<Game> {
 
 // Public methods of Server.
 
-impl<Game: GameTrait> Server<Game> {
+impl<G: Game> Server<G> {
     pub fn register_socket(&mut self) -> SocketId {
         let socket = Socket::new();
         let socket_id = socket.id;
@@ -41,11 +41,11 @@ impl<Game: GameTrait> Server<Game> {
         socket_id
     }
 
-    pub fn handle_request(&mut self, socket_id: SocketId, json: &str) -> ServerResult<Game> {
+    pub fn handle_request(&mut self, socket_id: SocketId, json: &str) -> ServerResult<G> {
         if self.sockets.get(&socket_id).is_none() {
             Err(SocketNotFound)
         } else {
-            let api_result = match from_str::<UserRequest<Game::Parameters, Game::Turn>>(&json) {
+            let api_result = match from_str::<UserRequest<G>>(&json) {
                 Ok(CreateRoom {name, parameters}) => {self.create_room (socket_id, name, parameters)},
                 Ok(JoinRoom   {name, room}      ) => {self.join_room   (socket_id, name, room      )},
                 Ok(TakeTurn   {turn}            ) => {self.take_turn   (socket_id, turn            )},
@@ -84,8 +84,8 @@ impl<Game: GameTrait> Server<Game> {
 
 // Private methods directly corresponding to API calls.
 
-impl<Game: GameTrait> Server<Game> {
-    fn create_room(&mut self, socket_id: SocketId, name: String, parameters: Game::Parameters) -> ApiResult<Game> {
+impl<G: Game> Server<G> {
+    fn create_room(&mut self, socket_id: SocketId, name: String, parameters: G::Parameters) -> ApiResult<G> {
         let socket = self.sockets.get_mut(&socket_id).expect("socket lookup in create_room()");
 
         if socket.room_id != None {
@@ -102,7 +102,7 @@ impl<Game: GameTrait> Server<Game> {
         Ok((RoomCreated {id: room_id}, Silent))
     }
 
-    fn join_room(&mut self, socket_id: SocketId, name: String, room_id: RoomId) -> ApiResult<Game> {
+    fn join_room(&mut self, socket_id: SocketId, name: String, room_id: RoomId) -> ApiResult<G> {
         let socket = self.sockets.get_mut(&socket_id).expect("socket lookup in join_room()");
         let room = self.rooms.get_mut(&room_id).ok_or(RoomNotFound)?;
 
@@ -133,7 +133,7 @@ impl<Game: GameTrait> Server<Game> {
         ))
     }
 
-    fn take_turn(&mut self, socket_id: SocketId, turn: Game::Turn) -> ApiResult<Game> {
+    fn take_turn(&mut self, socket_id: SocketId, turn: G::Turn) -> ApiResult<G> {
         let socket = self.sockets.get_mut(&socket_id).expect("socket lookup in take_turn()");
         let room_id = socket.room_id.ok_or(NotInARoom)?;
         let room = self.rooms.get_mut(&room_id).ok_or(RoomNotFound)?;
@@ -151,7 +151,7 @@ impl<Game: GameTrait> Server<Game> {
         }
     }
 
-    fn debug_log(&mut self) -> ApiResult<Game> {
+    fn debug_log(&mut self) -> ApiResult<G> {
         print!("{self}");
 
         // Always return InvalidJson so as to not reveal that the API call
@@ -170,7 +170,7 @@ impl Display for Socket {
     }
 }
 
-impl<Game: GameTrait> Display for Room<Game> {
+impl<G: Game> Display for Room<G> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         let bold = "\x1b[1m";
         let reset = "\x1b[0m";
@@ -189,7 +189,7 @@ impl<Game: GameTrait> Display for Room<Game> {
     }
 }
 
-impl<Game: GameTrait> Display for Server<Game> {
+impl<G: Game> Display for Server<G> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         let under = "\x1b[4m";
         let reset = "\x1b[0m";
