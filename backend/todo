@@ -18,7 +18,6 @@
 
 + Finish the server:
     + Bring the API into line with the description above.
-        + Add player_id to RoomCreated.
         + Check your work by comparing the test client output to the list above.
     + Make the API broadcast the outcome of the game as soon as a move yields an outcome.
 
