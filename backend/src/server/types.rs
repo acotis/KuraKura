@@ -11,9 +11,9 @@ pub type SocketId = CopyId<Socket>;
 // Socket type.
 
 pub struct Socket {
-    pub id:      SocketId,
-    pub room_id: Option<RoomId>,
-    pub name:    String,
+    pub id:          SocketId,
+    pub name:        String,
+    pub room_id:     Option<RoomId>,
     pub last_active: Instant,
 }
 
@@ -36,8 +36,8 @@ impl Socket {
 
 pub struct Room<G> {
     pub id:         RoomId,
-    pub socket_ids: Vec<SocketId>, // must be a vec for multiplayer games (N > 2)
     pub game:       G,
+    pub socket_ids: Vec<SocketId>, // must be a vec for multiplayer games (N > 2)
 }
 
 impl<G: Game> Room<G> {
