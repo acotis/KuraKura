@@ -17,15 +17,17 @@
     - [Brackets] mean the information is redundant but convenient.
 
 + Finish the server:
+    + Make the API broadcast the outcome of the game as soon as a move yields an outcome.
+        + Attach as field in TurnTaken (Option<Outcome>).
     + Bring the API into line with the description above.
         + Check your work by comparing the test client output to the list above.
-    + Make the API broadcast the outcome of the game as soon as a move yields an outcome.
 
 + Make the server awesome:
     + Make Server.join_room() validate names.
     + Make Server.create_room() validate names.
     + Make Server.create_room() validate board sizes.
         - Otherwise it's vulnerable to an attack where you just request a huge board that would use up all of RAM.
+    + Consider simplifying the Server a bit. I think the general philosophy should be: the game is a shared resource that players can make updates to; when they do, the deltas and new state are broadcast to everyone. The game gets to choose how it presents its state (there should be an associated type called Representation).
     + Remove as many trait bounds as possible from the Game trait.
     + Separate Server out into its own crate.
     + Make the server delete any socket that hasn't had activity in, say, an hour.
