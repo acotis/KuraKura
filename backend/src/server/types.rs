@@ -3,7 +3,9 @@ use std::time::{Duration, Instant};
 use crate::server::copy_id::CopyId;
 use crate::server::game::Game;
 
-pub type RoomId = CopyId<Room<bool>>;
+// ID types.
+
+pub type RoomId = CopyId<Room<()>>;
 pub type SocketId = CopyId<Socket>;
 
 // Socket type.

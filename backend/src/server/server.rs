@@ -99,7 +99,18 @@ impl<G: Game> Server<G> {
         socket.room_id = Some(room_id);
         socket.name = name;
 
-        Ok((RoomCreated {id: room_id}, Silent))
+        Ok((
+            RoomCreated {
+                player_id: 0,
+                player_role: room.game.add_player(),
+                room_state: RoomState {
+                    game_state: room.game.clone(),
+                    player_names: room.socket_ids.iter().map(|id|self.sockets.get(id).unwrap().name.clone()).collect(),
+                    room_id: room_id,
+                }
+            },
+            Silent
+        ))
     }
 
     fn join_room(&mut self, socket_id: SocketId, name: String, room_id: RoomId) -> ApiResult<G> {

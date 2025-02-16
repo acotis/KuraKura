@@ -68,14 +68,14 @@ pub type UserResponse<G> = Result<UserOk<G>, UserError<G>>;
 #[derive(Serialize, Deserialize)]
 #[derive(Derivative)]
 #[serde(bound(
-    deserialize = "G::PlayerRole: Deserialize<'de>"
+    deserialize = "G::PlayerRole: Deserialize<'de>, G: Deserialize<'de>"
 ))]
-#[derivative(Debug(bound="G::PlayerRole: Debug"))]
+#[derivative(Debug(bound="G::PlayerRole: Debug, G: Debug"))]
 #[derivative(Clone(bound="G::PlayerRole: Clone"))]
-#[derivative(PartialEq(bound="G::PlayerRole: PartialEq"))]
-#[derivative(Eq(bound="G::PlayerRole: Eq"))]
+#[derivative(PartialEq(bound="G::PlayerRole: PartialEq, G: PartialEq"))]
+#[derivative(Eq(bound="G::PlayerRole: Eq, G: Eq"))]
 pub enum UserOk<G: Game> {
-    RoomCreated {id: RoomId},
+    RoomCreated {player_id: usize, player_role: G::PlayerRole, room_state: RoomState<G>},
     RoomJoined {player_id: usize, player_role: <G as Game>::PlayerRole},
     TurnAccepted,
 }
