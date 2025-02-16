@@ -184,7 +184,7 @@ where Game: DeserializeOwned,
     async fn take_turn(&mut self, turn: Game::Turn) where Game::Turn : Debug {
         let response = self.take_turn_unchecked(turn).await;
 
-        if !matches!(response, ResponseMessage(Ok(TurnAccepted))) {
+        if !matches!(response, ResponseMessage(Ok(TurnAccepted {..}))) {
             panic!("When taking turn, response was: {response:?}");
         }
     }

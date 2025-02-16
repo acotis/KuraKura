@@ -19,6 +19,11 @@
 + Finish the server:
     + Bring the API into line with the description above.
         + Incorporate the RoomState struct into other structs.
+        + Add RoomState to RoomCreated struct.
+        + Add RoomState to RoomJoined struct.
+        + Add RoomState to PlayerJoined struct.
+        + Add RoomState to TurnAccepted struct.
+        + Add RoomState to TurnTaken struct.
         + Add player_id to RoomCreated.
         + Check your work by comparing the test client output to the list above.
     + Make the API broadcast the outcome of the game as soon as a move yields an outcome.
