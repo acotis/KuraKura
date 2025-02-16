@@ -58,7 +58,7 @@ pub enum UserMessage<G: Game> {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum UserInfo<G: Game> {
     TurnTaken {new_game_state: G, turn: G::Turn},
-    PlayerJoined {player_id: usize, new_game_state: G, player_name: String},
+    PlayerJoined {player_id: usize, player_role: G::PlayerRole, room_state: RoomState<G>, player_name: String},
 }
 
 // Here is the content of the UserResponse variant:
@@ -117,6 +117,9 @@ pub struct RoomState<G> {
 #[derivative(Debug(bound="UserInfo<G> : Debug"))]
 #[derivative(PartialEq(bound="UserInfo<G> : PartialEq"))]
 #[derivative(Eq(bound="UserInfo<G> : Eq"))]
+#[serde(bound(
+    deserialize = "G::PlayerRole: Deserialize<'de>, G: Deserialize<'de>"
+))]
 pub enum UserBroadcast<G: Game> {
     Silent,
     RoomBroadcast(RoomId, UserInfo<G>),

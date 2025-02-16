@@ -7,7 +7,7 @@ pub trait Game : Serialize + Display + Clone {
     type Parameters : DeserializeOwned;
     type Turn : Serialize + DeserializeOwned + Clone;
     type Outcome;
-    type PlayerRole : Serialize;
+    type PlayerRole : Serialize + Clone;
     type TurnError : Serialize;
 
     fn new(parameters: Self::Parameters) -> Self;
