@@ -126,16 +126,18 @@ impl<G: Game> Server<G> {
 
         let role = room.game.add_player();
         let player_id = room.socket_ids.len()-1;
+        let game_state = room.game.clone();
 
         Ok((
             RoomJoined {
                 player_role: role,
                 player_id: player_id,
+                room_state: self.room_state_for(room_id),
             },
             RoomBroadcast(
                 room_id,
                 PlayerJoined {
-                    new_game_state: room.game.clone(),
+                    new_game_state: game_state,
                     player_name: name,
                     player_id: player_id,
                 }

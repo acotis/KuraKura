@@ -76,7 +76,7 @@ pub type UserResponse<G> = Result<UserOk<G>, UserError<G>>;
 #[derivative(Eq(bound="G::PlayerRole: Eq, G: Eq"))]
 pub enum UserOk<G: Game> {
     RoomCreated {player_id: usize, player_role: G::PlayerRole, room_state: RoomState<G>},
-    RoomJoined {player_id: usize, player_role: <G as Game>::PlayerRole},
+    RoomJoined  {player_id: usize, player_role: G::PlayerRole, room_state: RoomState<G>},
     TurnAccepted,
 }
 
