@@ -57,7 +57,7 @@ pub enum UserMessage<G: Game> {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum UserInfo<G: Game> {
-    TurnTaken {new_game_state: G, turn: G::Turn},
+    TurnTaken {room_state: RoomState<G>, turn: G::Turn},
     PlayerJoined {player_id: usize, player_role: G::PlayerRole, room_state: RoomState<G>, player_name: String},
 }
 
