@@ -79,9 +79,6 @@ impl<G: Game> Server<G> {
     }
 }
 
-//vec![(socket_id, Err(InvalidJson))]},
-
-
 // Private methods directly corresponding to API calls.
 
 impl<G: Game> Server<G> {
@@ -92,22 +89,24 @@ impl<G: Game> Server<G> {
             return Err(AlreadyInARoom);
         }
 
-        let mut room = Room::new(parameters);
+        // Create the Room.
+
+        let mut room = Room::<G>::new(parameters);
         let room_id = room.id;
+        let role = room.game.add_player();
         room.socket_ids.push(socket_id);
         self.rooms.insert(room_id, room);
+
+        // Update the Socket's info.
+
         socket.room_id = Some(room_id);
         socket.name = name;
 
         Ok((
             RoomCreated {
                 player_id: 0,
-                player_role: room.game.add_player(),
-                room_state: RoomState {
-                    game_state: room.game.clone(),
-                    player_names: room.socket_ids.iter().map(|id|self.sockets.get(id).unwrap().name.clone()).collect(),
-                    room_id: room_id,
-                }
+                player_role: role,
+                room_state: self.room_state_for(room_id),
             },
             Silent
         ))
@@ -168,6 +167,28 @@ impl<G: Game> Server<G> {
         // Always return InvalidJson so as to not reveal that the API call
         // did anything.
         Err(InvalidJson(String::from("")))
+    }
+}
+
+// Private utility methods of Server.
+
+impl<G: Game> Server<G> {
+    fn room_state_for(&self, id: RoomId) -> RoomState<G> {
+        let room = self.rooms.get(&id).unwrap();
+        RoomState {
+            room_id: room.id,
+            player_names: 
+                room.socket_ids
+                    .iter()
+                    .map(|socket_id| 
+                        self.sockets
+                            .get(socket_id)
+                            .map(|socket| socket.name.clone())
+                            .unwrap_or(String::from("Disconnected player"))
+                    )
+                    .collect(),
+            game_state: room.game.clone(),
+        }
     }
 }
 

@@ -104,9 +104,9 @@ pub enum UserError<G: Game> {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RoomState<G> {
-    room_id: RoomId,
-    player_names: Vec<String>,
-    game_state: G,
+    pub room_id: RoomId,
+    pub player_names: Vec<String>,
+    pub game_state: G,
 }
 
 // We also have a type UserBroadcast which is used only internally

@@ -12,6 +12,7 @@ use futures_util::{SinkExt, StreamExt, stream::{SplitSink, SplitStream}};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
+use crate::server::message_types::*;
 use crate::server::message_types::UserMessage::{self, *};
 use crate::server::message_types::UserOk::*;
 use crate::server::message_types::UserError::*;
@@ -157,8 +158,8 @@ where Game: DeserializeOwned,
     async fn create_room(&mut self, name: &str, host_plays_black: bool, grid_size: usize, win_length: usize) -> String where Game::Turn : Debug {
         let response = self.create_room_unchecked(name, host_plays_black, grid_size, win_length).await;
 
-        if let ResponseMessage(Ok(RoomCreated {id})) = response {
-            id.to_string()
+        if let ResponseMessage(Ok(RoomCreated {room_state: RoomState {room_id, ..}, ..})) = response {
+            room_id.to_string()
         } else {
             panic!("When creating room, response was: {response:?}")
         }

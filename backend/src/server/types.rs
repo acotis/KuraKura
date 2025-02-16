@@ -27,7 +27,7 @@ impl Socket {
         }
     }
 
-    pub fn stale(&self) -> bool {
+    pub fn is_stale(&self) -> bool {
         Instant::now() - self.last_active > Duration::from_secs(3600)
     }
 }
