@@ -7,8 +7,8 @@
         - User -> Room state, Player role, [Player ID].
         - Others -> Room state, Player role, [Player ID], [Player name].
     - TakeTurn:
-        - User -> Room state.
-        - Others -> Player ID, Turn, Room state.
+        - User -> Room state, Outcome.
+        - Others -> Player ID, Turn, Room state, Outcome.
 
     - "Room state" means:
         - Room ID.
@@ -17,7 +17,6 @@
     - [Brackets] mean the information is redundant but convenient.
 
 + Finish the server:
-    + Add Outcome to TurnTaken as Option<Outcome>.
     + Bring the API into line with the description above.
         + Check your work by comparing the test client output to the list above.
 

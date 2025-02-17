@@ -152,14 +152,16 @@ impl<G: Game> Server<G> {
         let player = room.socket_ids.iter().position(|x| *x == socket_id).expect("socket not in its own room?");
 
         match room.game.turn(player, turn.clone()) {
-            Ok(_)           => Ok((
+            Ok(option_outcome) => Ok((
                 TurnAccepted {
                     room_state: self.room_state_for(room_id),
+                    outcome: option_outcome.clone(),
                 },
                 RoomBroadcast(room_id, TurnTaken {
                     player_id: player,
                     turn: turn,
                     room_state: self.room_state_for(room_id),
+                    outcome: option_outcome,
                 })
             )),
             Err(turn_error) => Err(InvalidTurn(turn_error)),

@@ -41,12 +41,12 @@ pub type ServerOk<G> = Vec<(SocketId, UserMessage<G>)>;
 
 #[derive(Serialize, Deserialize)]
 #[derive(Derivative)]
-#[derivative(Debug(bound="G: Debug, G::Turn: Debug, G::PlayerRole: Debug, G::TurnError: Debug"))]
+#[derivative(Debug(bound="G: Debug, G::Turn: Debug, G::PlayerRole: Debug, G::TurnError: Debug, G::Outcome: Debug"))]
 #[derivative(PartialEq(bound="UserInfo<G>: PartialEq, UserResponse<G>: PartialEq"))]
 #[derivative(Eq(bound="UserInfo<G>: Eq, UserResponse<G>: Eq"))]
-#[derivative(Clone(bound="G::PlayerRole: Clone, UserResponse<G>: Clone"))]
+#[derivative(Clone(bound="UserInfo<G>: Clone, UserResponse<G>: Clone"))]
 #[serde(bound(
-    deserialize = "G::PlayerRole: Deserialize<'de>, G: Deserialize<'de>, G::TurnError: Deserialize<'de>"
+    deserialize = "G::PlayerRole: Deserialize<'de>, G: Deserialize<'de>, G::TurnError: Deserialize<'de>, G::Outcome: Deserialize<'de>"
 ))]
 pub enum UserMessage<G: Game> {
     Info(UserInfo<G>),
@@ -56,8 +56,11 @@ pub enum UserMessage<G: Game> {
 // Here is the content of the Info variant:
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(bound(
+    deserialize = "G: Deserialize<'de>, G::PlayerRole: Deserialize<'de>, G::Outcome: Deserialize<'de>"
+))]
 pub enum UserInfo<G: Game> {
-    TurnTaken {player_id: usize, room_state: RoomState<G>, turn: G::Turn},
+    TurnTaken {player_id: usize, room_state: RoomState<G>, turn: G::Turn, outcome: Option<G::Outcome>},
     PlayerJoined {player_id: usize, player_role: G::PlayerRole, room_state: RoomState<G>, player_name: String},
 }
 
@@ -68,16 +71,16 @@ pub type UserResponse<G> = Result<UserOk<G>, UserError<G>>;
 #[derive(Serialize, Deserialize)]
 #[derive(Derivative)]
 #[serde(bound(
-    deserialize = "G::PlayerRole: Deserialize<'de>, G: Deserialize<'de>"
+    deserialize = "G::PlayerRole: Deserialize<'de>, G: Deserialize<'de>, G::Outcome: Deserialize<'de>"
 ))]
-#[derivative(Debug(bound="G::PlayerRole: Debug, G: Debug"))]
+#[derivative(Debug(bound="G::PlayerRole: Debug, G: Debug, G::Outcome: Debug"))]
 #[derivative(Clone(bound="G::PlayerRole: Clone"))]
-#[derivative(PartialEq(bound="G::PlayerRole: PartialEq, G: PartialEq"))]
-#[derivative(Eq(bound="G::PlayerRole: Eq, G: Eq"))]
+#[derivative(PartialEq(bound="G::PlayerRole: PartialEq, G: PartialEq, G::Outcome: PartialEq"))]
+#[derivative(Eq(bound="G::PlayerRole: Eq, G: Eq, G::Outcome: Eq"))]
 pub enum UserOk<G: Game> {
     RoomCreated {player_id: usize, player_role: G::PlayerRole, room_state: RoomState<G>},
     RoomJoined  {player_id: usize, player_role: G::PlayerRole, room_state: RoomState<G>},
-    TurnAccepted {room_state: RoomState<G>},
+    TurnAccepted {outcome: Option<G::Outcome>, room_state: RoomState<G>},
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -118,7 +121,7 @@ pub struct RoomState<G> {
 #[derivative(PartialEq(bound="UserInfo<G> : PartialEq"))]
 #[derivative(Eq(bound="UserInfo<G> : Eq"))]
 #[serde(bound(
-    deserialize = "G::PlayerRole: Deserialize<'de>, G: Deserialize<'de>"
+    deserialize = "UserInfo<G>: Deserialize<'de>"
 ))]
 pub enum UserBroadcast<G: Game> {
     Silent,

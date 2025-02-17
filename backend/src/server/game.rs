@@ -6,7 +6,7 @@ use serde::de::DeserializeOwned;
 pub trait Game : Serialize + Display + Clone {
     type Parameters : DeserializeOwned;
     type Turn : Serialize + DeserializeOwned + Clone;
-    type Outcome: Serialize;
+    type Outcome: Serialize + Clone;
     type PlayerRole : Serialize + Clone;
     type TurnError : Serialize;
 

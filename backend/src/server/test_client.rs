@@ -35,7 +35,7 @@ where Game: GameTrait + DeserializeOwned + Send,
       Game::TurnError: DeserializeOwned + Send,
       Game::Turn: Send,
       Game::PlayerRole: Send + DeserializeOwned,
-
+      Game::Outcome: DeserializeOwned + Send + Debug,
 {
     while let Some(Ok(message)) = receiver.next().await {
         let text = message.as_text().unwrap();
@@ -86,6 +86,7 @@ where Game: DeserializeOwned,
       Game::TurnError: DeserializeOwned + Debug + Send,
       Game::PlayerRole: Send + Debug + DeserializeOwned,
       Game: Debug,
+      Game::Outcome: DeserializeOwned + Send + Debug,
 {
     async fn new(ident: &str) -> Self where <Game as GameTrait>::TurnError: 'static, Game: 'static {
         static NEXT_DELAY: LazyLock<Mutex<usize>> = LazyLock::new(|| Mutex::new(0));
