@@ -17,8 +17,7 @@
     - [Brackets] mean the information is redundant but convenient.
 
 + Finish the server:
-    + Make the API broadcast the outcome of the game as soon as a move yields an outcome.
-        + Attach as field in TurnTaken (Option<Outcome>).
+    + Add Outcome to TurnTaken as Option<Outcome>.
     + Bring the API into line with the description above.
         + Check your work by comparing the test client output to the list above.
 

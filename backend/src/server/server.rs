@@ -157,6 +157,7 @@ impl<G: Game> Server<G> {
                     room_state: self.room_state_for(room_id),
                 },
                 RoomBroadcast(room_id, TurnTaken {
+                    player_id: player,
                     turn: turn,
                     room_state: self.room_state_for(room_id),
                 })
