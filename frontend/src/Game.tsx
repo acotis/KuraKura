@@ -23,11 +23,22 @@ export default function Game({ playerName, room }: GameProps) {
 
 	const [started, setStarted] = useState(false);
 	const [messages, setMessages] = useState<KuraResponse[]>([]);
+	const [blackPlayerName, setBlackPlayerName] = useState<string | undefined>(undefined);
+	const [whitePlayerName, setWhitePlayerName] = useState<string | undefined>(undefined);
 
 	useEffect(() => {
 		if (readyState === WebSocket.OPEN && !started) {
 			if (room === "create") {
-				send({ CreateRoom: { name: playerName } });
+				send({
+					CreateRoom: {
+						name: playerName,
+						parameters: {
+							host_plays_black: true,
+							grid_size: 6,
+							win_length: 4,
+						},
+					},
+				});
 			} else {
 				send({ JoinRoom: { name: playerName, room: room.joinId } });
 			}
@@ -39,12 +50,39 @@ export default function Game({ playerName, room }: GameProps) {
 	useEffect(() => {
 		if (last) {
 			setMessages((m) => [...m, last]);
+
+			// Handle room state updates
+			if ("Ok" in last) {
+				const ok = last.Ok;
+				if ("RoomCreated" in ok || "RoomJoined" in ok) {
+					const data = "RoomCreated" in ok ? ok.RoomCreated : ok.RoomJoined;
+					const { player_names } = data.room_state;
+					const { host_plays_black } = data.room_state.game_state;
+
+					// First player is host
+					if (player_names.length >= 1) {
+						if (host_plays_black) {
+							setBlackPlayerName(player_names[0]);
+						} else {
+							setWhitePlayerName(player_names[0]);
+						}
+					}
+					// Second player is guest
+					if (player_names.length >= 2) {
+						if (host_plays_black) {
+							setWhitePlayerName(player_names[1]);
+						} else {
+							setBlackPlayerName(player_names[1]);
+						}
+					}
+				}
+			}
 		}
 	}, [last]);
 
 	const [grid, setGrid] = useState<Grid>(
-		new Array(boardSize).fill(undefined).map((_, y) =>
-			new Array(boardSize).fill(undefined).map((_, x) => ({
+		new Array(boardSize).fill(undefined).map(() =>
+			new Array(boardSize).fill(undefined).map(() => ({
 				stone: undefined,
 			})),
 		),
@@ -82,8 +120,8 @@ export default function Game({ playerName, room }: GameProps) {
 				};
 				send({ TakeTurn: { turn: turnDetails } });
 			}}
-			black={{ name: "Rain" }}
-			white={{ name: "Fire" }}
+			black={blackPlayerName ? { name: blackPlayerName } : undefined}
+			white={whitePlayerName ? { name: whitePlayerName } : undefined}
 		/>
 	);
 }

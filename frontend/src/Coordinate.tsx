@@ -7,7 +7,7 @@ export interface CoordinateProps {
 export default function Coordinate({ tileSize, row, column }: CoordinateProps) {
 	return (
 		<div
-			className="absolute z-9 flex items-center justify-center"
+			className="absolute z-9 flex items-center justify-center text-black"
 			style={{
 				left: column !== undefined ? column * tileSize : -32,
 				top: row !== undefined ? row * tileSize : -32,

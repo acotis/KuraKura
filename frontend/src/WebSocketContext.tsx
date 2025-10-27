@@ -16,18 +16,44 @@ export interface TurnDetails {
 	spin_dir: "CW" | "CCW";
 }
 
+export interface GameParameters {
+	host_plays_black: boolean;
+	grid_size: number;
+	win_length: number;
+}
+
 export type KuraRequest =
-	| { CreateRoom: { name: UserId } }
+	| { CreateRoom: { name: UserId; parameters: GameParameters } }
 	| { JoinRoom: { name: UserId; room: RoomId } }
 	| { TakeTurn: { turn: TurnDetails } };
+
+export interface Cell {
+	stone: { color: Color } | null;
+}
+
+export interface GameState {
+	players_present: number;
+	host_plays_black: boolean;
+	win_length: number;
+	board: Cell[][];
+	turn: number;
+	outcome: unknown | null;
+}
+
+export interface RoomState {
+	room_id: RoomId;
+	player_names: string[];
+	game_state: GameState;
+}
+
+export type PlayerRole = "BlackPlayer" | "WhitePlayer";
 
 export type KuraResponse = { Ok: KuraOk } | { Err: KuraErr };
 
 export type KuraOk =
-	| { RoomCreated: { id: RoomId } }
-	| { JoinedAsPlayer: Unit }
-	| { JoinedAsSpectator: Unit }
-	| { TurnAccepted: Unit };
+	| { RoomCreated: { player_id: number; player_role: PlayerRole; room_state: RoomState } }
+	| { RoomJoined: { player_id: number; player_role: PlayerRole; room_state: RoomState } }
+	| { TurnAccepted: { outcome: unknown | null; room_state: RoomState } };
 
 export type KuraErr =
 	| "AccountNotFound"
@@ -83,7 +109,7 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
 
 	const value = {
 		send: (msg: KuraRequest) => {
-			console.debug("Sending", msg);
+			console.debug("Sending", msg, JSON.stringify(msg));
 			sendJsonMessage(msg);
 			sendJsonMessage("DebugLog");
 		},

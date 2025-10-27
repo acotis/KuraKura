@@ -72,13 +72,10 @@ export default function GameView({
 					/>
 				</div>
 			</div>
-			<div className="text-center">
-				asdf
-			</div>
 			<div className="text-xs">
 				{messages.map((m, i) => (
 					// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-					<pre key={i}>{JSON.stringify(m)}</pre>
+					<pre key={i} className="whitespace-pre-wrap break-words">{JSON.stringify(m)}</pre>
 				))}
 			</div>
 		</div>
