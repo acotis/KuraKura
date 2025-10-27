@@ -170,10 +170,7 @@ impl<G: Game> Server<G> {
 
     fn debug_log(&mut self) -> ApiResult<G> {
         print!("{self}");
-
-        // Always return InvalidJson so as to not reveal that the API call
-        // did anything.
-        Err(InvalidJson(String::from("")))
+        Ok((Understood, Silent))
     }
 }
 

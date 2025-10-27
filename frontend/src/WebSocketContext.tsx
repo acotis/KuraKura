@@ -53,7 +53,8 @@ export type KuraResponse = { Ok: KuraOk } | { Err: KuraErr };
 export type KuraOk =
 	| { RoomCreated: { player_id: number; player_role: PlayerRole; room_state: RoomState } }
 	| { RoomJoined: { player_id: number; player_role: PlayerRole; room_state: RoomState } }
-	| { TurnAccepted: { outcome: unknown | null; room_state: RoomState } };
+	| { TurnAccepted: { outcome: unknown | null; room_state: RoomState } }
+	| "Understood";
 
 export type KuraErr =
 	| "AccountNotFound"

@@ -81,6 +81,7 @@ pub enum UserOk<G: Game> {
     RoomCreated {player_id: usize, player_role: G::PlayerRole, room_state: RoomState<G>},
     RoomJoined  {player_id: usize, player_role: G::PlayerRole, room_state: RoomState<G>},
     TurnAccepted {outcome: Option<G::Outcome>, room_state: RoomState<G>},
+    Understood,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
