@@ -37,11 +37,11 @@ pub enum TurnError {
     NotYourTurn,
     InvalidLocation,
     PieceAlreadyThere,
+    YoureNotPlaying,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct Turn {
-    pub player:         Player,
     pub play_row:       usize,
     pub play_col:       usize,
     pub spin_ul_row:    usize,
@@ -57,6 +57,13 @@ pub enum PlayerRole {
     BlackPlayer,
     WhitePlayer,
     Spectator,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+pub struct Parameters {
+    pub host_plays_black: bool,
+    pub grid_size: usize,
+    pub win_length: usize,
 }
 
 // Implementations of elementary methods.

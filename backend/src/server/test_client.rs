@@ -12,13 +12,13 @@ use futures_util::{SinkExt, StreamExt, stream::{SplitSink, SplitStream}};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
+use crate::server::message_types::*;
 use crate::server::message_types::UserMessage::{self, *};
 use crate::server::message_types::UserOk::*;
 use crate::server::message_types::UserError::*;
 use crate::server::game::Game as GameTrait;
 use crate::game::KuraKura;
 use crate::game::types::*;
-use crate::game::types::Player::*;
 use crate::game::types::SpinDirection::*;
 
 type Receiver = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
@@ -32,9 +32,10 @@ async fn follow<Game>(
     last: Arc<Mutex<Option<UserMessage<Game>>>>
 ) 
 where Game: GameTrait + DeserializeOwned + Send,
-      Game::TurnError: DeserializeOwned,
+      Game::TurnError: DeserializeOwned + Send,
       Game::Turn: Send,
       Game::PlayerRole: Send + DeserializeOwned,
+      Game::Outcome: DeserializeOwned + Send + Debug,
 {
     while let Some(Ok(message)) = receiver.next().await {
         let text = message.as_text().unwrap();
@@ -57,7 +58,7 @@ where Game: GameTrait + DeserializeOwned + Send,
 
         pause(del).await;
 
-        let max_len = 68;
+        let max_len = 9999;
         let shortened_text = if text.len() < max_len {
             String::from(text)
         } else {
@@ -82,8 +83,10 @@ struct Client<Game: GameTrait> where Game::Turn: Serialize, Game::TurnError: Des
 impl<Game: GameTrait + Send> Client<Game>
 where Game: DeserializeOwned,
       Game::Turn: Serialize + Send,
-      Game::TurnError: DeserializeOwned + Debug,
+      Game::TurnError: DeserializeOwned + Debug + Send,
       Game::PlayerRole: Send + Debug + DeserializeOwned,
+      Game: Debug,
+      Game::Outcome: DeserializeOwned + Send + Debug,
 {
     async fn new(ident: &str) -> Self where <Game as GameTrait>::TurnError: 'static, Game: 'static {
         static NEXT_DELAY: LazyLock<Mutex<usize>> = LazyLock::new(|| Mutex::new(0));
@@ -135,8 +138,8 @@ where Game: DeserializeOwned,
 
     // Unchecked server interactions.
 
-    async fn create_room_unchecked(&mut self, name: &str) -> UserMessage<Game> {
-        self.send(&format!(r#"{{"CreateRoom": {{"name": "{name}", "parameters": null}}}}"#)).await
+    async fn create_room_unchecked(&mut self, name: &str, host_plays_black: bool, grid_size: usize, win_length: usize) -> UserMessage<Game> {
+        self.send(&format!(r#"{{"CreateRoom": {{"name": "{name}", "parameters": {{"host_plays_black": {host_plays_black}, "grid_size": {grid_size}, "win_length": {win_length}}}}}}}"#)).await
     }
 
     async fn join_room_unchecked(&mut self, name: &str, room_id: &str) -> UserMessage<Game> {
@@ -153,11 +156,11 @@ where Game: DeserializeOwned,
 
     // Checked server interactions.
 
-    async fn create_room(&mut self, name: &str) -> String where Game::Turn : Debug {
-        let response = self.create_room_unchecked(name).await;
+    async fn create_room(&mut self, name: &str, host_plays_black: bool, grid_size: usize, win_length: usize) -> String where Game::Turn : Debug {
+        let response = self.create_room_unchecked(name, host_plays_black, grid_size, win_length).await;
 
-        if let ResponseMessage(Ok(RoomCreated {id})) = response {
-            id.to_string()
+        if let ResponseMessage(Ok(RoomCreated {room_state: RoomState {room_id, ..}, ..})) = response {
+            room_id.to_string()
         } else {
             panic!("When creating room, response was: {response:?}")
         }
@@ -182,7 +185,7 @@ where Game: DeserializeOwned,
     async fn take_turn(&mut self, turn: Game::Turn) where Game::Turn : Debug {
         let response = self.take_turn_unchecked(turn).await;
 
-        if !matches!(response, ResponseMessage(Ok(TurnAccepted))) {
+        if !matches!(response, ResponseMessage(Ok(TurnAccepted {..}))) {
             panic!("When taking turn, response was: {response:?}");
         }
     }
@@ -195,21 +198,22 @@ pub async fn run_test_clients() {
     let mut evan  = Client::<KuraKura>::new("Evan").await;
     let mut lexi  = Client::<KuraKura>::new("Lexi").await;
 
-    let evan_rm   = evan.create_room("Evan is my name").await;
-    let _lynn_rm  = lynn.create_room("Lynnnn").await;
+    let evan_rm   = evan.create_room("Evan is my name", true, 2, 2).await;
+    let _lynn_rm  = lynn.create_room("Lynnnn", true, 2, 2).await;
     let _         = lexi.join_room("The LEX", &evan_rm).await;
 
     let _         = evan.debug_log().await;
 
     let _         = evan.take_turn(Turn {
-        player:         Black,
         play_row:       0,
         play_col:       0,
         spin_ul_row:    0,
         spin_ul_col:    0,
-        spin_size:      3,
+        spin_size:      1,
         spin_dir:       CW,
     }).await;
+
+    let _         = evan.debug_log().await;
 
     println!();
 }

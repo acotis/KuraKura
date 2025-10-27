@@ -1,39 +1,31 @@
 
-Originally, the message_types file had "flat" type parameter inheritance. The top-level structs, ServerResult<E> and ApiResult<E>, had a single type parameter which was expected to be set to the TurnError type and which was passed unchanged from parent type to child type. In the new architecture, ServerResult and ApiResult are parameterized by G, which is expected to be set to the Game type (KuraKura, for example), and a ServerResult<G> contains a ServerOk<G> which contains a UserMessage<G> which tonains a UserResponse<G::TurnError>, and this last step in the hierarchy is the problem. Rust's #derive macro can derive Deserialize for A<T> only when T implements derive, but it cannot derive Deserialize for A<T> only when T::Foo implements derive. Instead, it is insisting that T::Foo must be unconditionally bound to implement Derive no matter what, before it considers this code to compile at all. SOLUTION (h/t Lynn): serde's derive(Deserialize) macro is a little dumb about trait bounds. You can help it with the serde(bound(...)) macro.
+- API information:
+    - CreateRoom:
+        - User -> Room state, Player role, [Player ID which is always 0].
+        - Others -> N/A.
+    - JoinRoom:
+        - User -> Room state, Player role, [Player ID].
+        - Others -> Room state, Player role, [Player ID], [Player name].
+    - TakeTurn:
+        - User -> Room state, Outcome.
+        - Others -> Player ID, Turn, Room state, Outcome.
 
-    - LESSON LEARNED: Each thing that can be #[derive(...)]'d is a separate macro and may come with separate idiosyncracies. They are not compositional combinations of some universal #[derive] directive and any arbitrary trait. #[derive(Deserialize)] comes from serde and might suck even if Rust is good.
-
-- ServerResult:
-  - ServerError.
-  - ServerOk:
-    - SocketId.
-    - UserMessage:
-      - UserResponse:
-        - UserOk (JoinedAs).
-        - UserError (TurnError).
-      - Info (Game, Turn).
-
-+ Finish implementing the server:
-    + Create the actual Parameters type for Kura Kura.
-        + Update the test client to use it.
-    + Make Game.turn() accept an integer saying who is taking the turn.
-        - Remove the field of Turn that declares the color of the turn.
-        - Note: I finalized my theory of turns on 2024 Sep 15.
-
-+ Finish implementing the game:
-    + Add the concept of Parameters to the Game trait.
-        - Example: which player goes first.
-            + Really do this one.
-        - Example: grid size.
-        - Example: line length needed to win.
+    - "Room state" means:
+        - Room ID.
+        - List of player names.
+        - Game state.
+    - [Brackets] mean the information is redundant but convenient.
 
 + Make the server awesome:
     + Make Server.join_room() validate names.
     + Make Server.create_room() validate names.
+    + Make Server.create_room() validate board sizes.
+        - Otherwise it's vulnerable to an attack where you just request a huge board that would use up all of RAM.
+    + Consider simplifying the Server a bit. I think the general philosophy should be: the game is a shared resource that players can make updates to; when they do, the deltas and new state are broadcast to everyone. The game gets to choose how it presents its state (there should be an associated type called Representation).
+    + Develop a bunch of test games for the Game trait to see where the points of friction are.
     + Remove as many trait bounds as possible from the Game trait.
     + Separate Server out into its own crate.
     + Make the server delete any socket that hasn't had activity in, say, an hour.
-    + Make the PlayerJoined info message announce the role of the new player.
 
 + Make the game awesome:
     + Make there be a 1/100 chance that a stone is textured with the stare emoji (not in the first ~5 moves so as not to be confusing).

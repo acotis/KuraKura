@@ -1,7 +1,14 @@
 
 use serde::{Serialize, Deserialize};
+use derivative::Derivative;
+use std::fmt::Debug;
 use crate::server::types::*;
-use crate::server::game::Game as GameTrait;
+use crate::server::game::Game;
+
+/*
+
+// Stuff to derive:
+// #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 
 // Note about types: I know it sucks that the API call methods have to start with
 // a redundant socket lookup which also must be unwrapped instead of .ok_or()'d.
@@ -15,9 +22,10 @@ use crate::server::game::Game as GameTrait;
 // ServerResult is the return type of Server.handle_request(), which interfaces
 // with the threads that handle WebSockets. ApiResult is used inside the Server
 // class as the type returned by its API call handling methods.
+*/
 
-pub type ServerResult<Game> = Result<ServerOk<Game>, ServerError>;
-pub type ApiResult<Game> = Result<(UserOk<<Game as GameTrait>::PlayerRole>, UserBroadcast<Game>), UserError<<Game as GameTrait>::TurnError>>;
+pub type ServerResult<G> = Result<ServerOk<G>, ServerError>;
+pub type ApiResult<G> = Result<(UserOk<G>, UserBroadcast<G>), UserError<G>>;
 
 // ServerResult can be our one type of error, or it can be a Vec of socket ID's
 // and UserMessages, which is an instruction to the WebSocket thread to send
@@ -25,42 +33,58 @@ pub type ApiResult<Game> = Result<(UserOk<<Game as GameTrait>::PlayerRole>, User
 
 #[derive(Debug)]
 pub enum ServerError {SocketNotFound}
-pub type ServerOk<Game> = Vec<(SocketId, UserMessage<Game>)>;
+pub type ServerOk<G> = Vec<(SocketId, UserMessage<G>)>;
 
 // UserMessage is the umbrella type for any message we might send to the user.
 // It has variants "Info" (for things we might send them autonomously) and
 // "ResponseMessage" (for things we send in response to API calls).
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
+#[derive(Derivative)]
+#[derivative(Debug(bound="G: Debug, G::Turn: Debug, G::PlayerRole: Debug, G::TurnError: Debug, G::Outcome: Debug"))]
+#[derivative(PartialEq(bound="UserInfo<G>: PartialEq, UserResponse<G>: PartialEq"))]
+#[derivative(Eq(bound="UserInfo<G>: Eq, UserResponse<G>: Eq"))]
+#[derivative(Clone(bound="UserInfo<G>: Clone, UserResponse<G>: Clone"))]
 #[serde(bound(
-        deserialize = "Game::TurnError: Deserialize<'de>, Game: Deserialize<'de>, Game::PlayerRole: Deserialize<'de>"
+    deserialize = "G::PlayerRole: Deserialize<'de>, G: Deserialize<'de>, G::TurnError: Deserialize<'de>, G::Outcome: Deserialize<'de>"
 ))]
-pub enum UserMessage<Game: GameTrait> {
-    Info(UserInfo<Game, Game::Turn>),
-    #[serde(untagged)] ResponseMessage(UserResponse<Game::PlayerRole, Game::TurnError>),
+pub enum UserMessage<G: Game> {
+    Info(UserInfo<G>),
+    #[serde(untagged)] ResponseMessage(UserResponse<G>),
 }
 
 // Here is the content of the Info variant:
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum UserInfo<Game, Turn> {
-    TurnTaken {new_game_state: Game, turn: Turn},
-    PlayerJoined {new_game_state: Game, player_name: String},
+#[serde(bound(
+    deserialize = "G: Deserialize<'de>, G::PlayerRole: Deserialize<'de>, G::Outcome: Deserialize<'de>"
+))]
+pub enum UserInfo<G: Game> {
+    TurnTaken {player_id: usize, room_state: RoomState<G>, turn: G::Turn, outcome: Option<G::Outcome>},
+    PlayerJoined {player_id: usize, player_role: G::PlayerRole, room_state: RoomState<G>, player_name: String},
 }
 
 // Here is the content of the UserResponse variant:
 
-pub type UserResponse<PlayerRole, TurnError> = Result<UserOk<PlayerRole>, UserError<TurnError>>;
+pub type UserResponse<G> = Result<UserOk<G>, UserError<G>>;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum UserOk<PlayerRole> {
-    RoomCreated {id: RoomId},
-    RoomJoined {player_role: PlayerRole},
-    TurnAccepted,
+#[derive(Serialize, Deserialize)]
+#[derive(Derivative)]
+#[serde(bound(
+    deserialize = "G::PlayerRole: Deserialize<'de>, G: Deserialize<'de>, G::Outcome: Deserialize<'de>"
+))]
+#[derivative(Debug(bound="G::PlayerRole: Debug, G: Debug, G::Outcome: Debug"))]
+#[derivative(Clone(bound="G::PlayerRole: Clone"))]
+#[derivative(PartialEq(bound="G::PlayerRole: PartialEq, G: PartialEq, G::Outcome: PartialEq"))]
+#[derivative(Eq(bound="G::PlayerRole: Eq, G: Eq, G::Outcome: Eq"))]
+pub enum UserOk<G: Game> {
+    RoomCreated {player_id: usize, player_role: G::PlayerRole, room_state: RoomState<G>},
+    RoomJoined  {player_id: usize, player_role: G::PlayerRole, room_state: RoomState<G>},
+    TurnAccepted {outcome: Option<G::Outcome>, room_state: RoomState<G>},
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum UserError<TurnError> {
+pub enum UserError<G: Game> {
     AccountNotFound,
     AlreadyLoggedIn,
     AlreadyInARoom,
@@ -73,27 +97,45 @@ pub enum UserError<TurnError> {
     AccountDoesntHaveRoom,
     RoomDoesntHaveGuest,
     AccountPlayedWrongColor,
-    InvalidTurn(TurnError),
+    InvalidTurn(G::TurnError),
     NotImplemented,
     InvalidJson(String),
     InternalFailure,
 }
 
+// Many types above include a RoomState field.
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RoomState<G> {
+    pub room_id: RoomId,
+    pub player_names: Vec<String>,
+    pub game_state: G,
+}
+
 // We also have a type UserBroadcast which is used only internally
 // as part of the API call delegation architecture.
 
-pub enum UserBroadcast<Game: GameTrait> {
+#[derive(Derivative)]
+#[derive(Clone, Serialize, Deserialize)]
+#[derivative(Debug(bound="UserInfo<G> : Debug"))]
+#[derivative(PartialEq(bound="UserInfo<G> : PartialEq"))]
+#[derivative(Eq(bound="UserInfo<G> : Eq"))]
+#[serde(bound(
+    deserialize = "UserInfo<G>: Deserialize<'de>"
+))]
+pub enum UserBroadcast<G: Game> {
     Silent,
-    RoomBroadcast(RoomId, UserInfo<Game, Game::Turn>),
+    RoomBroadcast(RoomId, UserInfo<G>),
 }
+
 
 // Finally, there is the top-level type of a User Request.
 
-#[derive(Debug, Serialize, Deserialize)]
-pub enum UserRequest<Parameters, Turn> {
-    CreateRoom {name: String, parameters: Parameters},
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum UserRequest<G: Game> {
+    CreateRoom {name: String, parameters: G::Parameters},
     JoinRoom   {name: String, room: RoomId},
-    TakeTurn   {turn: Turn},
+    TakeTurn   {turn: G::Turn},
 
     DebugLog,   // Debugging only, turn this off in production.
 }

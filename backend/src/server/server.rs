@@ -5,7 +5,7 @@ use crate::server::message_types::UserOk::*;
 use crate::server::message_types::UserInfo::*;
 use crate::server::message_types::UserMessage::*;
 use crate::server::message_types::ServerError::*;
-use crate::server::game::Game as GameTrait;
+use crate::server::game::Game;
 //use std::time::{Instant};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Error};
@@ -15,14 +15,14 @@ use crate::server::message_types::{*, UserBroadcast::*};
 
 // Server struct.
 
-pub struct Server<Game> {
+pub struct Server<G> {
     sockets:    HashMap<SocketId, Socket>,
-    rooms:      HashMap<RoomId, Room<Game>>,
+    rooms:      HashMap<RoomId, Room<G>>,
 }
 
 // Constructor.
 
-impl<Game: GameTrait> Server<Game> {
+impl<G: Game> Server<G> {
     pub fn new() -> Self {
         Server {
             sockets: HashMap::new(),
@@ -33,7 +33,7 @@ impl<Game: GameTrait> Server<Game> {
 
 // Public methods of Server.
 
-impl<Game: GameTrait> Server<Game> {
+impl<G: Game> Server<G> {
     pub fn register_socket(&mut self) -> SocketId {
         let socket = Socket::new();
         let socket_id = socket.id;
@@ -41,11 +41,11 @@ impl<Game: GameTrait> Server<Game> {
         socket_id
     }
 
-    pub fn handle_request(&mut self, socket_id: SocketId, json: &str) -> ServerResult<Game> {
+    pub fn handle_request(&mut self, socket_id: SocketId, json: &str) -> ServerResult<G> {
         if self.sockets.get(&socket_id).is_none() {
             Err(SocketNotFound)
         } else {
-            let api_result = match from_str::<UserRequest<Game::Parameters, Game::Turn>>(&json) {
+            let api_result = match from_str::<UserRequest<G>>(&json) {
                 Ok(CreateRoom {name, parameters}) => {self.create_room (socket_id, name, parameters)},
                 Ok(JoinRoom   {name, room}      ) => {self.join_room   (socket_id, name, room      )},
                 Ok(TakeTurn   {turn}            ) => {self.take_turn   (socket_id, turn            )},
@@ -67,7 +67,7 @@ impl<Game: GameTrait> Server<Game> {
                                     .unwrap()
                                     .socket_ids
                                     .iter()
-                                    .map(|&id| (id, Info(info.clone())))
+                                    .filter_map(|&id| if id == socket_id {None} else {Some((id, Info(info.clone())))})
                                     .collect()
                         };
                         ret.insert(0, (socket_id, ResponseMessage(Ok(okay))));
@@ -79,30 +79,40 @@ impl<Game: GameTrait> Server<Game> {
     }
 }
 
-//vec![(socket_id, Err(InvalidJson))]},
-
-
 // Private methods directly corresponding to API calls.
 
-impl<Game: GameTrait> Server<Game> {
-    fn create_room(&mut self, socket_id: SocketId, name: String, parameters: Game::Parameters) -> ApiResult<Game> {
+impl<G: Game> Server<G> {
+    fn create_room(&mut self, socket_id: SocketId, name: String, parameters: G::Parameters) -> ApiResult<G> {
         let socket = self.sockets.get_mut(&socket_id).expect("socket lookup in create_room()");
 
         if socket.room_id != None {
             return Err(AlreadyInARoom);
         }
 
-        let mut room = Room::new(parameters);
+        // Create the Room.
+
+        let mut room = Room::<G>::new(parameters);
         let room_id = room.id;
+        let role = room.game.add_player();
         room.socket_ids.push(socket_id);
         self.rooms.insert(room_id, room);
+
+        // Update the Socket's info.
+
         socket.room_id = Some(room_id);
         socket.name = name;
 
-        Ok((RoomCreated {id: room_id}, Silent))
+        Ok((
+            RoomCreated {
+                player_id: 0,
+                player_role: role,
+                room_state: self.room_state_for(room_id),
+            },
+            Silent
+        ))
     }
 
-    fn join_room(&mut self, socket_id: SocketId, name: String, room_id: RoomId) -> ApiResult<Game> {
+    fn join_room(&mut self, socket_id: SocketId, name: String, room_id: RoomId) -> ApiResult<G> {
         let socket = self.sockets.get_mut(&socket_id).expect("socket lookup in join_room()");
         let room = self.rooms.get_mut(&room_id).ok_or(RoomNotFound)?;
 
@@ -115,39 +125,77 @@ impl<Game: GameTrait> Server<Game> {
         socket.name = name.clone();
 
         let role = room.game.add_player();
+        let player_id = room.socket_ids.len()-1;
 
-        Ok((RoomJoined {player_role: role}, RoomBroadcast(
-            room_id,
-            PlayerJoined {
-                new_game_state: room.game.clone(),
-                player_name: name
-            }
-        )))
+        Ok((
+            RoomJoined {
+                player_role: role.clone(),
+                player_id: player_id,
+                room_state: self.room_state_for(room_id),
+            },
+            RoomBroadcast(
+                room_id,
+                PlayerJoined {
+                    player_id: player_id,
+                    player_role: role,
+                    player_name: name,
+                    room_state: self.room_state_for(room_id),
+                }
+            )
+        ))
     }
 
-    fn take_turn(&mut self, socket_id: SocketId, turn: Game::Turn) -> ApiResult<Game> {
+    fn take_turn(&mut self, socket_id: SocketId, turn: G::Turn) -> ApiResult<G> {
         let socket = self.sockets.get_mut(&socket_id).expect("socket lookup in take_turn()");
         let room_id = socket.room_id.ok_or(NotInARoom)?;
         let room = self.rooms.get_mut(&room_id).ok_or(RoomNotFound)?;
+        let player = room.socket_ids.iter().position(|x| *x == socket_id).expect("socket not in its own room?");
 
-        match room.game.turn(turn.clone()) {
-            Ok(_)           => Ok((
-                TurnAccepted,
+        match room.game.turn(player, turn.clone()) {
+            Ok(option_outcome) => Ok((
+                TurnAccepted {
+                    room_state: self.room_state_for(room_id),
+                    outcome: option_outcome.clone(),
+                },
                 RoomBroadcast(room_id, TurnTaken {
+                    player_id: player,
                     turn: turn,
-                    new_game_state: room.game.clone(),
+                    room_state: self.room_state_for(room_id),
+                    outcome: option_outcome,
                 })
             )),
             Err(turn_error) => Err(InvalidTurn(turn_error)),
         }
     }
 
-    fn debug_log(&mut self) -> ApiResult<Game> {
+    fn debug_log(&mut self) -> ApiResult<G> {
         print!("{self}");
 
         // Always return InvalidJson so as to not reveal that the API call
         // did anything.
         Err(InvalidJson(String::from("")))
+    }
+}
+
+// Private utility methods of Server.
+
+impl<G: Game> Server<G> {
+    fn room_state_for(&self, id: RoomId) -> RoomState<G> {
+        let room = self.rooms.get(&id).unwrap();
+        RoomState {
+            room_id: room.id,
+            player_names: 
+                room.socket_ids
+                    .iter()
+                    .map(|socket_id| 
+                        self.sockets
+                            .get(socket_id)
+                            .map(|socket| socket.name.clone())
+                            .unwrap_or(String::from("Disconnected player"))
+                    )
+                    .collect(),
+            game_state: room.game.clone(),
+        }
     }
 }
 
@@ -161,7 +209,7 @@ impl Display for Socket {
     }
 }
 
-impl<Game: GameTrait> Display for Room<Game> {
+impl<G: Game> Display for Room<G> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         let bold = "\x1b[1m";
         let reset = "\x1b[0m";
@@ -180,7 +228,7 @@ impl<Game: GameTrait> Display for Room<Game> {
     }
 }
 
-impl<Game: GameTrait> Display for Server<Game> {
+impl<G: Game> Display for Server<G> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         let under = "\x1b[4m";
         let reset = "\x1b[0m";

@@ -21,6 +21,7 @@ use crate::game::cell::Cell;
 use crate::game::cell::spin_cell_grid;
 use crate::game::types::Turn;
 use crate::game::types::PlayerRole::{self, *};
+use crate::game::types::Parameters;
 
 use crate::server::game::Game;
 
@@ -29,8 +30,9 @@ use crate::server::game::Game;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct KuraKura {
     players_present: usize,
+    host_plays_black: bool,
 
-    win_len:    usize,                  // Line length needed to win.
+    win_length: usize,                  // Line length needed to win.
     board:      Vec<Vec<Cell>>,         // State of the board.
     turn:       usize,                  // Number of the active turn's stone.
 
@@ -38,20 +40,20 @@ pub struct KuraKura {
 }
 
 impl Game for KuraKura {
-    type Parameters = ();
+    type Parameters = Parameters;
     type Turn = Turn;
     type TurnError = TurnError;
     type Outcome = GameOutcome;
     type PlayerRole = PlayerRole;
 
-    fn new(parameters: ()) -> Self {
-        let size = 4;
-        let win_len = 2;
+    fn new(parameters: Parameters) -> Self {
+        let Parameters {grid_size, win_length, host_plays_black} = parameters;
 
         KuraKura {
             players_present: 0,
-            win_len:    win_len,
-            board:      vec![vec![Default::default(); size]; size],
+            win_length,
+            host_plays_black,
+            board:      vec![vec![Default::default(); grid_size]; grid_size],
             turn:       1,
             outcome:    None,
         }
@@ -67,9 +69,8 @@ impl Game for KuraKura {
         }
     }
 
-    fn turn(&mut self, turn: Turn) -> TurnResult {
+    fn turn(&mut self, player: usize, turn: Turn) -> TurnResult {
         let Turn {
-            player:         player,
             play_row:       pr,
             play_col:       pc,
             spin_ul_row:    su,
@@ -78,15 +79,21 @@ impl Game for KuraKura {
             spin_dir:       sd,
         } = turn;
 
+        let player_color = match player {
+            0 => if self.host_plays_black {Black} else {White},
+            1 => if self.host_plays_black {White} else {Black},
+            2.. => {return Err(YoureNotPlaying);}
+        };
+
         // Validate the turn.
 
-        if self.outcome           != None   {return Err(GameAlreadyOver);}
-        if self.whose_turn()      != player {return Err(NotYourTurn);}
-        if self.size() <= pr                {return Err(InvalidLocation);}
-        if self.size() <= pc                {return Err(InvalidLocation);}
-        if self.size() <= su + sz - 1       {return Err(InvalidLocation);}
-        if self.size() <= sl + sz - 1       {return Err(InvalidLocation);}
-        if self.board[pr][pc].stone != None {return Err(PieceAlreadyThere);}
+        if self.outcome != None              {return Err(GameAlreadyOver);}
+        if self.whose_turn() != player_color {return Err(NotYourTurn);}
+        if self.size() <= pr                 {return Err(InvalidLocation);}
+        if self.size() <= pc                 {return Err(InvalidLocation);}
+        if self.size() <= su + sz - 1        {return Err(InvalidLocation);}
+        if self.size() <= sl + sz - 1        {return Err(InvalidLocation);}
+        if self.board[pr][pc].stone != None  {return Err(PieceAlreadyThere);}
 
         // Place the stone.
 
@@ -125,7 +132,7 @@ impl KuraKura {
         for r in 0..self.size() {
             for c in 0..self.size() {
                 for dir in vec![(0, 1), (1, 0), (1, 1)] {
-                    let line = (0..self.win_len).map(|x| (r + dir.0 * x, c + dir.1 * x));
+                    let line = (0..self.win_length).map(|x| (r + dir.0 * x, c + dir.1 * x));
 
                     for player in vec![Black, White] {
                         if line.clone().all(|(r, c)|
@@ -351,7 +358,7 @@ impl Display for KuraKura {
         }
 
         if self.outcome == None {
-            write!(f, "\n   Need {} to win.", self.win_len)?;
+            write!(f, "\n   Need {} to win.", self.win_length)?;
         }
 
         Ok(())

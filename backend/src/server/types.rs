@@ -3,15 +3,17 @@ use std::time::{Duration, Instant};
 use crate::server::copy_id::CopyId;
 use crate::server::game::Game;
 
-pub type RoomId = CopyId<Room<bool>>;
+// ID types.
+
+pub type RoomId = CopyId<Room<()>>;
 pub type SocketId = CopyId<Socket>;
 
 // Socket type.
 
 pub struct Socket {
-    pub id:      SocketId,
-    pub room_id: Option<RoomId>,
-    pub name:    String,
+    pub id:          SocketId,
+    pub name:        String,
+    pub room_id:     Option<RoomId>,
     pub last_active: Instant,
 }
 
@@ -25,7 +27,7 @@ impl Socket {
         }
     }
 
-    pub fn stale(&self) -> bool {
+    pub fn is_stale(&self) -> bool {
         Instant::now() - self.last_active > Duration::from_secs(3600)
     }
 }
@@ -34,8 +36,8 @@ impl Socket {
 
 pub struct Room<G> {
     pub id:         RoomId,
-    pub socket_ids: Vec<SocketId>, // must be a vec for multiplayer games (N > 2)
     pub game:       G,
+    pub socket_ids: Vec<SocketId>, // must be a vec for multiplayer games (N > 2)
 }
 
 impl<G: Game> Room<G> {
