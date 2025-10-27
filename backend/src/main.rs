@@ -23,7 +23,12 @@ type AppState = (Arc<Mutex<Server<KuraKura>>>, Arc<Mutex<Senders>>);
 
 #[tokio::main]
 async fn main() {
-    tokio::spawn(run_test_clients());
+    let args: Vec<String> = std::env::args().collect();
+    let test_clients = args.iter().any(|arg| arg == "--test_clients");
+
+    if test_clients {
+        tokio::spawn(run_test_clients());
+    }
 
     let server  = Arc::new(Mutex::new(Server::new()));
     let senders = Arc::new(Mutex::new(Senders::new()));
