@@ -15,8 +15,6 @@ interface GameProps {
 }
 
 export default function Game({ playerName, room }: GameProps) {
-	// const params = new URLSearchParams(location.search);
-
 	const ctx = useContext(WebSocketContext);
 	if (!ctx) throw new Error("Need websocket context");
 	const { send, readyState } = ctx;
@@ -25,6 +23,8 @@ export default function Game({ playerName, room }: GameProps) {
 	const [messages, setMessages] = useState<KuraResponse[]>([]);
 	const [blackPlayerName, setBlackPlayerName] = useState<string | undefined>(undefined);
 	const [whitePlayerName, setWhitePlayerName] = useState<string | undefined>(undefined);
+	const [roomJoinId, setRoomJoinId] = useState<string | undefined>(undefined);
+	const [isHost, setIsHost] = useState(room === "create");
 
 	useEffect(() => {
 		if (readyState === WebSocket.OPEN && !started) {
@@ -54,25 +54,30 @@ export default function Game({ playerName, room }: GameProps) {
 			// Handle room state updates
 			if ("Ok" in last) {
 				const ok = last.Ok;
-				if ("RoomCreated" in ok || "RoomJoined" in ok) {
-					const data = "RoomCreated" in ok ? ok.RoomCreated : ok.RoomJoined;
-					const { player_names } = data.room_state;
-					const { host_plays_black } = data.room_state.game_state;
+				if (typeof ok === "object" && ok !== null) {
+					if ("RoomCreated" in ok || "RoomJoined" in ok) {
+						const data = "RoomCreated" in ok ? ok.RoomCreated : ok.RoomJoined;
+						const { player_names, room_id } = data.room_state;
+						const { host_plays_black } = data.room_state.game_state;
 
-					// First player is host
-					if (player_names.length >= 1) {
-						if (host_plays_black) {
-							setBlackPlayerName(player_names[0]);
-						} else {
-							setWhitePlayerName(player_names[0]);
+						// Store the room ID for the invite link (used as join ID)
+						setRoomJoinId(room_id);
+
+						// First player is host
+						if (player_names.length >= 1) {
+							if (host_plays_black) {
+								setBlackPlayerName(player_names[0]);
+							} else {
+								setWhitePlayerName(player_names[0]);
+							}
 						}
-					}
-					// Second player is guest
-					if (player_names.length >= 2) {
-						if (host_plays_black) {
-							setWhitePlayerName(player_names[1]);
-						} else {
-							setBlackPlayerName(player_names[1]);
+						// Second player is guest
+						if (player_names.length >= 2) {
+							if (host_plays_black) {
+								setWhitePlayerName(player_names[1]);
+							} else {
+								setBlackPlayerName(player_names[1]);
+							}
 						}
 					}
 				}
@@ -122,6 +127,8 @@ export default function Game({ playerName, room }: GameProps) {
 			}}
 			black={blackPlayerName ? { name: blackPlayerName } : undefined}
 			white={whitePlayerName ? { name: whitePlayerName } : undefined}
+			roomJoinId={roomJoinId}
+			isHost={isHost}
 		/>
 	);
 }

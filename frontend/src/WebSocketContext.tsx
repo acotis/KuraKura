@@ -4,7 +4,6 @@ import type { Color } from "./types";
 
 type UserId = string;
 type RoomId = string;
-type Unit = [];
 
 export interface TurnDetails {
 	player: Color;

@@ -4,6 +4,12 @@ import Game from "./Game";
 export default function Lab() {
 	const { isDarkMode, toggle } = useDarkMode();
 
+	// Check for ?join=<gameId> parameter
+	const params = new URLSearchParams(window.location.search);
+	const joinId = params.get("join");
+
+	const room = joinId ? { joinId } : "create";
+
 	return (
 		<main
 			className="flex flex-col items-center gap-4 p-8"
@@ -14,7 +20,7 @@ export default function Lab() {
 				Theme
 			</button>
 
-			<Game playerName="Laqme" room="create" />
+			<Game playerName="Laqme" room={room} />
 		</main>
 	);
 }

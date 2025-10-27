@@ -15,6 +15,8 @@ export interface GameViewProps {
 	onMove: (move: Move) => void;
 	black: Player | undefined;
 	white: Player | undefined;
+	roomJoinId: string | undefined;
+	isHost: boolean;
 }
 
 function PlayerCard({
@@ -47,7 +49,18 @@ export default function GameView({
 	onMove,
 	black,
 	white,
+	roomJoinId,
+	isHost,
 }: GameViewProps) {
+	const copyInviteLink = () => {
+		if (roomJoinId) {
+			const inviteUrl = `${window.location.origin}${window.location.pathname}?join=${roomJoinId}`;
+			navigator.clipboard.writeText(inviteUrl);
+		}
+	};
+
+	const waitingForGuest = isHost && (!black || !white);
+
 	return (
 		<div className="flex flex-col border p-4 gap-2">
 			<div className="flex flex-row gap-2">
@@ -70,6 +83,15 @@ export default function GameView({
 						name={white?.name}
 						active={active === "White"}
 					/>
+					{waitingForGuest && roomJoinId && (
+						<button
+							type="button"
+							className="btn btn-primary btn-sm"
+							onClick={copyInviteLink}
+						>
+							Copy Invite Link
+						</button>
+					)}
 				</div>
 			</div>
 			<div className="text-xs">
