@@ -72,6 +72,73 @@ test('One player can invite another player', async ({ browser }) => {
     });
     expect(guestHasBothPlayers).toBe(true);
 
+    // Now test that one player can make a move and the other sees it
+    // Black player (host) goes first
+    console.log('Testing move submission and synchronization...');
+
+    // Host places a stone at position (2, 2)
+    const hostBoard = hostPage.locator('table tbody');
+    const hostCell = hostBoard.locator('tr').nth(2).locator('td').nth(2);
+    await hostCell.click();
+
+    // Wait for the spin selection overlay to appear
+    await hostPage.waitForTimeout(500);
+
+    // Select a 2x2 spin region by dragging from (1,1) to (2,2)
+    const spinOverlay = hostPage.locator('div.absolute.inset-0');
+    await spinOverlay.dispatchEvent('mousedown', {
+      clientX: 1.5 * 40 + 32, // tileSize is 40, offset by 32px padding
+      clientY: 1.5 * 40 + 32,
+    });
+    await spinOverlay.dispatchEvent('mousemove', {
+      clientX: 2.5 * 40 + 32,
+      clientY: 2.5 * 40 + 32,
+    });
+    await spinOverlay.dispatchEvent('mouseup');
+
+    // Wait for the confirm button to appear
+    await hostPage.waitForTimeout(500);
+
+    // Click the checkmark button to confirm the move
+    const confirmButton = hostPage.locator('button:has-text("✓")');
+    await expect(confirmButton).toBeVisible();
+    await confirmButton.click();
+
+    // Wait for the move to be sent and processed
+    await hostPage.waitForTimeout(1000);
+    await guestPage.waitForTimeout(1000);
+
+    // Verify both players see the stone on the board
+    // Check that there's a stone visible at position (2, 2) on both boards
+    const hostStoneExists = await hostPage.evaluate(() => {
+      const table = document.querySelector('table tbody');
+      if (!table) return false;
+      const rows = table.querySelectorAll('tr');
+      if (rows.length < 3) return false;
+      const cells = rows[2].querySelectorAll('td');
+      if (cells.length < 3) return false;
+      // Check if there's stone content (looking for the stone element)
+      const cellContent = cells[2].textContent || '';
+      return cells[2].querySelector('[class*="stone"]') !== null || cellContent.includes('1');
+    });
+
+    const guestStoneExists = await guestPage.evaluate(() => {
+      const table = document.querySelector('table tbody');
+      if (!table) return false;
+      const rows = table.querySelectorAll('tr');
+      if (rows.length < 3) return false;
+      const cells = rows[2].querySelectorAll('td');
+      if (cells.length < 3) return false;
+      const cellContent = cells[2].textContent || '';
+      return cells[2].querySelector('[class*="stone"]') !== null || cellContent.includes('1');
+    });
+
+    console.log('Host sees stone:', hostStoneExists);
+    console.log('Guest sees stone:', guestStoneExists);
+
+    expect(hostStoneExists).toBe(true);
+    expect(guestStoneExists).toBe(true);
+
   } finally {
     // Clean up
     await hostPage.close();

@@ -79,6 +79,30 @@ export default function Game({ playerName, room }: GameProps) {
 								setBlackPlayerName(player_names[1]);
 							}
 						}
+					} else if ("TurnAccepted" in ok) {
+						// Sync the board state from the server's authoritative state
+						const { room_state } = ok.TurnAccepted;
+						const { board, turn } = room_state.game_state;
+
+						// Convert server board format to our Grid format
+						const newGrid: Grid = board.map(row =>
+							row.map(cell => ({
+								stone: cell.stone
+									? {
+											color: cell.stone.color,
+											label: "", // Server doesn't send labels, we'll need to derive from turn number
+											rotation: 0,
+									  }
+									: undefined,
+							}))
+						);
+
+						setGrid(newGrid);
+						setMoveNumber(turn);
+						// Determine whose turn it is based on turn number and host_plays_black
+						const { host_plays_black } = room_state.game_state;
+						const isBlackTurn = turn % 2 === 1;
+						setActive(isBlackTurn ? "Black" : "White");
 					}
 				}
 			}
